@@ -34,8 +34,8 @@ Zoom Mario Sequence screen. integer N > 0 can be 1, 2, 3, 4, ...
 - **?SCORE="*MSQ's score data*"**  
 Pass the score data. Try these links for example:  
 Kerby's OP theme. http://bit.ly/1iuFZs1  
-Aunt Spoon (or Mrs.Pepper Pot) http://bit.ly/1kpLFsd
+Aunt Spoon (or Mrs. Pepper Pot) http://bit.ly/1kpLFsd
 
 ## License
 Original game: Mario Paint. Images and sounds belong to Nintendo.  
-Original Javascript code: (minghai)[https://github.com/minghai]
+Original Javascript code: [minghai](https://github.com/minghai)
