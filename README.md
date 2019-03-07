@@ -1,5 +1,5 @@
 # MarioSequencer
-Mario Sequencer - Web Edition. Fork of https://github.com/minghai/MarioSequencer with minor improvement.
+Mario Sequencer - Web Edition. Fork of https://github.com/minghai/MarioSequencer with minor improvements.
 
 ## Improvements over the original repository
 1. Increased default maxium bars (199). The original repository: 24.
@@ -35,3 +35,7 @@ Zoom Mario Sequence screen. integer N > 0 can be 1, 2, 3, 4, ...
 Pass the score data. Try these links for example:  
 Kerby's OP theme. http://bit.ly/1iuFZs1  
 Aunt Spoon (or Mrs.Pepper Pot) http://bit.ly/1kpLFsd
+
+## License
+Original game: Mario Paint. Images and sounds belong to Nintendo.  
+Original Javascript code: (minghai)[https://github.com/minghai]
