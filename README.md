@@ -23,7 +23,7 @@ You can use ♯ and ♭ for semitones. Hold **Shift** for ♯ or **Ctrl** for �
 
 ## API
 - **?url="*filename*.json"**  
-View the score file. [Sample here](https://windyboy1704.github.io/MarioSequencer/?url=bobbycarrot_ingame1.json).
+View the score file. [Sample here](https://windyboy1704.github.io/MarioSequencer/?url=smb3world1map.json).
 
 - **?auto="true"** or **?auto="false"**  
 Turn on/off autoplay music.
