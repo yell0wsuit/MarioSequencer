@@ -7,7 +7,7 @@ Mario Sequencer - Web Edition. Fork of https://github.com/minghai/MarioSequencer
 3. Improved WAV sound quality, deleted unnecessary sound files.
 
 ## How to use
-Click [here](https://windyboy1704.github.io/MarioSequencer/) to try this online. You can download (or clone) this repository to try it offline.
+Click [here](https://auranticus.github.io/MarioSequencer/) to try this online. You can download (or clone) this repository to try it offline.
 
 Select instruments with the buttons on the top of the screen. Most right button is not a instrument, but it is a end mark. If you select it, you can put the end mark on the score and play will stop there.
 
