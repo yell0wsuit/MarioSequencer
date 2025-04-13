@@ -4,7 +4,7 @@
  */
 
 // First, check the parameters to get MAGNIFY
-var OPTS = {};
+const OPTS = {};
 window.location.search
     .slice(1)
     .split("&")
@@ -16,34 +16,34 @@ window.location.search
 // GLOBAL VARIABLES
 //   Constants: Full capital letters
 //   Variables: CamelCase
-AC = window.AudioContext ? new AudioContext() : new webkitAudioContext();
-SEMITONERATIO = Math.pow(2, 1 / 12);
-MAGNIFY = OPTS.mag || OPTS.magnify || 3;
-CHARSIZE = 16 * MAGNIFY;
-HALFCHARSIZE = Math.floor(CHARSIZE / 2);
-BUTTONS = [];
-MouseX = 0;
-MouseY = 0;
-CONSOLE = document.getElementById("console");
-ORGWIDTH = 256;
-ORGHEIGHT = 224;
-SCRHEIGHT = 152;
+const AC = window.AudioContext ? new AudioContext() : new webkitAudioContext();
+const SEMITONERATIO = Math.pow(2, 1 / 12);
+const MAGNIFY = OPTS.mag || OPTS.magnify || 3;
+const CHARSIZE = 16 * MAGNIFY;
+const HALFCHARSIZE = Math.floor(CHARSIZE / 2);
+const BUTTONS = [];
+let mouseX = 0;
+let mouseY = 0;
+const CONSOLE = document.getElementById("console");
+const ORGWIDTH = 256;
+const ORGHEIGHT = 224;
+const SCRHEIGHT = 152;
 CONSOLE.style.width = ORGWIDTH * MAGNIFY + "px";
 CONSOLE.style.height = ORGHEIGHT * MAGNIFY + "px";
-OFFSETLEFT = CONSOLE.offsetLeft;
-OFFSETTOP = CONSOLE.offsetTop;
-CurChar = 0;
-CurPos = 0;
-CurSong = undefined; // For Embedded Songs
-CurScore = {};
-DEFAULTMAXBARS = 199 * 4 + 1; // 24 bars by default
-DEFAULTTEMPO = 100;
-CurMaxBars = DEFAULTMAXBARS;
-Mario = null; // Mamma Mia!
-AnimeID = 0; // ID for cancel animation
-PsedoSheet = null; // CSSRules for manipulating pseudo elements
-RepeatMark = null; // For Score
-EndMark = null;
+let offsetLeft = CONSOLE.offsetLeft;
+let offsetTop = CONSOLE.offsetTop;
+let curChar = 0;
+let curPos = 0;
+let curSong = undefined; // For Embedded Songs
+let curScore = {};
+const DEFAULT_MAX_BARS = 199 * 4 + 1; // 24 bars by default
+const DEFAULT_TEMPO = 100;
+let curMaxBars = DEFAULT_MAX_BARS;
+let mario = null; // Mamma Mia!
+let animeId = 0; // ID for cancel animation
+let pseudoSheet = null; // CSSRules for manipulating pseudo elements
+let repeatMark = null; // For Score
+let endMark = null;
 
 /*
  * GameStatus: Game mode
@@ -52,7 +52,7 @@ EndMark = null;
  *   2: Playing
  *   3: Mario Leaving
  */
-GameStatus = 0;
+let gameStatus = 0;
 
 // shim layer with setTimeout fallback
 window.requestAnimFrame = (function () {
@@ -98,7 +98,7 @@ class SoundEntity {
             // Dynamic tempo change
             if (typeof note === "string") {
                 const tempo = note.split("=")[1];
-                CurScore.tempo = tempo;
+                curScore.tempo = tempo;
                 document.getElementById("tempo").value = tempo;
                 return;
             }
@@ -197,7 +197,7 @@ class MarioClass {
     }
 
     checkMarioShouldJump() {
-        const notes = CurScore.notes[this.pos - 1];
+        const notes = curScore.notes[this.pos - 1];
         if (!notes || notes.length === 0) {
             this.isJumping = false;
         } else if (notes.length === 1) {
@@ -216,7 +216,7 @@ class MarioClass {
             notes.forEach((note) => {
                 if (typeof note === "string") {
                     const tempo = note.split("=")[1];
-                    CurScore.tempo = tempo;
+                    curScore.tempo = tempo;
                     document.getElementById("tempo").value = tempo;
                     return;
                 }
@@ -232,7 +232,7 @@ class MarioClass {
             });
         };
 
-        const tempo = CurScore.tempo;
+        const tempo = curScore.tempo;
         let diff = timeStamp - this.lastTime; // both are [ms]
         if (diff > 32) diff = 16; // When user hide the tag, force it
         this.lastTime = timeStamp;
@@ -241,14 +241,14 @@ class MarioClass {
         this.timer.checkAndFire(timeStamp);
         const scroll = document.getElementById("scroll");
 
-        const nextBar = 16 + 32 * (this.pos - CurPos + 1) - 8;
+        const nextBar = 16 + 32 * (this.pos - curPos + 1) - 8;
         if (this.x < 120) {
             // Mario still has to run
             this.x += step;
             // If this step crosses the bar
             if (this.x >= nextBar) {
                 this.pos++;
-                scheduleAndPlay(CurScore.notes[this.pos - 2], 0); // Ignore diff
+                scheduleAndPlay(curScore.notes[this.pos - 2], 0); // Ignore diff
                 this.checkMarioShouldJump();
             } else {
                 // 32 dots in t[sec/1beat]
@@ -257,21 +257,21 @@ class MarioClass {
                     this.x = 120;
                 }
             }
-        } else if (CurPos <= CurScore.end - 6) {
+        } else if (curPos <= curScore.end - 6) {
             // Scroll
             this.x = 120;
             if (this.scroll < 16 && this.scroll + step > 16) {
                 this.pos++;
                 this.scroll += step;
-                scheduleAndPlay(CurScore.notes[this.pos - 2], 0); // Ignore error
+                scheduleAndPlay(curScore.notes[this.pos - 2], 0); // Ignore error
                 this.checkMarioShouldJump();
             } else {
                 this.scroll += step;
                 if (this.scroll > 32) {
                     this.scroll -= 32;
-                    CurPos++;
-                    scroll.value = CurPos;
-                    if (CurPos > CurScore.end - 6) {
+                    curPos++;
+                    scroll.value = curPos;
+                    if (curPos > curScore.end - 6) {
                         this.x += this.scroll;
                         this.scroll = 0;
                     }
@@ -282,11 +282,11 @@ class MarioClass {
             // If this step crosses the bar
             if (this.x >= nextBar) {
                 this.pos++;
-                scheduleAndPlay(CurScore.notes[this.pos - 2], 0); // Ignore diff
+                scheduleAndPlay(curScore.notes[this.pos - 2], 0); // Ignore diff
                 this.checkMarioShouldJump();
             }
         }
-        drawScore(CurPos, CurScore.notes, this.scroll);
+        drawScore(curPos, curScore.notes, this.scroll);
         this.draw();
     }
 
@@ -327,7 +327,7 @@ class MarioClass {
             if (this.scroll > 32) {
                 this.x += this.scroll - 32;
                 this.scroll = 0;
-                CurPos++;
+                curPos++;
             }
         } else {
             this.x = Math.floor(diff / 4) + this.offset;
@@ -336,10 +336,10 @@ class MarioClass {
         if (Math.floor(diff / 100) % 2 === 0) {
             this.state = 8;
             this.draw();
-            const w = sweatimg.width;
-            const h = sweatimg.height;
+            const w = sweatImg.width;
+            const h = sweatImg.height;
             L2C.drawImage(
-                sweatimg,
+                sweatImg,
                 0,
                 0,
                 w,
@@ -373,36 +373,36 @@ class EasyTimer {
 }
 
 // Asynchronous load of sounds
-SOUNDS = [];
-for (i = 1; i < 21; i++) {
-    var tmp = "0";
+const SOUNDS = [];
+for (let i = 1; i < 21; i++) {
+    let tmp = "0";
     tmp += i.toString();
-    var file = "wav/sound" + tmp.slice(-2) + ".wav";
-    var e = new SoundEntity(file);
+    let file = "wav/sound" + tmp.slice(-2) + ".wav";
+    let e = new SoundEntity(file);
     SOUNDS[i - 1] = e;
 }
 
 // Prepare Mat
-MAT = document.getElementById("layer1");
+const MAT = document.getElementById("layer1");
 MAT.width = ORGWIDTH * MAGNIFY;
 MAT.height = ORGHEIGHT * MAGNIFY;
-L1C = MAT.getContext("2d");
+const L1C = MAT.getContext("2d");
 L1C.imageSmoothingEnabled = false;
-var mi = new Image();
+const mi = new Image();
 mi.src = "images/mat.png";
 mi.onload = function () {
     L1C.drawImage(mi, 0, 0, mi.width * MAGNIFY, mi.height * MAGNIFY);
 };
 
 // Prepare Characters
-char_sheet = new Image();
-char_sheet.src = "images/character_sheet.png";
+const charSheet = new Image();
+charSheet.src = "images/character_sheet.png";
 
 // Prepare the Bomb!
-BOMBS = [];
-bombimg = new Image();
-bombimg.src = "images/bomb.png";
-bombTimer = new EasyTimer(150, drawBomb);
+let BOMBS = [];
+const bombImg = new Image();
+bombImg.src = "images/bomb.png";
+const bombTimer = new EasyTimer(150, drawBomb);
 bombTimer.switch = true; // always true for the bomb
 bombTimer.currentFrame = 0;
 
@@ -421,65 +421,65 @@ function drawBomb(mySelf) {
         case 2:
             break;
     }
-    if (CurSong == undefined || GameStatus != 2) return;
-    CurSong.style.backgroundImage = "url(" + CurSong.images[mySelf.currentFrame + 1].src + ")";
+    if (curSong == undefined || gameStatus != 2) return;
+    curSong.style.backgroundImage = "url(" + curSong.images[mySelf.currentFrame + 1].src + ")";
 }
 
 // Prepare the G-Clef. (x, y) = (9, 48)
-GClef = new Image();
+const GClef = new Image();
 GClef.src = "images/G_Clef.png";
 
 // Prepare the numbers
-numimg = new Image();
-numimg.src = "images/numbers.png";
+const numImg = new Image();
+numImg.src = "images/numbers.png";
 
 // Prepare the Mario images
-marioimg = new Image();
-marioimg.src = "images/Mario.png";
+const marioImg = new Image();
+marioImg.src = "images/Mario.png";
 
-sweatimg = new Image();
-sweatimg.src = "images/mario_sweat.png";
+const sweatImg = new Image();
+sweatImg.src = "images/mario_sweat.png";
 
 // Prepare the Play button
-playbtnimg = new Image();
-playbtnimg.src = "images/play_button.png";
+const playBtnImg = new Image();
+playBtnImg.src = "images/play_button.png";
 
 // Prepare the Stop button
-stopbtnimg = new Image();
-stopbtnimg.src = "images/stop_button.png";
+const stopBtnImg = new Image();
+stopBtnImg.src = "images/stop_button.png";
 
 // Prepare the CLEAR button
-clearimg = new Image();
-clearimg.src = "images/clear_button.png";
+const clearImg = new Image();
+clearImg.src = "images/clear_button.png";
 
 // Prepare tempo range slider thumb image
-thumbimg = new Image();
-thumbimg.src = "images/slider_thumb.png";
+const thumbImg = new Image();
+thumbImg.src = "images/slider_thumb.png";
 
 // Prepare beat button
-beatimg = new Image();
-beatimg.src = "images/beat_button.png";
+const beatImg = new Image();
+beatImg.src = "images/beat_button.png";
 
 // Prepare Song buttons
-songimg = new Image();
-songimg.src = "images/song_buttons.png";
+const songImg = new Image();
+songImg.src = "images/song_buttons.png";
 
 // Prepare End Mark
-endimg = new Image();
-endimg.src = "images/end_mark.png";
+const endImg = new Image();
+endImg.src = "images/end_mark.png";
 
 // Prepare Semitone
-semitoneimg = new Image();
-semitoneimg.src = "images/semitone.png";
+const semitoneImg = new Image();
+semitoneImg.src = "images/semitone.png";
 
 // Prepare the repeat marks
-repeatimg = new Image();
-repeatimg.src = "images/repeat_head.png";
+const repeatImg = new Image();
+repeatImg.src = "images/repeat_head.png";
 
 function drawRepeatHead(x) {
-    var w = RepeatMarks[0].width;
-    var h = RepeatMarks[0].height;
-    L2C.drawImage(RepeatMarks[0], x * MAGNIFY, 56 * MAGNIFY);
+    var w = repeatMark[0].width;
+    var h = repeatMark[0].height;
+    L2C.drawImage(repeatMark[0], x * MAGNIFY, 56 * MAGNIFY);
 }
 
 // Score Area (8, 41) to (247, 148)
@@ -491,13 +491,13 @@ function drawScore(pos, notes, scroll) {
     L2C.clip();
 
     // If mouse cursor on or under the C, draw horizontal line
-    var realX = MouseX - OFFSETLEFT;
-    var realY = MouseY - OFFSETTOP;
+    var realX = mouseX - offsetLeft;
+    var realY = mouseY - offsetTop;
     var g = toGrid(realX, realY);
     var gridX;
     var gridY;
     // Edit mode only, no scroll
-    if (GameStatus == 0 && g !== false) {
+    if (gameStatus == 0 && g !== false) {
         gridX = g[0];
         gridY = g[1];
         if (gridY >= 11) drawHorizontalBar(gridX, 0);
@@ -509,15 +509,15 @@ function drawScore(pos, notes, scroll) {
         // GClef image is NOT magnified yet.
         L2C.drawImage(GClef, 0, 0, w, h, (9 - scroll) * MAGNIFY, 48 * MAGNIFY, w * MAGNIFY, h * MAGNIFY);
 
-        if (CurScore.loop) {
+        if (curScore.loop) {
             drawRepeatHead(41 - scroll);
         }
-    } else if (pos == 1 && CurScore.loop) {
+    } else if (pos == 1 && curScore.loop) {
         drawRepeatHead(9 - scroll);
     }
 
     //ORANGE #F89000
-    var beats = CurScore.beats;
+    var beats = curScore.beats;
     // orange = 2, 1, 0, 3, 2, 1, 0, 3, ..... (if beats = 4)
     //        = 2, 1, 0, 2, 1, 0, 2, 1, ..... (if beats = 3)
     var orange = beats == 4 ? 3 - ((pos + 1) % 4) : 2 - ((pos + 3) % 3);
@@ -527,8 +527,8 @@ function drawScore(pos, notes, scroll) {
         var x = xorg * MAGNIFY;
         var barnum = pos + i - 2;
 
-        if (barnum == CurScore.end) {
-            var img = CurScore.loop ? RepeatMarks[1] : EndMark;
+        if (barnum == curScore.end) {
+            var img = curScore.loop ? repeatMark[1] : endMark;
             L2C.drawImage(img, x - 7 * MAGNIFY, 56 * MAGNIFY);
         }
 
@@ -536,7 +536,7 @@ function drawScore(pos, notes, scroll) {
         L2C.setLineDash([MAGNIFY, MAGNIFY]);
         L2C.lineWidth = MAGNIFY;
         if (i % beats == orange) {
-            if (GameStatus == 0) drawBarNumber(i, barnum / beats + 1);
+            if (gameStatus == 0) drawBarNumber(i, barnum / beats + 1);
             L2C.strokeStyle = "#F89000";
         } else {
             L2C.strokeStyle = "#A0C0B0";
@@ -550,12 +550,12 @@ function drawScore(pos, notes, scroll) {
 
         // Get notes down
         var delta = 0;
-        if (GameStatus == 2 && Mario.pos - 2 == barnum) {
+        if (gameStatus == 2 && mario.pos - 2 == barnum) {
             var idx;
-            if (Mario.x == 120) {
-                idx = Mario.scroll >= 16 ? Mario.scroll - 16 : Mario.scroll + 16;
+            if (mario.x == 120) {
+                idx = mario.scroll >= 16 ? mario.scroll - 16 : mario.scroll + 16;
             } else {
-                idx = Mario.x + 8 - xorg;
+                idx = mario.x + 8 - xorg;
             }
             var tbl = [
                 0, 1, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 6, 6, 5, 5, 4, 3, 3, 2, 1, 0,
@@ -568,9 +568,9 @@ function drawScore(pos, notes, scroll) {
 
             var sndnum = b[j] >> 8;
             var scale = b[j] & 0x0f;
-            // When CurChar is eraser, and the mouse cursor is on the note,
+            // When curChar is eraser, and the mouse cursor is on the note,
             // an Image of note blinks.
-            if (CurChar == 16 && g != false && i == gridX && scale == gridY && eraserTimer.currentFrame == 1) {
+            if (curChar == 16 && g != false && i == gridX && scale == gridY && eraserTimer.currentFrame == 1) {
                 continue;
             }
 
@@ -589,7 +589,7 @@ function drawScore(pos, notes, scroll) {
             }
         }
     }
-    if (GameStatus == 0) {
+    if (gameStatus == 0) {
         L2C.beginPath();
         L2C.setLineDash([7 * MAGNIFY, 2 * MAGNIFY, 7 * MAGNIFY, 0]);
         L2C.lineWidth = MAGNIFY;
@@ -668,16 +668,16 @@ function toGrid(realX, realY) {
     var gridY = Math.floor((realY - gridTop) / HALFCHARSIZE);
 
     // Consider G-Clef and repeat head area
-    if ((CurPos == 0 && gridX < 2) || (CurPos == 1 && gridX == 0)) return false;
+    if ((curPos == 0 && gridX < 2) || (curPos == 1 && gridX == 0)) return false;
     else return [gridX, gridY];
 }
 
-SCREEN = document.getElementById("layer2");
+const SCREEN = document.getElementById("layer2");
 // You should not use .style.width(or height) here.
 // You must not append "px" here.
 SCREEN.width = ORGWIDTH * MAGNIFY;
 SCREEN.height = SCRHEIGHT * MAGNIFY;
-L2C = SCREEN.getContext("2d");
+const L2C = SCREEN.getContext("2d");
 L2C.imageSmoothingEnabled = false;
 // Delete
 // Google don't support MouseEvent.buttons even it is in W3C standard?
@@ -690,11 +690,11 @@ SCREEN.addEventListener("contextmenu", mouseClickListener);
 SCREEN.addEventListener("click", mouseClickListener);
 
 function mouseClickListener(e) {
-    if (GameStatus != 0) return;
+    if (gameStatus != 0) return;
     e.preventDefault();
 
-    var realX = e.clientX - OFFSETLEFT;
-    var realY = e.clientY - OFFSETTOP;
+    var realX = e.clientX - offsetLeft;
+    var realY = e.clientY - offsetTop;
 
     var g = toGrid(realX, realY);
     if (g == false) return;
@@ -702,24 +702,24 @@ function mouseClickListener(e) {
     var gridY = g[1];
 
     // Map logical x to real bar number
-    var b = CurPos + gridX - 2;
+    var b = curPos + gridX - 2;
 
     // process End Mark
-    if (CurChar == 15) {
-        CurScore.end = b;
+    if (curChar == 15) {
+        curScore.end = b;
         return;
     }
 
-    if (b >= CurScore.end) return;
+    if (b >= curScore.end) return;
 
-    var notes = CurScore["notes"][b];
+    var notes = curScore["notes"][b];
     // Delete
-    if (CurChar == 16 || e.button == 2) {
+    if (curChar == 16 || e.button == 2) {
         // Delete Top of the stack
         for (var i = notes.length - 1; i >= 0; i--) {
             if ((notes[i] & 0x3f) == gridY) {
                 notes.splice(i, 1);
-                CurScore.notes[b] = notes;
+                curScore.notes[b] = notes;
                 SOUNDS[17].play(8);
                 break;
             }
@@ -727,21 +727,21 @@ function mouseClickListener(e) {
         return;
     }
 
-    var note = (CurChar << 8) | gridY;
+    var note = (curChar << 8) | gridY;
     if (notes.indexOf(note) != -1) return;
     //
     // Handle semitone
     if (e.shiftKey) gridY |= 0x80;
     if (e.ctrlKey) gridY |= 0x40;
-    SOUNDS[CurChar].play(gridY);
-    note = (CurChar << 8) | gridY;
+    SOUNDS[curChar].play(gridY);
+    note = (curChar << 8) | gridY;
     notes.push(note);
-    CurScore["notes"][b] = notes;
+    curScore["notes"][b] = notes;
 }
 
 SCREEN.addEventListener("mousemove", function (e) {
-    MouseX = e.clientX;
-    MouseY = e.clientY;
+    mouseX = e.clientX;
+    mouseY = e.clientY;
 });
 
 // Read MSQ File
@@ -819,28 +819,28 @@ SCREEN.addEventListener("drop", function (e) {
 //   Configure Score parameters
 function closing() {
     // Finally, after reducing, set parameters to Score
-    var b = document.getElementById(CurScore.beats == 3 ? "3beats" : "4beats");
+    var b = document.getElementById(curScore.beats == 3 ? "3beats" : "4beats");
     var e = new Event("click");
     e.soundOff = true;
     b.dispatchEvent(e);
 
     var r = document.getElementById("scroll");
-    CurMaxBars = CurScore.end + 1;
-    r.max = CurMaxBars - 6;
+    curMaxBars = curScore.end + 1;
+    r.max = curMaxBars - 6;
     r.value = 0;
-    CurPos = 0;
+    curPos = 0;
 
-    var tempo = CurScore.notes[0][0];
+    var tempo = curScore.notes[0][0];
     if (typeof tempo == "string" && tempo.slice(0, 5) == "TEMPO") {
         tempo = tempo.split("=")[1];
-        CurScore.tempo = tempo;
+        curScore.tempo = tempo;
         document.getElementById("tempo").value = tempo;
     }
 }
 
 function addMSQ(text) {
-    lines = text.split(/\r\n|\r|\n/);
-    keyword = ["SCORE", "TEMPO", "LOOP", "END", "TIME44"];
+    var lines = text.split(/\r\n|\r|\n/);
+    var keyword = ["SCORE", "TEMPO", "LOOP", "END", "TIME44"];
     var values = {};
     lines.forEach(function (line, i) {
         if (line === "") return;
@@ -853,10 +853,10 @@ function addMSQ(text) {
         this[k] = v;
     }, values);
 
-    var oldEnd = CurScore.end;
+    var oldEnd = curScore.end;
     var s = values.SCORE;
     var i = 0,
-        count = CurScore.end;
+        count = curScore.end;
     // MSQ format is variable length string.
     out: while (i < s.length) {
         var bar = [];
@@ -870,41 +870,41 @@ function addMSQ(text) {
                 bar.push(note);
             }
         }
-        CurScore.notes[count++] = bar;
+        curScore.notes[count++] = bar;
     }
 
-    CurScore.end += parseInt(values.END) - 1;
-    if (CurScore.tempo != values.TEMPO) CurScore.notes[oldEnd].splice(0, 0, "TEMPO=" + values.TEMPO);
-    CurScore.tempo = values.TEMPO;
+    curScore.end += parseInt(values.END) - 1;
+    if (curScore.tempo != values.TEMPO) curScore.notes[oldEnd].splice(0, 0, "TEMPO=" + values.TEMPO);
+    curScore.tempo = values.TEMPO;
     var beats = values.TIME44 == "TRUE" ? 4 : 3;
-    CurScore.beats = beats;
-    // click listener will set CurScore.loop
+    curScore.beats = beats;
+    // click listener will set curScore.loop
     b = document.getElementById("loop");
     values.LOOP == "TRUE" ? b.set() : b.reset();
 }
 
 // addJSON
-//   Prase JSON and add contents into CurScore
+//   Prase JSON and add contents into curScore
 //   Input parameter type is FileReader,
 //   but use only its result property.
 //   This means you can use any object with result.
 function addJSON(text) {
     var json = JSON.parse(text);
-    for (var i = 0; i < json.end; i++) CurScore.notes.push(json.notes[i]);
+    for (var i = 0; i < json.end; i++) curScore.notes.push(json.notes[i]);
 
-    var notes = CurScore.notes[CurScore.end];
-    if (CurScore.tempo != json.tempo && notes.length != 0) {
+    var notes = curScore.notes[curScore.end];
+    if (curScore.tempo != json.tempo && notes.length != 0) {
         var tempostr = notes[0];
         if (typeof tempostr != "string") {
             notes.splice(0, 0, "TEMPO=" + json.tempo);
         }
     }
-    CurScore.tempo = json.tempo;
+    curScore.tempo = json.tempo;
 
-    CurScore.end += json.end;
+    curScore.end += json.end;
 
     b = document.getElementById("loop");
-    if (CurScore.loop) b.set;
+    if (curScore.loop) b.set;
     else b.reset();
 }
 
@@ -914,9 +914,9 @@ function doAnimation(time) {
     eraserTimer.checkAndFire(time);
     endMarkTimer.checkAndFire(time);
 
-    drawScore(CurPos, CurScore["notes"], 0);
+    drawScore(curPos, curScore["notes"], 0);
 
-    if (GameStatus != 0) return;
+    if (gameStatus != 0) return;
 
     requestAnimFrame(doAnimation);
 }
@@ -964,12 +964,12 @@ const resizeScreen = () => {
 
     CONSOLE.style.width = `${ORGWIDTH * MAGNIFY}px`;
     CONSOLE.style.height = `${ORGHEIGHT * MAGNIFY}px`;
-    OFFSETLEFT = CONSOLE.offsetLeft;
-    OFFSETTOP = CONSOLE.offsetTop;
+    offsetLeft = CONSOLE.offsetLeft;
+    offsetTop = CONSOLE.offsetTop;
 
-    BOMBS = sliceImage(bombimg, 14, 18);
-    Mario.images = sliceImage(marioimg, 16, 22);
-    Semitones = sliceImage(semitoneimg, 5, 12);
+    BOMBS = sliceImage(bombImg, 14, 18);
+    mario.images = sliceImage(marioImg, 16, 22);
+    Semitones = sliceImage(semitoneImg, 5, 12);
 
     MAT.width = ORGWIDTH * MAGNIFY;
     MAT.height = ORGHEIGHT * MAGNIFY;
@@ -978,54 +978,54 @@ const resizeScreen = () => {
     SCREEN.width = ORGWIDTH * MAGNIFY;
     SCREEN.height = SCRHEIGHT * MAGNIFY;
 
-    const imgs = sliceImage(char_sheet, 16, 16);
+    const imgs = sliceImage(charSheet, 16, 16);
     BUTTONS.forEach((b, i) => {
         b.redraw();
         if (i < 15) b.se.image = imgs[i];
     });
-    BUTTONS[15].images = sliceImage(endimg, 14, 13);
+    BUTTONS[15].images = sliceImage(endImg, 14, 13);
     endMarkTimer.images = BUTTONS[15].images;
 
     // Endmark Cursor (= 15) will be redrawn by its animation
     // Eraser (= 16) will be redrawn later below
-    if (CurChar < 15) {
-        changeCursor(CurChar);
+    if (curChar < 15) {
+        changeCursor(curChar);
     }
 
-    if (CurChar === 15) drawEndMarkIcon(BUTTONS[15].images[0]);
-    else if (CurChar === 16) drawEraserIcon();
-    else drawCurChar(SOUNDS[CurChar].image);
+    if (curChar === 15) drawEndMarkIcon(BUTTONS[15].images[0]);
+    else if (curChar === 16) drawEraserIcon();
+    else drawCurChar(SOUNDS[curChar].image);
 
     const playBtn = document.getElementById("play");
     playBtn.redraw();
-    playBtn.images = sliceImage(playbtnimg, 12, 15);
+    playBtn.images = sliceImage(playBtnImg, 12, 15);
     const num = playBtn.disabled ? 1 : 0;
     playBtn.style.backgroundImage = `url(${playBtn.images[num].src})`;
 
     const stopBtn = document.getElementById("stop");
     stopBtn.redraw();
-    const stopImgs = sliceImage(stopbtnimg, 16, 15);
+    const stopImgs = sliceImage(stopBtnImg, 16, 15);
     stopBtn.images = [stopImgs[0], stopImgs[1]];
     stopBtn.style.backgroundImage = `url(${stopBtn.images[1 - num].src})`;
 
     const loopBtn = document.getElementById("loop");
     loopBtn.redraw();
     loopBtn.images = [stopImgs[2], stopImgs[3]]; // made in Stop button (above)
-    const loopNum = CurScore.loop ? 1 : 0;
+    const loopNum = curScore.loop ? 1 : 0;
     loopBtn.style.backgroundImage = `url(${loopBtn.images[loopNum].src})`;
 
     // Prepare Repeat (global!)
-    RepeatMarks = sliceImage(repeatimg, 13, 62);
-    EndMark = RepeatMarks[2];
+    repeatMark = sliceImage(repeatImg, 13, 62);
+    endMark = repeatMark[2];
 
     const scroll = document.getElementById("scroll");
     moveDOM(scroll, scroll.originalX, scroll.originalY);
     resizeDOM(scroll, scroll.originalW, scroll.originalH);
-    const rules = PseudoSheet.cssRules;
+    const rules = pseudoSheet.cssRules;
     for (let i = 0; i < rules.length; i++) {
         if (rules[i].selectorText === "#scroll::-webkit-slider-thumb") {
-            PseudoSheet.deleteRule(i);
-            PseudoSheet.insertRule(
+            pseudoSheet.deleteRule(i);
+            pseudoSheet.insertRule(
                 `#scroll::-webkit-slider-thumb {
                     -webkit-appearance: none !important;
                     border-radius: 0px;
@@ -1046,17 +1046,17 @@ const resizeScreen = () => {
     toRight.redraw();
     const clear = document.getElementById("clear");
     clear.redraw();
-    clear.images = sliceImage(clearimg, 34, 16);
+    clear.images = sliceImage(clearImg, 34, 16);
     clear.style.backgroundImage = `url(${clear.images[0].src})`;
 
     // Make number images from the number sheet
-    NUMBERS = sliceImage(numimg, 5, 7);
+    NUMBERS = sliceImage(numImg, 5, 7);
 
     const beats3 = document.getElementById("3beats");
     beats3.redraw();
-    const beatImgs = sliceImage(beatimg, 14, 15);
+    const beatImgs = sliceImage(beatImg, 14, 15);
     beats3.images = [beatImgs[0], beatImgs[1]];
-    const beatsNum = CurScore.beats === 3 ? 1 : 0;
+    const beatsNum = curScore.beats === 3 ? 1 : 0;
     beats3.style.backgroundImage = `url(${beats3.images[beatsNum].src})`;
     const beats4 = document.getElementById("4beats");
     beats4.redraw();
@@ -1065,25 +1065,25 @@ const resizeScreen = () => {
 
     const frog = document.getElementById("frog");
     frog.redraw();
-    const songImgs = sliceImage(songimg, 15, 17);
+    const songImgs = sliceImage(songImg, 15, 17);
     frog.images = [songImgs[0], songImgs[1], songImgs[2]];
-    const frogNum = CurSong === frog ? 1 : 0;
+    const frogNum = curSong === frog ? 1 : 0;
     frog.style.backgroundImage = `url(${frog.images[frogNum].src})`;
     const beak = document.getElementById("beak");
     beak.redraw();
     beak.images = [songImgs[3], songImgs[4], songImgs[5]];
-    const beakNum = CurSong === beak ? 1 : 0;
+    const beakNum = curSong === beak ? 1 : 0;
     beak.style.backgroundImage = `url(${beak.images[beakNum].src})`;
     const oneUp = document.getElementById("1up");
     oneUp.redraw();
     oneUp.images = [songImgs[6], songImgs[7], songImgs[8]];
-    const oneUpNum = CurSong === oneUp ? 1 : 0;
+    const oneUpNum = curSong === oneUp ? 1 : 0;
     oneUp.style.backgroundImage = `url(${oneUp.images[oneUpNum].src})`;
     const eraser = document.getElementById("eraser");
     eraser.redraw();
     eraser.images = [songImgs[9], songImgs[10], songImgs[11]];
     let eraserNum;
-    if (CurChar === 16) {
+    if (curChar === 16) {
         eraserNum = 1;
         SCREEN.style.cursor = `url(${eraser.images[2].src}) 0 0, auto`;
     } else {
@@ -1096,8 +1096,8 @@ const resizeScreen = () => {
     resizeDOM(tempo, tempo.originalW, tempo.originalH);
     for (let i = 0; i < rules.length; i++) {
         if (rules[i].selectorText === "#tempo::-webkit-slider-thumb") {
-            PseudoSheet.deleteRule(i);
-            PseudoSheet.insertRule(
+            pseudoSheet.deleteRule(i);
+            pseudoSheet.insertRule(
                 `#tempo::-webkit-slider-thumb {
                     -webkit-appearance: none !important;
                     background-image: url('${tempo.image.src}');
@@ -1139,7 +1139,7 @@ const sliceImage = (img, width, height) => {
 const download = () => {
     const link = document.createElement("a");
     link.download = "MSQ_Data.json";
-    const json = JSON.stringify(CurScore);
+    const json = JSON.stringify(curScore);
     const blob = new Blob([json], { type: "octet/stream" });
     const url = window.URL.createObjectURL(blob);
     link.href = url;
@@ -1156,7 +1156,7 @@ function onload() {
             //   1st mario:   x=24, y=8, width=13, height=14
             //   2nd Kinopio: X=38, y=8, width=13, height=14
             //   and so on...
-            var bimgs = sliceImage(char_sheet, 16, 16);
+            var bimgs = sliceImage(charSheet, 16, 16);
             for (var i = 0; i < 15; i++) {
                 var b = makeButton(24 + 14 * i, 8, 13, 14);
                 b.num = i;
@@ -1164,7 +1164,7 @@ function onload() {
                 b.se.image = bimgs[i];
                 b.addEventListener("click", function () {
                     this.se.play(8); // Note F
-                    CurChar = this.num;
+                    curChar = this.num;
                     clearEraserButton();
                     changeCursor(this.num);
                     drawCurChar(this.se.image);
@@ -1175,10 +1175,10 @@ function onload() {
 
             // Prepare End Mark button (Char. No. 15)
             var b = makeButton(235, 8, 13, 14);
-            b.images = sliceImage(endimg, 14, 13); // Note: Different size from the button
+            b.images = sliceImage(endImg, 14, 13); // Note: Different size from the button
             endMarkTimer = new EasyTimer(150, function (self) {
                 // If current is not end mark, just return;
-                if (CurChar != 15) {
+                if (curChar != 15) {
                     self.switch = false;
                     return;
                 }
@@ -1190,7 +1190,7 @@ function onload() {
             endMarkTimer.currentFrame = 0;
             b.addEventListener("click", function () {
                 endMarkTimer.switch = true;
-                CurChar = 15;
+                curChar = 15;
                 SOUNDS[15].play(8);
                 clearEraserButton();
                 drawEndMarkIcon(this.images[0]);
@@ -1201,12 +1201,12 @@ function onload() {
             // For inserting pseudo elements' styles
             var s = document.createElement("style");
             document.head.appendChild(s);
-            PseudoSheet = s.sheet;
+            pseudoSheet = s.sheet;
 
             // Prepare Play Button (55, 168)
             var b = makeButton(55, 168, 12, 15);
             b.id = "play";
-            b.images = sliceImage(playbtnimg, 12, 15);
+            b.images = sliceImage(playBtnImg, 12, 15);
             b.style.backgroundImage = "url(" + b.images[0].src + ")";
             b.addEventListener("click", playListener);
             s.sheet.insertRule("#play:focus {outline: none !important;}", 0);
@@ -1217,7 +1217,7 @@ function onload() {
             b.id = "stop";
             b.disabled = false;
             // stopbtn image including loop button (next)
-            var imgs = sliceImage(stopbtnimg, 16, 15);
+            var imgs = sliceImage(stopBtnImg, 16, 15);
             b.images = [imgs[0], imgs[1]];
             b.style.backgroundImage = "url(" + b.images[1].src + ")";
             b.addEventListener("click", stopListener);
@@ -1229,40 +1229,40 @@ function onload() {
             b.id = "loop";
             b.images = [imgs[2], imgs[3]]; // made in Stop button (above)
             b.style.backgroundImage = "url(" + b.images[0].src + ")";
-            CurScore.loop = false;
+            curScore.loop = false;
             b.addEventListener("click", function (e) {
                 var num;
-                if (CurScore.loop) {
-                    CurScore.loop = false;
+                if (curScore.loop) {
+                    curScore.loop = false;
                     num = 0;
                 } else {
-                    CurScore.loop = true;
+                    curScore.loop = true;
                     num = 1;
                 }
                 this.style.backgroundImage = "url(" + this.images[num].src + ")";
                 SOUNDS[17].play(8);
             });
             b.reset = function () {
-                CurScore.loop = false;
+                curScore.loop = false;
                 this.style.backgroundImage = "url(" + this.images[0].src + ")";
             };
             b.set = function () {
-                CurScore.loop = true;
+                curScore.loop = true;
                 this.style.backgroundImage = "url(" + this.images[1].src + ")";
             };
             s.sheet.insertRule("#loop:focus {outline: none !important;}", 0);
             CONSOLE.appendChild(b);
 
             // Prepare Repeat (global!)
-            RepeatMarks = sliceImage(repeatimg, 13, 62);
-            EndMark = RepeatMarks[2];
+            repeatMark = sliceImage(repeatImg, 13, 62);
+            endMark = repeatMark[2];
 
             // Prepare Scroll Range
             var r = document.createElement("input");
             r.id = "scroll";
             r.type = "range";
             r.value = 0;
-            r.max = CurMaxBars - 6;
+            r.max = curMaxBars - 6;
             r.min = 0;
             r.step = 1;
             r.style["-webkit-appearance"] = "none";
@@ -1279,7 +1279,7 @@ function onload() {
             moveDOM(r, r.originalX, r.originalY);
             resizeDOM(r, r.originalW, r.originalH);
             r.addEventListener("input", function (e) {
-                CurPos = parseInt(this.value);
+                curPos = parseInt(this.value);
             });
             CONSOLE.appendChild(r);
 
@@ -1303,13 +1303,13 @@ function onload() {
             s.sheet.insertRule("#scroll:focus {outline: none !important;}", 0);
 
             // Make number images from the number sheet
-            NUMBERS = sliceImage(numimg, 5, 7);
+            NUMBERS = sliceImage(numImg, 5, 7);
 
             // Prepare Beat buttons w=14, h=15 (81, 203) (96, 203)
             // (1) Disable self, Enable the other
             // (2) Change both images
             // (3) Play Sound
-            // (4) Set CurScore.beat
+            // (4) Set curScore.beat
             function makeExclusiveFunction(doms, num, success) {
                 var clone = doms.slice(0); // Clone the Array
                 var self = clone[num];
@@ -1329,7 +1329,7 @@ function onload() {
                 };
             }
 
-            var imgs = sliceImage(beatimg, 14, 15);
+            var imgs = sliceImage(beatImg, 14, 15);
             var b1 = makeButton(81, 203, 14, 15);
             b1.id = "3beats";
             b1.beats = 3;
@@ -1345,13 +1345,13 @@ function onload() {
             b2.disabled = true;
             CONSOLE.appendChild(b2);
             var func = function (self) {
-                CurScore.beats = self.beats;
+                curScore.beats = self.beats;
             };
             b1.addEventListener("click", makeExclusiveFunction([b1, b2], 0, func));
             b2.addEventListener("click", makeExclusiveFunction([b1, b2], 1, func));
 
             // Preapre Song Buttons (136, 202) 15x17, 160 - 136 = 24
-            var imgs = sliceImage(songimg, 15, 17);
+            var imgs = sliceImage(songImg, 15, 17);
             var b = ["frog", "beak", "1up"].map(function (id, idx) {
                 var b = makeButton(136 + 24 * idx, 202, 15, 17);
                 b.id = id;
@@ -1363,16 +1363,16 @@ function onload() {
                 return b;
             });
             var func = function (self) {
-                CurScore = clone(EmbeddedSong[self.num]);
-                document.getElementById("tempo").value = CurScore.tempo;
+                curScore = clone(EmbeddedSong[self.num]);
+                document.getElementById("tempo").value = curScore.tempo;
                 var b = document.getElementById("loop");
-                if (CurScore.loop) b.set();
+                if (curScore.loop) b.set();
                 else b.reset();
                 var s = document.getElementById("scroll");
-                s.max = CurScore.end - 5;
+                s.max = curScore.end - 5;
                 s.value = 0;
-                CurPos = 0;
-                CurSong = self;
+                curPos = 0;
+                curSong = self;
             };
             b[0].addEventListener("click", makeExclusiveFunction(b, 0, func));
             b[1].addEventListener("click", makeExclusiveFunction(b, 1, func));
@@ -1385,7 +1385,7 @@ function onload() {
             b.style.backgroundImage = "url(" + b.images[0].src + ")";
             eraserTimer = new EasyTimer(200, function (self) {
                 // If current is not end mark, just return;
-                if (CurChar != 16) {
+                if (curChar != 16) {
                     self.switch = false;
                     return;
                 }
@@ -1394,7 +1394,7 @@ function onload() {
             eraserTimer.currentFrame = 0;
             b.addEventListener("click", function () {
                 eraserTimer.switch = true;
-                CurChar = 16;
+                curChar = 16;
                 SOUNDS[17].play(8);
                 drawEraserIcon();
                 clearSongButtons();
@@ -1426,11 +1426,11 @@ function onload() {
             moveDOM(r, r.originalX, r.originalY);
             resizeDOM(r, r.originalW, r.originalH);
             r.addEventListener("input", function (e) {
-                CurScore.tempo = parseInt(this.value);
+                curScore.tempo = parseInt(this.value);
             });
             CONSOLE.appendChild(r);
 
-            var t = sliceImage(thumbimg, 5, 8)[0];
+            var t = sliceImage(thumbImg, 5, 8)[0];
             r.image = t;
             // It's very hard to set values to a pseudo element with JS.
             // http://pankajparashar.com/posts/modify-pseudo-elements-css/
@@ -1459,7 +1459,7 @@ function onload() {
             b.addEventListener("click", function (e) {
                 var r = document.getElementById("scroll");
                 if (r.value > 0) {
-                    CurPos = --r.value;
+                    curPos = --r.value;
                 }
             });
             CONSOLE.appendChild(b);
@@ -1468,8 +1468,8 @@ function onload() {
             b.id = "toRight";
             b.addEventListener("click", function (e) {
                 var r = document.getElementById("scroll");
-                if (r.value < CurMaxBars - 6) {
-                    CurPos = ++r.value;
+                if (r.value < curMaxBars - 6) {
+                    curPos = ++r.value;
                 }
             });
             CONSOLE.appendChild(b);
@@ -1477,7 +1477,7 @@ function onload() {
             // Prepare CLEAR button (200, 176)
             var b = makeButton(200, 176, 34, 16);
             b.id = "clear";
-            b.images = sliceImage(clearimg, 34, 16);
+            b.images = sliceImage(clearImg, 34, 16);
             b.style.backgroundImage = "url(" + b.images[0].src + ")";
             b.addEventListener("click", clearListener);
             CONSOLE.appendChild(b);
@@ -1487,21 +1487,21 @@ function onload() {
             initScore();
 
             // Initializing Screen
-            CurPos = 0;
-            CurChar = 0;
-            drawCurChar(SOUNDS[CurChar].image);
-            changeCursor(CurChar);
-            drawScore(CurPos, CurScore["notes"], 0);
+            curPos = 0;
+            curChar = 0;
+            drawCurChar(SOUNDS[curChar].image);
+            changeCursor(curChar);
+            drawScore(curPos, curScore["notes"], 0);
 
             // Make bomb images from the bomb sheet
-            BOMBS = sliceImage(bombimg, 14, 18);
+            BOMBS = sliceImage(bombImg, 14, 18);
 
             // Make Mario images
-            Mario = new MarioClass();
-            Mario.images = sliceImage(marioimg, 16, 22);
+            mario = new MarioClass();
+            mario.images = sliceImage(marioImg, 16, 22);
 
             // Make Semitone images
-            Semitones = sliceImage(semitoneimg, 5, 12);
+            Semitones = sliceImage(semitoneImg, 5, 12);
 
             // Load Sound Files
             Promise.all(
@@ -1602,13 +1602,13 @@ function onload() {
 
                     case 37: // left -> scroll left
                         var r = document.getElementById("scroll");
-                        if (r.value > 0) CurPos = --r.value;
+                        if (r.value > 0) curPos = --r.value;
                         e.preventDefault();
                         break;
 
                     case 39: // right -> scroll right
                         var r = document.getElementById("scroll");
-                        if (r.value < CurMaxBars - 6) CurPos = ++r.value;
+                        if (r.value < curMaxBars - 6) curPos = ++r.value;
                         e.preventDefault();
                         break;
                 }
@@ -1616,8 +1616,8 @@ function onload() {
 
             requestAnimFrame(doAnimation);
 
-            var b = document.getElementById("magnify");
-            b.addEventListener("change", selectListener);
+            // const b = document.getElementById("magnify");
+            // b.addEventListener("change", selectListener);
         })
         .catch((error) => {
             console.error("Failed to load embedded songs:", error);
@@ -1647,7 +1647,7 @@ function clearListener(e) {
         })
         .then(function () {
             initScore();
-            CurPos = 0;
+            curPos = 0;
         });
 
     clearSongButtons();
@@ -1666,9 +1666,9 @@ function playListener(e) {
         document.getElementById(id).disabled = true;
     });
 
-    GameStatus = 1; // Mario Entering the stage
-    CurPos = 0; // doAnimation will draw POS 0 and stop
-    Mario.init();
+    gameStatus = 1; // Mario Entering the stage
+    curPos = 0; // doAnimation will draw POS 0 and stop
+    mario.init();
     requestAnimFrame(doMarioEnter);
 }
 
@@ -1682,40 +1682,40 @@ function stopListener(e) {
     //b.disabled = false; // Do after Mario left the stage
     this.disabled = true; // Would be unlocked by play button
 
-    GameStatus = 3; // Mario leaves from the stage
-    Mario.init4leaving();
-    if (AnimeID != 0) cancelAnimationFrame(AnimeID);
+    gameStatus = 3; // Mario leaves from the stage
+    mario.init4leaving();
+    if (animeId != 0) cancelAnimationFrame(animeId);
     requestAnimFrame(doMarioLeave);
 }
 
 // Let Mario run on the stage
 function doMarioEnter(timeStamp) {
     bombTimer.checkAndFire(timeStamp);
-    drawScore(0, CurScore.notes, 0);
-    Mario.enter(timeStamp);
+    drawScore(0, curScore.notes, 0);
+    mario.enter(timeStamp);
 
-    if (Mario.x < 40) {
-        AnimeID = requestAnimFrame(doMarioEnter);
+    if (mario.x < 40) {
+        animeId = requestAnimFrame(doMarioEnter);
     } else {
-        Mario.init4playing(timeStamp);
-        GameStatus = 2;
-        AnimeID = requestAnimFrame(doMarioPlay);
+        mario.init4playing(timeStamp);
+        gameStatus = 2;
+        animeId = requestAnimFrame(doMarioPlay);
     }
 }
 
 // Let Mario play the music!
 function doMarioPlay(timeStamp) {
     bombTimer.checkAndFire(timeStamp);
-    Mario.play(timeStamp);
-    if (GameStatus == 2) {
-        if (Mario.pos - 2 != CurScore.end - 1) {
-            AnimeID = requestAnimFrame(doMarioPlay);
-        } else if (CurScore.loop) {
-            CurPos = 0;
-            Mario.pos = 1;
-            Mario.x = 40;
-            Mario.init4playing(timeStamp);
-            AnimeID = requestAnimFrame(doMarioPlay);
+    mario.play(timeStamp);
+    if (gameStatus == 2) {
+        if (mario.pos - 2 != curScore.end - 1) {
+            animeId = requestAnimFrame(doMarioPlay);
+        } else if (curScore.loop) {
+            curPos = 0;
+            mario.pos = 1;
+            mario.x = 40;
+            mario.init4playing(timeStamp);
+            animeId = requestAnimFrame(doMarioPlay);
         } else {
             // Calls stopListener without a event arg
             stopListener.call(document.getElementById("stop"));
@@ -1726,13 +1726,13 @@ function doMarioPlay(timeStamp) {
 // Let Mario leave from the stage
 function doMarioLeave(timeStamp) {
     bombTimer.checkAndFire(timeStamp);
-    drawScore(CurPos, CurScore.notes, Mario.scroll);
-    Mario.leave(timeStamp);
+    drawScore(curPos, curScore.notes, mario.scroll);
+    mario.leave(timeStamp);
 
-    if (Mario.x < 247) {
+    if (mario.x < 247) {
         requestAnimFrame(doMarioLeave);
     } else {
-        GameStatus = 0;
+        gameStatus = 0;
 
         ["toLeft", "toRight", "scroll", "play", "clear", "frog", "beak", "1up"].map(function (id) {
             document.getElementById(id).disabled = false;
@@ -1749,7 +1749,7 @@ function clearSongButtons() {
         b.disabled = false;
         b.style.backgroundImage = "url(" + b.images[0].src + ")";
     });
-    CurSong = undefined;
+    curSong = undefined;
 }
 
 // Clear Eraser Button
@@ -1762,30 +1762,30 @@ function clearEraserButton() {
 // Full Initialize Score
 // - Just for file loading...
 function fullInitScore() {
-    CurScore.notes = [];
-    CurMaxBars = 0;
-    CurScore.beats = 4;
+    curScore.notes = [];
+    curMaxBars = 0;
+    curScore.beats = 4;
     // Loop button itself has a state, so keep current value;
-    // CurScore.loop = false;
-    CurScore.end = 0;
-    CurScore.tempo = 0;
+    // curScore.loop = false;
+    curScore.end = 0;
+    curScore.tempo = 0;
 }
 
 // Initialize Score
 function initScore() {
     var tmpa = [];
-    for (var i = 0; i < DEFAULTMAXBARS; i++) tmpa[i] = [];
-    CurScore.notes = tmpa;
-    CurMaxBars = DEFAULTMAXBARS;
+    for (var i = 0; i < DEFAULT_MAX_BARS; i++) tmpa[i] = [];
+    curScore.notes = tmpa;
+    curMaxBars = DEFAULT_MAX_BARS;
     var s = document.getElementById("scroll");
-    s.max = DEFAULTMAXBARS - 6;
+    s.max = DEFAULT_MAX_BARS - 6;
     s.value = 0;
-    CurScore.loop = false;
+    curScore.loop = false;
     document.getElementById("loop").reset();
-    CurScore.end = DEFAULTMAXBARS - 1;
-    CurScore.tempo = DEFAULTTEMPO;
-    document.getElementById("tempo").value = DEFAULTTEMPO;
-    CurScore.beats = 4;
+    curScore.end = DEFAULT_MAX_BARS - 1;
+    curScore.tempo = DEFAULT_TEMPO;
+    document.getElementById("tempo").value = DEFAULT_TEMPO;
+    curScore.beats = 4;
     var e = new Event("click");
     e.soundOff = true;
     document.getElementById("4beats").dispatchEvent(e);
