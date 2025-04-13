@@ -1700,10 +1700,10 @@ function onload() {
 function clearListener(e) {
     this.style.backgroundImage = "url(" + this.images[1].src + ")";
     SOUNDS[19].play(8);
+    const self = this;
     function makePromise(num) {
         return new Promise(function (resolve, reject) {
             setTimeout(function () {
-                const self = this;
                 self.style.backgroundImage = "url(" + self.images[num].src + ")";
                 resolve();
             }, 150);
