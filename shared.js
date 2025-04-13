@@ -6,7 +6,7 @@
 // First, check the parameters to get MAGNIFY
 var OPTS = {};
 window.location.search
-    .substr(1)
+    .slice(1)
     .split("&")
     .forEach(function (s) {
         var tmp = s.split("=");
@@ -68,357 +68,312 @@ window.requestAnimFrame = (function () {
     );
 })();
 
-// SoundEntity#constructor
-function SoundEntity(path) {
-    this.path = path;
-    this.buffer = null;
-    this.prevChord = [];
-    this.diff = [14, 12, 11, 9, 7, 6, 4, 2, 0, -1, -3, -5, -6];
-}
-
-// SoundEntity#play
-// The all wav files are recorded in the tone F.
-// You should choose correct playback rate to play a music.
-SoundEntity.prototype.play = function (scale, delay) {
-    var source = AC.createBufferSource();
-    var tmps = scale & 0x0f;
-    var semitone = this.diff[tmps];
-    if ((scale & 0x80) != 0) semitone++;
-    else if ((scale & 0x40) != 0) semitone--;
-    if (delay == undefined) delay = 0;
-    source.buffer = this.buffer;
-    source.playbackRate.value = Math.pow(SEMITONERATIO, semitone);
-    source.connect(AC.destination);
-    source.start(delay);
-};
-
-// Play a chord
-//   In fact, can be a single note.
-//   Purpose is to cancel the sounds in previous bar
-//   if the kind of note is the same.
-//   Even the chord will be canceled (stoped) playing
-//   SNES has channels limit, so that succesive notes
-//   cancels previous note when next note comes.
-//   Long note like Yoshi can be canceled often
-//   BufferSource.stop won't throw an error even if the
-//   previous note has already ended.
-SoundEntity.prototype.playChord = function (noteList, delay) {
-    // Cancel previous chord first
-    for (var i = 0; i < this.prevChord.length; i++) {
-        this.prevChord[i].stop();
+// Modernized SoundEntity class
+class SoundEntity {
+    constructor(path) {
+        this.path = path;
+        this.buffer = null;
+        this.prevChord = [];
+        this.diff = [14, 12, 11, 9, 7, 6, 4, 2, 0, -1, -3, -5, -6];
     }
-    this.prevChord = [];
-    if (delay == undefined) delay = 0;
-    // I heard that Array#map is slower than for loop because of costs of calling methods.
-    for (var i = 0; i < noteList.length; i++) {
-        var source = AC.createBufferSource();
-        var scale = noteList[i] & 0x0f;
-        var semitone = this.diff[scale];
-        if ((noteList[i] & 0x80) != 0) semitone++;
-        else if ((noteList[i] & 0x40) != 0) semitone--;
+
+    play(scale, delay = 0) {
+        const source = AC.createBufferSource();
+        const tmps = scale & 0x0f;
+        let semitone = this.diff[tmps];
+        if ((scale & 0x80) !== 0) semitone++;
+        else if ((scale & 0x40) !== 0) semitone--;
         source.buffer = this.buffer;
         source.playbackRate.value = Math.pow(SEMITONERATIO, semitone);
-
-        // Compressor: Suppress harsh distortions
-        //var compressor = AC.createDynamicsCompressor();
-        //source.connect(compressor);
-        //compressor.connect(AC.destination);
         source.connect(AC.destination);
         source.start(delay);
-        this.prevChord.push(source);
     }
-};
 
-SoundEntity.prototype.load = function () {
-    var filepath = this.path;
-    return new Promise(function (resolve, reject) {
-        // Load buffer asynchronously
-        var request = new XMLHttpRequest();
-        request.open("GET", filepath, true);
-        request.responseType = "arraybuffer";
+    playChord(noteList, delay = 0) {
+        // Cancel previous chord first
+        this.prevChord.forEach(source => source.stop());
+        this.prevChord = [];
 
-        request.onload = function () {
-            // Asynchronously decode the audio file data in request.response
-            AC.decodeAudioData(
-                request.response,
-                function (buffer) {
-                    if (!buffer) {
-                        reject("error decoding file data: " + url);
-                    }
-                    resolve(buffer);
-                },
-                function (error) {
-                    reject("decodeAudioData error:" + error);
-                }
-            );
-        };
+        noteList.forEach(note => {
+            // Dynamic tempo change
+            if (typeof note === 'string') {
+                const tempo = note.split('=')[1];
+                CurScore.tempo = tempo;
+                document.getElementById('tempo').value = tempo;
+                return;
+            }
 
-        request.onerror = function () {
-            reject("BufferLoader: XHR error");
-        };
+            const source = AC.createBufferSource();
+            const scale = note & 0x0f;
+            let semitone = this.diff[scale];
+            if ((note & 0x80) !== 0) semitone++;
+            else if ((note & 0x40) !== 0) semitone--;
+            source.buffer = this.buffer;
+            source.playbackRate.value = Math.pow(SEMITONERATIO, semitone);
+            source.connect(AC.destination);
+            source.start(delay);
+            this.prevChord.push(source);
+        });
+    }
 
-        request.send();
-    });
-};
+    load() {
+        return new Promise((resolve, reject) => {
+            const request = new XMLHttpRequest();
+            request.open('GET', this.path, true);
+            request.responseType = 'arraybuffer';
+
+            request.onload = () => {
+                AC.decodeAudioData(
+                    request.response,
+                    buffer => {
+                        if (!buffer) {
+                            reject(new Error(`error decoding file data: ${this.path}`));
+                            return;
+                        }
+                        resolve(buffer);
+                    },
+                    error => reject(new Error(`decodeAudioData error: ${error}`))
+                );
+            };
+
+            request.onerror = () => reject(new Error('BufferLoader: XHR error'));
+            request.send();
+        });
+    }
+}
 
 // It's me, Mario!
-function MarioClass() {
-    this.offset = -16; // offset in X
-    this.scroll = 0; // Scroll amount in dots
-    this.x = -16; // X-position in dots.
-    this.images = null;
-    this.pos = 0; // position in bar number
-}
-
-MarioClass.prototype.init = function () {
-    this.x = -16;
-    this.pos = 0;
-    this.start = 0;
-    this.state = 0;
-    this.scroll = 0;
-    this.offset = -16;
-    this.timer = new easyTimer(100, function (timer) {
-        Mario.state = Mario.state == 1 ? 0 : 1;
-    });
-    this.timer.switch = true; // forever true;
-    this.isJumping = false;
-};
-
-MarioClass.prototype.enter = function (timeStamp) {
-    if (this.start == 0) this.start = timeStamp;
-
-    var diff = timeStamp - this.start;
-    this.x = Math.floor(diff / 5) + this.offset;
-    if (this.x >= 40) this.x = 40; // 16 + 32 - 8
-    if (Math.floor(diff / 100) % 2 == 0) {
-        this.state = 1;
-    } else {
+class MarioClass {
+    constructor() {
+        this.offset = -16; // offset in X
+        this.scroll = 0; // Scroll amount in dots
+        this.x = -16; // X-position in dots.
+        this.images = null;
+        this.pos = 0; // position in bar number
         this.state = 0;
-    }
-    this.draw();
-};
-
-MarioClass.prototype.init4leaving = function () {
-    this.offset = this.x;
-    this.start = 0;
-    this.isJumping = false;
-};
-
-/*
- * You can assume that animation is always 60FPS (in theory :-)
- * So 1[frame] is 1 / 60 = 0.1666...[sec]
- * Mario runs 32[dots] per 1[beat]
- * [beat/1sec] = TEMPO[bpm] / 60[sec]
- * [sec/1beat] = 60[sec] / TEMPO[bpm] for 32[dots]
- * 1/60 : 60/TEMPO = x : 32
- * 60x/TEMPO = 32/60
- * x = 32 * TEMPO / 60 * 60 [dots/1frame]
- * Acctually, [msec/1frame] = diff is not always 1/60 * 1000; So,
- * diff : 60 * 1000 / TEMPO = x : 32
- * 60000x/TEMPO = 32diff
- * x = 32 * diff * TEMPO / 60000
- * Logical MAX BPM is when t[sec/1beat] = 2/60, then TEMPO = 1800
- * Because Mario must jump up and down, so he needs 2 times to draw in 1 beat.
- * Real Mario sequencer tempo limit seems 700.
- * So this is good enough.
- * (Famous fastest song, Hatsune Miku no Shoshitsu is 245 (* 4 < 1000))
- * (Mario Sequencer handles only 3 or 4 beat, so if you want to do 8 beat, TEMPO*2)
- *
- * At first, Mario runs to the center of the stage.
- * Then Mario will be fixed at the position.
- * Instead, the score is scrolling from then.
- * When the last bar appears, scroll stops and Mario runs again.
- *
- * Mario should jump from one bar before the next bar which has the note(s)
- *
- */
-MarioClass.prototype.init4playing = function (timeStamp) {
-    this.lastTime = timeStamp;
-    this.offset = this.x;
-    this.scroll = 0;
-    this.pos = 1;
-    this.state == 1;
-    this.checkMarioShouldJump();
-};
-
-MarioClass.prototype.checkMarioShouldJump = function () {
-    var notes = CurScore.notes[this.pos - 1];
-    if (notes == undefined || notes.length == 0) {
+        this.start = 0;
+        this.lastTime = 0;
         this.isJumping = false;
-    } else if (notes.length == 1) {
-        this.isJumping = typeof notes[0] != "string";
-    } else this.isJumping = true;
-};
+        this.timer = new EasyTimer(100, timer => {
+            this.state = this.state === 1 ? 0 : 1;
+        });
+        this.timer.switch = true; // forever true
+    }
 
-MarioClass.prototype.play = function (timeStamp) {
-    // function for setting a chord to SoundEntities and playing it
-    function scheduleAndPlay(notes, time) {
-        if (time < 0) time = 0;
-        if (notes == undefined || notes.length == 0) return;
-        var dic = {};
-        for (var i = 0; i < notes.length; i++) {
-            var note = notes[i];
+    init() {
+        this.x = -16;
+        this.pos = 0;
+        this.start = 0;
+        this.state = 0;
+        this.scroll = 0;
+        this.offset = -16;
+        this.timer.switch = true;
+        this.isJumping = false;
+    }
 
-            // Dynamic tempo change
-            if (typeof note == "string") {
-                var tempo = note.split("=")[1];
-                CurScore.tempo = tempo;
-                document.getElementById("tempo").value = tempo;
-                continue;
-            }
+    enter(timeStamp) {
+        if (this.start === 0) this.start = timeStamp;
 
-            var num = note >> 8;
-            var scale = note & 0xff;
-            if (!dic[num]) dic[num] = [scale];
-            else dic[num].push(scale);
-        }
-        for (var i in dic) {
-            SOUNDS[i].playChord(dic[i], time / 1000); // [ms] -> [s]
+        const diff = timeStamp - this.start;
+        this.x = Math.floor(diff / 5) + this.offset;
+        if (this.x >= 40) this.x = 40; // 16 + 32 - 8
+        this.state = Math.floor(diff / 100) % 2 === 0 ? 1 : 0;
+        this.draw();
+    }
+
+    init4leaving() {
+        this.offset = this.x;
+        this.start = 0;
+        this.isJumping = false;
+    }
+
+    init4playing(timeStamp) {
+        this.lastTime = timeStamp;
+        this.offset = this.x;
+        this.scroll = 0;
+        this.pos = 1;
+        this.state = 1;
+        this.checkMarioShouldJump();
+    }
+
+    checkMarioShouldJump() {
+        const notes = CurScore.notes[this.pos - 1];
+        if (!notes || notes.length === 0) {
+            this.isJumping = false;
+        } else if (notes.length === 1) {
+            this.isJumping = typeof notes[0] !== 'string';
+        } else {
+            this.isJumping = true;
         }
     }
 
-    var tempo = CurScore.tempo;
-    var diff = timeStamp - this.lastTime; // both are [ms]
-    if (diff > 32) diff = 16; // When user hide the tag, force it
-    this.lastTime = timeStamp;
-    var step = (32 * diff * tempo) / 60000; // (60[sec] * 1000)[msec]
+    play(timeStamp) {
+        const scheduleAndPlay = (notes, time) => {
+            if (time < 0) time = 0;
+            if (!notes || notes.length === 0) return;
+            
+            const dic = {};
+            notes.forEach(note => {
+                if (typeof note === 'string') {
+                    const tempo = note.split('=')[1];
+                    CurScore.tempo = tempo;
+                    document.getElementById('tempo').value = tempo;
+                    return;
+                }
 
-    this.timer.checkAndFire(timeStamp);
-    var scroll = document.getElementById("scroll");
+                const num = note >> 8;
+                const scale = note & 0xff;
+                if (!dic[num]) dic[num] = [scale];
+                else dic[num].push(scale);
+            });
 
-    var nextBar = 16 + 32 * (this.pos - CurPos + 1) - 8;
-    if (Mario.x < 120) {
-        // Mario still has to run
-        this.x += step;
-        // If this step crosses the bar
-        if (this.x >= nextBar) {
-            this.pos++;
-            scheduleAndPlay(CurScore.notes[this.pos - 2], 0); // Ignore diff
-            this.checkMarioShouldJump();
-        } else {
-            // 32 dots in t[sec/1beat]
-            if (this.x >= 120) {
-                this.scroll = this.x - 120;
-                this.x = 120;
-            }
-        }
-    } else if (CurPos <= CurScore.end - 6) {
-        // Scroll
-        this.x = 120;
-        if (this.scroll < 16 && this.scroll + step > 16) {
-            this.pos++;
-            this.scroll += step;
-            scheduleAndPlay(CurScore.notes[this.pos - 2], 0); // Ignore error
-            this.checkMarioShouldJump();
-        } else {
-            this.scroll += step;
-            if (this.scroll > 32) {
-                this.scroll -= 32;
-                CurPos++;
-                scroll.value = CurPos;
-                if (CurPos > CurScore.end - 6) {
-                    this.x += this.scroll;
-                    this.scroll = 0;
+            Object.entries(dic).forEach(([i, scales]) => {
+                SOUNDS[i].playChord(scales, time / 1000); // [ms] -> [s]
+            });
+        };
+
+        const tempo = CurScore.tempo;
+        let diff = timeStamp - this.lastTime; // both are [ms]
+        if (diff > 32) diff = 16; // When user hide the tag, force it
+        this.lastTime = timeStamp;
+        const step = (32 * diff * tempo) / 60000; // (60[sec] * 1000)[msec]
+
+        this.timer.checkAndFire(timeStamp);
+        const scroll = document.getElementById('scroll');
+
+        const nextBar = 16 + 32 * (this.pos - CurPos + 1) - 8;
+        if (this.x < 120) {
+            // Mario still has to run
+            this.x += step;
+            // If this step crosses the bar
+            if (this.x >= nextBar) {
+                this.pos++;
+                scheduleAndPlay(CurScore.notes[this.pos - 2], 0); // Ignore diff
+                this.checkMarioShouldJump();
+            } else {
+                // 32 dots in t[sec/1beat]
+                if (this.x >= 120) {
+                    this.scroll = this.x - 120;
+                    this.x = 120;
                 }
             }
-        }
-    } else {
-        this.x += step;
-        // If this step crosses the bar
-        if (this.x >= nextBar) {
-            this.pos++;
-            scheduleAndPlay(CurScore.notes[this.pos - 2], 0); // Ignore diff
-            this.checkMarioShouldJump();
-        }
-    }
-    drawScore(CurPos, CurScore.notes, this.scroll);
-    this.draw();
-};
-
-// Mario Jump
-MarioClass.prototype.jump = function (x) {
-    var h = [
-        0, 2, 4, 6, 8, 10, 12, 13, 14, 15, 16, 17, 18, 18, 19, 19, 19, 19, 19, 18, 18, 17, 16, 15, 14, 13, 12, 10, 8, 6,
-        4, 2, 0,
-    ];
-    return h[Math.round(x) % 32];
-};
-
-MarioClass.prototype.draw = function () {
-    var y = 41 - 22;
-    var state = this.state;
-    if (this.isJumping) {
-        state = 2;
-        if (this.x == 120) {
-            // In scroll mode
-            // (scroll == 16) is just on the bar, 0 and 32 is on the center of between bars
-            if (this.scroll != 16) {
-                y -= this.jump(this.scroll > 16 ? this.scroll - 16 : this.scroll + 16);
-            } /* if scroll == 16 then Mario should be on the ground */
+        } else if (CurPos <= CurScore.end - 6) {
+            // Scroll
+            this.x = 120;
+            if (this.scroll < 16 && this.scroll + step > 16) {
+                this.pos++;
+                this.scroll += step;
+                scheduleAndPlay(CurScore.notes[this.pos - 2], 0); // Ignore error
+                this.checkMarioShouldJump();
+            } else {
+                this.scroll += step;
+                if (this.scroll > 32) {
+                    this.scroll -= 32;
+                    CurPos++;
+                    scroll.value = CurPos;
+                    if (CurPos > CurScore.end - 6) {
+                        this.x += this.scroll;
+                        this.scroll = 0;
+                    }
+                }
+            }
         } else {
-            // Running to the center, or leaving to the goal
-            y -= this.jump(Math.round((this.x - 8) % 32));
+            this.x += step;
+            // If this step crosses the bar
+            if (this.x >= nextBar) {
+                this.pos++;
+                scheduleAndPlay(CurScore.notes[this.pos - 2], 0); // Ignore diff
+                this.checkMarioShouldJump();
+            }
         }
-    }
-
-    L2C.drawImage(this.images[state], this.x * MAGNIFY, y * MAGNIFY);
-};
-
-MarioClass.prototype.leave = function (timeStamp) {
-    if (this.start == 0) this.start = timeStamp;
-
-    var diff = timeStamp - this.start;
-    if (this.scroll > 0 && this.scroll < 32) {
-        this.scroll += Math.floor(diff / 4);
-        if (this.scroll > 32) {
-            this.x += this.scroll - 32;
-            this.scroll = 0;
-            CurPos++;
-        }
-    } else this.x = Math.floor(diff / 4) + this.offset;
-    if (Math.floor(diff / 100) % 2 == 0) {
-        this.state = 8;
-        this.draw();
-        var w = sweatimg.width;
-        var h = sweatimg.height;
-        L2C.drawImage(
-            sweatimg,
-            0,
-            0,
-            w,
-            h,
-            (this.x - (w + 1)) * MAGNIFY,
-            (41 - 22) * MAGNIFY,
-            w * MAGNIFY,
-            h * MAGNIFY
-        );
-    } else {
-        this.state = 9;
+        drawScore(CurPos, CurScore.notes, this.scroll);
         this.draw();
     }
-};
 
-// Timer
-function easyTimer(time, func) {
-    this.time = time;
-    this.func = func;
-    this.lastTime = 0;
-    this.switch = false;
+    jump(x) {
+        const h = [
+            0, 2, 4, 6, 8, 10, 12, 13, 14, 15, 16, 17, 18, 18, 19, 19, 19, 19, 19, 18, 18, 17, 16, 15, 14, 13, 12, 10, 8, 6, 4, 2, 0
+        ];
+        return h[Math.round(x) % 32];
+    }
+
+    draw() {
+        let y = 41 - 22;
+        let state = this.state;
+        if (this.isJumping) {
+            state = 2;
+            if (this.x === 120) {
+                // In scroll mode
+                // (scroll == 16) is just on the bar, 0 and 32 is on the center of between bars
+                if (this.scroll !== 16) {
+                    y -= this.jump(this.scroll > 16 ? this.scroll - 16 : this.scroll + 16);
+                } /* if scroll == 16 then Mario should be on the ground */
+            } else {
+                // Running to the center, or leaving to the goal
+                y -= this.jump(Math.round((this.x - 8) % 32));
+            }
+        }
+
+        L2C.drawImage(this.images[state], this.x * MAGNIFY, y * MAGNIFY);
+    }
+
+    leave(timeStamp) {
+        if (this.start === 0) this.start = timeStamp;
+
+        const diff = timeStamp - this.start;
+        if (this.scroll > 0 && this.scroll < 32) {
+            this.scroll += Math.floor(diff / 4);
+            if (this.scroll > 32) {
+                this.x += this.scroll - 32;
+                this.scroll = 0;
+                CurPos++;
+            }
+        } else {
+            this.x = Math.floor(diff / 4) + this.offset;
+        }
+
+        if (Math.floor(diff / 100) % 2 === 0) {
+            this.state = 8;
+            this.draw();
+            const w = sweatimg.width;
+            const h = sweatimg.height;
+            L2C.drawImage(
+                sweatimg,
+                0, 0, w, h,
+                (this.x - (w + 1)) * MAGNIFY,
+                (41 - 22) * MAGNIFY,
+                w * MAGNIFY,
+                h * MAGNIFY
+            );
+        } else {
+            this.state = 9;
+            this.draw();
+        }
+    }
 }
 
-easyTimer.prototype.checkAndFire = function (time) {
-    if (this.switch && time - this.lastTime > this.time) {
-        this.func(this);
-        this.lastTime = time;
+class EasyTimer {
+    constructor(time, func) {
+        this.time = time;
+        this.func = func;
+        this.lastTime = 0;
+        this.switch = false;
     }
-};
+
+    checkAndFire(time) {
+        if (this.switch && time - this.lastTime > this.time) {
+            this.func(this);
+            this.lastTime = time;
+        }
+    }
+}
 
 // Asynchronous load of sounds
 SOUNDS = [];
 for (i = 1; i < 21; i++) {
     var tmp = "0";
     tmp += i.toString();
-    var file = "wav/sound" + tmp.substr(-2) + ".wav";
+    var file = "wav/sound" + tmp.slice(-2) + ".wav";
     var e = new SoundEntity(file);
     SOUNDS[i - 1] = e;
 }
@@ -443,7 +398,7 @@ char_sheet.src = "image/character_sheet.png";
 BOMBS = [];
 bombimg = new Image();
 bombimg.src = "image/bomb.png";
-bombTimer = new easyTimer(150, drawBomb);
+bombTimer = new EasyTimer(150, drawBomb);
 bombTimer.switch = true; // always true for the bomb
 bombTimer.currentFrame = 0;
 
@@ -872,7 +827,7 @@ function closing() {
     CurPos = 0;
 
     var tempo = CurScore.notes[0][0];
-    if (typeof tempo == "string" && tempo.substr(0, 5) == "TEMPO") {
+    if (typeof tempo == "string" && tempo.slice(0, 5) == "TEMPO") {
         tempo = tempo.split("=")[1];
         CurScore.tempo = tempo;
         document.getElementById("tempo").value = tempo;
@@ -962,53 +917,49 @@ function doAnimation(time) {
     requestAnimFrame(doAnimation);
 }
 
-function makeButton(x, y, w, h) {
-    var b = document.createElement("button");
-    b.className = "game";
-    b.style.position = "absolute";
+const makeButton = (x, y, w, h) => {
+    const b = document.createElement('button');
+    b.className = 'game';
+    b.style.position = 'absolute';
     moveDOM(b, x, y);
     resizeDOM(b, w, h);
-    b.style["z-index"] = 3;
-    b.style.background = "rgba(0,0,0,0)";
+    b.style.zIndex = '3';
+    b.style.background = 'rgba(0,0,0,0)';
 
     // Save position and size for later use
     b.originalX = x;
     b.originalY = y;
     b.originalW = w;
     b.originalH = h;
-    b.redraw = function () {
-        moveDOM(this, this.originalX, this.originalY);
-        resizeDOM(this, this.originalW, this.originalH);
+    b.redraw = () => {
+        moveDOM(b, b.originalX, b.originalY);
+        resizeDOM(b, b.originalW, b.originalH);
     };
     return b;
-}
+};
 
-function resizeDOM(b, w, h) {
-    b.style.width = w * MAGNIFY + "px";
-    b.style.height = h * MAGNIFY + "px";
-}
+const resizeDOM = (element, w, h) => {
+    element.style.width = `${w * MAGNIFY}px`;
+    element.style.height = `${h * MAGNIFY}px`;
+};
 
-function moveDOM(b, x, y) {
-    b.style.left = x * MAGNIFY + "px";
-    b.style.top = y * MAGNIFY + "px";
-}
+const moveDOM = (element, x, y) => {
+    element.style.left = `${x * MAGNIFY}px`;
+    element.style.top = `${y * MAGNIFY}px`;
+};
 
-// Select Listener
-function selectListener(e) {
+const selectListener = e => {
     console.log(e);
     MAGNIFY = e.target.selectedIndex + 1;
     resizeScreen();
-}
+};
 
-// resize screen using MAGNIFY
-//   If we can use Elm.style.imageRendering = Crisp-edged,
-//   You can avoid these re-configuring. Sigh.
-function resizeScreen() {
+const resizeScreen = () => {
     CHARSIZE = 16 * MAGNIFY;
     HALFCHARSIZE = Math.floor(CHARSIZE / 2);
 
-    CONSOLE.style.width = ORGWIDTH * MAGNIFY + "px";
-    CONSOLE.style.height = ORGHEIGHT * MAGNIFY + "px";
+    CONSOLE.style.width = `${ORGWIDTH * MAGNIFY}px`;
+    CONSOLE.style.height = `${ORGHEIGHT * MAGNIFY}px`;
     OFFSETLEFT = CONSOLE.offsetLeft;
     OFFSETTOP = CONSOLE.offsetTop;
 
@@ -1023,12 +974,11 @@ function resizeScreen() {
     SCREEN.width = ORGWIDTH * MAGNIFY;
     SCREEN.height = SCRHEIGHT * MAGNIFY;
 
-    var imgs = sliceImage(char_sheet, 16, 16);
-    for (var i = 0; i < BUTTONS.length; i++) {
-        var b = BUTTONS[i];
+    const imgs = sliceImage(char_sheet, 16, 16);
+    BUTTONS.forEach((b, i) => {
         b.redraw();
         if (i < 15) b.se.image = imgs[i];
-    }
+    });
     BUTTONS[15].images = sliceImage(endimg, 14, 13);
     endMarkTimer.images = BUTTONS[15].images;
 
@@ -1038,134 +988,159 @@ function resizeScreen() {
         changeCursor(CurChar);
     }
 
-    if (CurChar == 15) drawEndMarkIcon(BUTTONS[15].images[0]);
-    else if (CurChar == 16) drawEraserIcon();
+    if (CurChar === 15) drawEndMarkIcon(BUTTONS[15].images[0]);
+    else if (CurChar === 16) drawEraserIcon();
     else drawCurChar(SOUNDS[CurChar].image);
 
-    var b = document.getElementById("play");
-    b.redraw();
-    b.images = sliceImage(playbtnimg, 12, 15);
-    var num = b.disabled ? 1 : 0;
-    b.style.backgroundImage = "url(" + b.images[num].src + ")";
+    const playBtn = document.getElementById('play');
+    playBtn.redraw();
+    playBtn.images = sliceImage(playbtnimg, 12, 15);
+    const num = playBtn.disabled ? 1 : 0;
+    playBtn.style.backgroundImage = `url(${playBtn.images[num].src})`;
 
-    var b = document.getElementById("stop");
-    b.redraw();
-    var imgs = sliceImage(stopbtnimg, 16, 15);
-    b.images = [imgs[0], imgs[1]];
-    b.style.backgroundImage = "url(" + b.images[1 - num].src + ")";
+    const stopBtn = document.getElementById('stop');
+    stopBtn.redraw();
+    const stopImgs = sliceImage(stopbtnimg, 16, 15);
+    stopBtn.images = [stopImgs[0], stopImgs[1]];
+    stopBtn.style.backgroundImage = `url(${stopBtn.images[1 - num].src})`;
 
-    var b = document.getElementById("loop");
-    b.redraw();
-    b.images = [imgs[2], imgs[3]]; // made in Stop button (above)
-    var num = CurScore.loop ? 1 : 0;
-    b.style.backgroundImage = "url(" + b.images[num].src + ")";
+    const loopBtn = document.getElementById('loop');
+    loopBtn.redraw();
+    loopBtn.images = [stopImgs[2], stopImgs[3]]; // made in Stop button (above)
+    const loopNum = CurScore.loop ? 1 : 0;
+    loopBtn.style.backgroundImage = `url(${loopBtn.images[loopNum].src})`;
 
     // Prepare Repeat (global!)
     RepeatMarks = sliceImage(repeatimg, 13, 62);
     EndMark = RepeatMarks[2];
 
-    var b = document.getElementById("scroll");
-    moveDOM(b, b.originalX, b.originalY);
-    resizeDOM(b, b.originalW, b.originalH);
-    var rules = PseudoSheet.cssRules;
-    for (var i = 0; i < rules.length; i++) {
-        if (rules[i].selectorText == "#scroll::-webkit-slider-thumb") {
+    const scroll = document.getElementById('scroll');
+    moveDOM(scroll, scroll.originalX, scroll.originalY);
+    resizeDOM(scroll, scroll.originalW, scroll.originalH);
+    const rules = PseudoSheet.cssRules;
+    for (let i = 0; i < rules.length; i++) {
+        if (rules[i].selectorText === '#scroll::-webkit-slider-thumb') {
             PseudoSheet.deleteRule(i);
             PseudoSheet.insertRule(
-                "#scroll::-webkit-slider-thumb {" +
-                    "-webkit-appearance: none !important;" +
-                    "border-radius: 0px;" +
-                    "background-color: #A870D0;" +
-                    "box-shadow:inset 0 0 0px;" +
-                    "border: 0px;" +
-                    "width: " +
-                    5 * MAGNIFY +
-                    "px;" +
-                    "height:" +
-                    7 * MAGNIFY +
-                    "px;}",
+                `#scroll::-webkit-slider-thumb {
+                    -webkit-appearance: none !important;
+                    border-radius: 0px;
+                    background-color: #A870D0;
+                    box-shadow:inset 0 0 0px;
+                    border: 0px;
+                    width: ${5 * MAGNIFY}px;
+                    height:${7 * MAGNIFY}px;
+                }`,
                 0
             );
         }
     }
-    var b = document.getElementById("toLeft");
-    b.redraw();
-    var b = document.getElementById("toRight");
-    b.redraw();
-    var b = document.getElementById("clear");
-    b.redraw();
-    b.images = sliceImage(clearimg, 34, 16);
-    b.style.backgroundImage = "url(" + b.images[0].src + ")";
+
+    const toLeft = document.getElementById('toLeft');
+    toLeft.redraw();
+    const toRight = document.getElementById('toRight');
+    toRight.redraw();
+    const clear = document.getElementById('clear');
+    clear.redraw();
+    clear.images = sliceImage(clearimg, 34, 16);
+    clear.style.backgroundImage = `url(${clear.images[0].src})`;
 
     // Make number images from the number sheet
     NUMBERS = sliceImage(numimg, 5, 7);
 
-    var b = document.getElementById("3beats");
-    b.redraw();
-    var imgs = sliceImage(beatimg, 14, 15);
-    b.images = [imgs[0], imgs[1]];
-    var num = CurScore.beats == 3 ? 1 : 0;
-    b.style.backgroundImage = "url(" + b.images[num].src + ")";
-    var b = document.getElementById("4beats");
-    b.redraw();
-    b.images = [imgs[2], imgs[3]];
-    b.style.backgroundImage = "url(" + b.images[1 - num].src + ")";
+    const beats3 = document.getElementById('3beats');
+    beats3.redraw();
+    const beatImgs = sliceImage(beatimg, 14, 15);
+    beats3.images = [beatImgs[0], beatImgs[1]];
+    const beatsNum = CurScore.beats === 3 ? 1 : 0;
+    beats3.style.backgroundImage = `url(${beats3.images[beatsNum].src})`;
+    const beats4 = document.getElementById('4beats');
+    beats4.redraw();
+    beats4.images = [beatImgs[2], beatImgs[3]];
+    beats4.style.backgroundImage = `url(${beats4.images[1 - beatsNum].src})`;
 
-    var b = document.getElementById("frog");
-    b.redraw();
-    var imgs = sliceImage(songimg, 15, 17);
-    b.images = [imgs[0], imgs[1], imgs[2]];
-    var num = CurSong === b ? 1 : 0;
-    b.style.backgroundImage = "url(" + b.images[num].src + ")";
-    var b = document.getElementById("beak");
-    b.redraw();
-    b.images = [imgs[3], imgs[4], imgs[5]];
-    var num = CurSong === b ? 1 : 0;
-    b.style.backgroundImage = "url(" + b.images[num].src + ")";
-    var b = document.getElementById("1up");
-    b.redraw();
-    b.images = [imgs[6], imgs[7], imgs[8]];
-    var num = CurSong === b ? 1 : 0;
-    b.style.backgroundImage = "url(" + b.images[num].src + ")";
-    var b = document.getElementById("eraser");
-    b.redraw();
-    b.images = [imgs[9], imgs[10], imgs[11]];
-    var num;
-    if (CurChar == 16) {
-        num = 1;
-        SCREEN.style.cursor = "url(" + b.images[2].src + ")" + " 0 0, auto";
+    const frog = document.getElementById('frog');
+    frog.redraw();
+    const songImgs = sliceImage(songimg, 15, 17);
+    frog.images = [songImgs[0], songImgs[1], songImgs[2]];
+    const frogNum = CurSong === frog ? 1 : 0;
+    frog.style.backgroundImage = `url(${frog.images[frogNum].src})`;
+    const beak = document.getElementById('beak');
+    beak.redraw();
+    beak.images = [songImgs[3], songImgs[4], songImgs[5]];
+    const beakNum = CurSong === beak ? 1 : 0;
+    beak.style.backgroundImage = `url(${beak.images[beakNum].src})`;
+    const oneUp = document.getElementById('1up');
+    oneUp.redraw();
+    oneUp.images = [songImgs[6], songImgs[7], songImgs[8]];
+    const oneUpNum = CurSong === oneUp ? 1 : 0;
+    oneUp.style.backgroundImage = `url(${oneUp.images[oneUpNum].src})`;
+    const eraser = document.getElementById('eraser');
+    eraser.redraw();
+    eraser.images = [songImgs[9], songImgs[10], songImgs[11]];
+    let eraserNum;
+    if (CurChar === 16) {
+        eraserNum = 1;
+        SCREEN.style.cursor = `url(${eraser.images[2].src}) 0 0, auto`;
     } else {
-        num = 0;
+        eraserNum = 0;
     }
-    b.style.backgroundImage = "url(" + b.images[num].src + ")";
+    eraser.style.backgroundImage = `url(${eraser.images[eraserNum].src})`;
 
-    var b = document.getElementById("tempo");
-    moveDOM(b, b.originalX, b.originalY);
-    resizeDOM(b, b.originalW, b.originalH);
-    var rules = PseudoSheet.cssRules;
-    for (var i = 0; i < rules.length; i++) {
-        if (rules[i].selectorText == "#tempo::-webkit-slider-thumb") {
+    const tempo = document.getElementById('tempo');
+    moveDOM(tempo, tempo.originalX, tempo.originalY);
+    resizeDOM(tempo, tempo.originalW, tempo.originalH);
+    for (let i = 0; i < rules.length; i++) {
+        if (rules[i].selectorText === '#tempo::-webkit-slider-thumb') {
             PseudoSheet.deleteRule(i);
             PseudoSheet.insertRule(
-                "#tempo::-webkit-slider-thumb {" +
-                    "-webkit-appearance: none !important;" +
-                    "background-image: url('" +
-                    b.image.src +
-                    "');" +
-                    "background-repeat: no-repeat;" +
-                    "background-size: 100% 100%;" +
-                    "border: 0px;" +
-                    "width: " +
-                    5 * MAGNIFY +
-                    "px;" +
-                    "height:" +
-                    8 * MAGNIFY +
-                    "px;}",
+                `#tempo::-webkit-slider-thumb {
+                    -webkit-appearance: none !important;
+                    background-image: url('${tempo.image.src}');
+                    background-repeat: no-repeat;
+                    background-size: 100% 100%;
+                    border: 0px;
+                    width: ${5 * MAGNIFY}px;
+                    height:${8 * MAGNIFY}px;
+                }`,
                 0
             );
         }
     }
-}
+};
+
+const sliceImage = (img, width, height) => {
+    const result = [];
+    const imgw = img.width * MAGNIFY;
+    const imgh = img.height * MAGNIFY;
+    const num = Math.floor(img.width / width);
+    const all = num * Math.floor(img.height / height);
+    const charw = width * MAGNIFY;
+    const charh = height * MAGNIFY;
+
+    for (let i = 0; i < all; i++) {
+        const tmpcan = document.createElement('canvas');
+        tmpcan.width = charw;
+        tmpcan.height = charh;
+        const tmpctx = tmpcan.getContext('2d');
+        tmpctx.imageSmoothingEnabled = false;
+        tmpctx.drawImage(img, (i % num) * width, Math.floor(i / num) * height, width, height, 0, 0, charw, charh);
+        const charimg = new Image();
+        charimg.src = tmpcan.toDataURL();
+        result[i] = charimg;
+    }
+    return result;
+};
+
+const download = () => {
+    const link = document.createElement('a');
+    link.download = 'MSQ_Data.json';
+    const json = JSON.stringify(CurScore);
+    const blob = new Blob([json], { type: 'octet/stream' });
+    const url = window.URL.createObjectURL(blob);
+    link.href = url;
+    link.click();
+};
 
 // INIT routine
 window.addEventListener("load", onload);
@@ -1194,7 +1169,7 @@ function onload() {
     // Prepare End Mark button (Char. No. 15)
     var b = makeButton(235, 8, 13, 14);
     b.images = sliceImage(endimg, 14, 13); // Note: Different size from the button
-    endMarkTimer = new easyTimer(150, function (self) {
+    endMarkTimer = new EasyTimer(150, function (self) {
         // If current is not end mark, just return;
         if (CurChar != 15) {
             self.switch = false;
@@ -1401,7 +1376,7 @@ function onload() {
     b.id = "eraser";
     b.images = [imgs[9], imgs[10], imgs[11]]; // In the Song button images
     b.style.backgroundImage = "url(" + b.images[0].src + ")";
-    eraserTimer = new easyTimer(200, function (self) {
+    eraserTimer = new EasyTimer(200, function (self) {
         // If current is not end mark, just return;
         if (CurChar != 16) {
             self.switch = false;
@@ -1562,8 +1537,6 @@ function onload() {
                         else addJSON(response);
 
                         closing();
-
-                        autoPlayIfDemanded(OPTS);
                     })
                     .catch(function (err) {
                         alert("Downloading File: " + url + " failed :" + err);
@@ -1601,8 +1574,6 @@ function onload() {
                 fullInitScore();
                 addMSQ(text);
                 closing();
-
-                autoPlayIfDemanded(OPTS);
             }
         })
         .catch(function (err) {
@@ -1642,13 +1613,6 @@ function onload() {
     b.addEventListener("change", selectListener);
 }
 
-function autoPlayIfDemanded(opts) {
-    var auto = opts["a"] || opts["auto"];
-    if (auto != undefined) {
-        auto = auto.toUpperCase();
-        if (auto == "T" || auto == "TRUE") document.getElementById("play").dispatchEvent(new Event("click"));
-    }
-}
 // Clear Button Listener
 function clearListener(e) {
     this.style.backgroundImage = "url(" + this.images[1].src + ")";
@@ -1819,45 +1783,6 @@ function initScore() {
 // Easiest and Fastest way to clone
 function clone(obj) {
     return JSON.parse(JSON.stringify(obj));
-}
-
-// sliceImage(img, width, height)
-//   img: Image of the sprite sheet
-//   width: width of the Character
-//   height: height of the Charactter
-function sliceImage(img, width, height) {
-    var result = [];
-    var imgw = img.width * MAGNIFY;
-    var imgh = img.height * MAGNIFY;
-    var num = Math.floor(img.width / width);
-    var all = num * Math.floor(img.height / height);
-    var charw = width * MAGNIFY;
-    var charh = height * MAGNIFY;
-
-    for (var i = 0; i < all; i++) {
-        var tmpcan = document.createElement("canvas");
-        tmpcan.width = charw;
-        tmpcan.height = charh;
-        var tmpctx = tmpcan.getContext("2d");
-        tmpctx.imageSmoothingEnabled = false;
-        tmpctx.drawImage(img, (i % num) * width, Math.floor(i / num) * height, width, height, 0, 0, charw, charh);
-        var charimg = new Image();
-        charimg.src = tmpcan.toDataURL();
-        result[i] = charimg;
-    }
-    return result;
-}
-
-// Download Score as JSON
-//   http://jsfiddle.net/koldev/cW7W5/
-function download() {
-    var link = document.createElement("a");
-    link.download = "MSQ_Data.json";
-    var json = JSON.stringify(CurScore);
-    var blob = new Blob([json], { type: "octet/stream" });
-    var url = window.URL.createObjectURL(blob);
-    link.href = url;
-    link.click();
 }
 
 EmbeddedSong = [];

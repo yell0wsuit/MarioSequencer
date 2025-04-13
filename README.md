@@ -24,18 +24,18 @@ You can use ♯ and ♭ for semitones. Hold **Shift** for ♯ or **Ctrl** for �
 
 **Undo Dog** is not yet implemented so there's no way to undo. Temporary solution: save many times.
 
-## API
+## Parameters
 
-- **?url="*filename*.json"**  
+- **?url=`filename.json`**  
 View the score file. [Sample here](https://yell0wsuit.github.io/MarioSequencer/?url=smb3world1map.json).
 
-- **?auto="true"** or **?auto="false"**  
-Turn on/off autoplay music.
+- ~~**?auto="true"** or **?auto="false"**~~  
+~~Turn on/off autoplay music.~~ Removed due to browser security policy not allowing autoplay without user interaction.
 
-- **?mag="*integer N > 0*"**  
+- **?mag=`integer > 0`**  
 Zoom Mario Sequence screen. integer N > 0 can be 1, 2, 3, 4, ...
 
-- **?SCORE="*MSQ's score data*"**  
+- **?SCORE=`MSQ's score data`**  
 Pass the score data. Try these links for example:  
 Kerby's OP theme. <http://bit.ly/1iuFZs1>  
 Aunt Spoon (or Mrs. Pepper Pot) <http://bit.ly/1kpLFsd>
