@@ -1277,7 +1277,7 @@ function onload() {
             // Prepare Stop Button (21, 168)
             const stopButton = makeButton(21, 168, 16, 15, "button", "Stop music");
             stopButton.id = "stop";
-            stopButton.disabled = false;
+            stopButton.disabled = true;
             // stopbtn image including loop button (next)
             const stopButtonImages = sliceImage(stopBtnImg, 16, 15);
             stopButton.images = [stopButtonImages[0], stopButtonImages[1]];
