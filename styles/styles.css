@@ -33,3 +33,40 @@
     z-index: 4;
     width: 46px;
 }
+
+#btncontrols {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-top: 10px;
+    gap: 1em;
+}
+
+#btncontrols button {
+    color: black;
+    background-color: burlywood;
+    border: 1px solid burlywood;
+    border-radius: 5px;
+    padding: 5px 10px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.3s ease;
+}
+
+#btncontrols button:hover {
+    background-color: #d3d3d3;
+    border: 1px solid #d3d3d3;
+}
+
+#btncontrols button:active {
+    background-color: #d3d3d3;
+    border: 1px solid #d3d3d3;
+}
+
+#btncontrols button:focus {
+    background-color: #d3d3d3;
+    border: 1px solid #d3d3d3;
+}

@@ -33,8 +33,12 @@ const BUTTONS = [];
 let mouseX = 0;
 let mouseY = 0;
 const CONSOLE = document.getElementById("console");
-CONSOLE.style.width = ORGWIDTH * MAGNIFY + "px";
-CONSOLE.style.height = ORGHEIGHT * MAGNIFY + "px";
+// Set initial console position and size
+//CONSOLE.style.position = 'absolute';
+CONSOLE.style.width = `${ORGWIDTH * MAGNIFY}px`;
+CONSOLE.style.height = `${ORGHEIGHT * MAGNIFY}px`;
+//CONSOLE.style.left = `${(window.innerWidth - ORGWIDTH * MAGNIFY) / 2}px`;
+//CONSOLE.style.top = `${(window.innerHeight - ORGHEIGHT * MAGNIFY) / 2}px`;
 let offsetLeft = CONSOLE.offsetLeft;
 let offsetTop = CONSOLE.offsetTop;
 let curChar = 0;
@@ -925,10 +929,15 @@ function doAnimation(time) {
     requestAnimFrame(doAnimation);
 }
 
-const makeButton = (x, y, w, h) => {
+const makeButton = (x, y, w, h, type = "button", ariaLabel = "") => {
     const b = document.createElement("button");
     b.className = "game";
     b.style.position = "absolute";
+    b.style.cursor = "pointer";
+    b.type = type;
+    if (ariaLabel) {
+        b.setAttribute("aria-label", ariaLabel);
+    }
     moveDOM(b, x, y);
     resizeDOM(b, w, h);
     b.style.zIndex = "3";
@@ -963,8 +972,19 @@ const selectListener = (e) => {
 };
 
 const resizeScreen = () => {
+    CHARSIZE = 16 * MAGNIFY;
+    HALFCHARSIZE = Math.floor(CHARSIZE / 2);
+
+    // Update console dimensions
     CONSOLE.style.width = `${ORGWIDTH * MAGNIFY}px`;
     CONSOLE.style.height = `${ORGHEIGHT * MAGNIFY}px`;
+
+    // Center the console in the viewport
+    //CONSOLE.style.position = 'absolute';
+    //CONSOLE.style.left = `${(window.innerWidth - ORGWIDTH * MAGNIFY) / 2}px`;
+    //CONSOLE.style.top = `${(window.innerHeight - ORGHEIGHT * MAGNIFY) / 2}px`;
+
+    // Update offsets for cursor positioning
     offsetLeft = CONSOLE.offsetLeft;
     offsetTop = CONSOLE.offsetTop;
 
@@ -1205,7 +1225,7 @@ function onload() {
             pseudoSheet = s.sheet;
 
             // Prepare Play Button (55, 168)
-            var b = makeButton(55, 168, 12, 15);
+            var b = makeButton(55, 168, 12, 15, "button", "Play music");
             b.id = "play";
             b.images = sliceImage(playBtnImg, 12, 15);
             b.style.backgroundImage = "url(" + b.images[0].src + ")";
@@ -1214,7 +1234,7 @@ function onload() {
             CONSOLE.appendChild(b);
 
             // Prepare Stop Button (21, 168)
-            var b = makeButton(21, 168, 16, 15);
+            var b = makeButton(21, 168, 16, 15, "button", "Stop music");
             b.id = "stop";
             b.disabled = false;
             // stopbtn image including loop button (next)
@@ -1226,7 +1246,7 @@ function onload() {
             CONSOLE.appendChild(b);
 
             // Prepare Loop Button (85, 168)
-            var b = makeButton(85, 168, 16, 15);
+            var b = makeButton(85, 168, 16, 15, "button", "Toggle music loop");
             b.id = "loop";
             b.images = [imgs[2], imgs[3]]; // made in Stop button (above)
             b.style.backgroundImage = "url(" + b.images[0].src + ")";
@@ -1476,7 +1496,7 @@ function onload() {
             CONSOLE.appendChild(b);
 
             // Prepare CLEAR button (200, 176)
-            var b = makeButton(200, 176, 34, 16);
+            var b = makeButton(200, 176, 34, 16, "button", "Clear all notes");
             b.id = "clear";
             b.images = sliceImage(clearImg, 34, 16);
             b.style.backgroundImage = "url(" + b.images[0].src + ")";
