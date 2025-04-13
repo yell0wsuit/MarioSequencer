@@ -1726,16 +1726,17 @@ function clearListener(e) {
 }
 
 // Play Button Listener
-function playListener(e) {
+function playListener(event) {
     this.style.backgroundImage = "url(" + this.images[1].src + ")";
     SOUNDS[17].play(8);
-    var b = document.getElementById("stop");
-    b.style.backgroundImage = "url(" + b.images[0].src + ")";
-    b.disabled = false;
+    var stopButton = document.getElementById("stop");
+    stopButton.style.backgroundImage = "url(" + stopButton.images[0].src + ")";
+    stopButton.disabled = false;
     this.disabled = true; // Would be unlocked by stop button
 
-    ["toLeft", "toRight", "scroll", "clear", "frog", "beak", "1up"].map(function (id) {
-        document.getElementById(id).disabled = true;
+    const disabledButtonIds = ["toLeft", "toRight", "scroll", "clear", "frog", "beak", "1up"];
+    disabledButtonIds.forEach(function (buttonId) {
+        document.getElementById(buttonId).disabled = true;
     });
 
     // Reset scroll position to beginning
@@ -1749,13 +1750,13 @@ function playListener(e) {
 }
 
 // Stop Button Listener
-function stopListener(e) {
+function stopListener(event) {
     this.style.backgroundImage = "url(" + this.images[1].src + ")";
     // Sound ON: click , OFF: called by doMarioPlay
-    if (e != undefined) SOUNDS[17].play(8);
-    var b = document.getElementById("play");
-    b.style.backgroundImage = "url(" + b.images[0].src + ")";
-    //b.disabled = false; // Do after Mario left the stage
+    if (event != undefined) SOUNDS[17].play(8);
+    var playButton = document.getElementById("play");
+    playButton.style.backgroundImage = "url(" + playButton.images[0].src + ")";
+    //playButton.disabled = false; // Do after Mario left the stage
     this.disabled = true; // Would be unlocked by play button
 
     gameStatus = 3; // Mario leaves from the stage
