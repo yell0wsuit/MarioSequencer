@@ -1799,22 +1799,20 @@ function clone(obj) {
 let EmbeddedSong = [];
 const songFiles = ["frog.json", "beak.json", "1up.json"];
 
-function loadEmbeddedSongs() {
-    return Promise.all(
-        songFiles.map((file) => {
-            return fetch(`songs/${file}`)
-                .then((response) => {
-                    if (!response.ok) {
-                        throw new Error(`Failed to load ${file}`);
-                    }
-                    return response.json();
-                })
-                .catch((error) => {
-                    console.error(`Error loading ${file}:`, error);
-                    return null;
-                });
+async function loadEmbeddedSongs() {
+    const songs = await Promise.all(
+        songFiles.map(async (file) => {
+            try {
+                const response = await fetch(`songs/${file}`);
+                if (!response.ok) {
+                    throw new Error(`Failed to load ${file}`);
+                }
+                return response.json();
+            } catch (error) {
+                console.error(`Error loading ${file}:`, error);
+                return null;
+            }
         })
-    ).then((songs) => {
-        EmbeddedSong = songs.filter((song) => song !== null);
-    });
+    );
+    EmbeddedSong = songs.filter(song => song !== null);
 }
