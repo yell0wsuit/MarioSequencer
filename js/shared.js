@@ -18,16 +18,21 @@ window.location.search
 //   Variables: CamelCase
 const AC = window.AudioContext ? new AudioContext() : new webkitAudioContext();
 const SEMITONERATIO = Math.pow(2, 1 / 12);
-const MAGNIFY = OPTS.mag || OPTS.magnify || 3;
-const CHARSIZE = 16 * MAGNIFY;
-const HALFCHARSIZE = Math.floor(CHARSIZE / 2);
+const ORGWIDTH = 256;
+const ORGHEIGHT = 224;
+const SCRHEIGHT = 152;
+// Calculate MAGNIFY to fit within viewport without scrolling
+// Use 96% of available space to leave some margin
+let MAGNIFY = Math.min(
+    Math.floor((window.innerWidth * 0.96) / ORGWIDTH),
+    Math.floor((window.innerHeight * 0.96) / ORGHEIGHT)
+);
+let CHARSIZE = 16 * MAGNIFY;
+let HALFCHARSIZE = Math.floor(CHARSIZE / 2);
 const BUTTONS = [];
 let mouseX = 0;
 let mouseY = 0;
 const CONSOLE = document.getElementById("console");
-const ORGWIDTH = 256;
-const ORGHEIGHT = 224;
-const SCRHEIGHT = 152;
 CONSOLE.style.width = ORGWIDTH * MAGNIFY + "px";
 CONSOLE.style.height = ORGHEIGHT * MAGNIFY + "px";
 let offsetLeft = CONSOLE.offsetLeft;
@@ -958,9 +963,6 @@ const selectListener = (e) => {
 };
 
 const resizeScreen = () => {
-    CHARSIZE = 16 * MAGNIFY;
-    HALFCHARSIZE = Math.floor(CHARSIZE / 2);
-
     CONSOLE.style.width = `${ORGWIDTH * MAGNIFY}px`;
     CONSOLE.style.height = `${ORGHEIGHT * MAGNIFY}px`;
     offsetLeft = CONSOLE.offsetLeft;
@@ -1814,5 +1816,17 @@ async function loadEmbeddedSongs() {
             }
         })
     );
-    EmbeddedSong = songs.filter(song => song !== null);
+    EmbeddedSong = songs.filter((song) => song !== null);
 }
+
+// Add window resize handler
+window.addEventListener("resize", () => {
+    const newMagnify = Math.min(
+        Math.floor((window.innerWidth * 0.96) / ORGWIDTH),
+        Math.floor((window.innerHeight * 0.96) / ORGHEIGHT)
+    );
+    if (newMagnify !== MAGNIFY) {
+        MAGNIFY = newMagnify;
+        resizeScreen();
+    }
+});
