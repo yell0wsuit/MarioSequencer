@@ -389,19 +389,19 @@ MAT.height = ORGHEIGHT * MAGNIFY;
 L1C = MAT.getContext("2d");
 L1C.imageSmoothingEnabled = false;
 var mi = new Image();
-mi.src = "image/mat.png";
+mi.src = "images/mat.png";
 mi.onload = function () {
     L1C.drawImage(mi, 0, 0, mi.width * MAGNIFY, mi.height * MAGNIFY);
 };
 
 // Prepare Characters
 char_sheet = new Image();
-char_sheet.src = "image/character_sheet.png";
+char_sheet.src = "images/character_sheet.png";
 
 // Prepare the Bomb!
 BOMBS = [];
 bombimg = new Image();
-bombimg.src = "image/bomb.png";
+bombimg.src = "images/bomb.png";
 bombTimer = new EasyTimer(150, drawBomb);
 bombTimer.switch = true; // always true for the bomb
 bombTimer.currentFrame = 0;
@@ -427,54 +427,54 @@ function drawBomb(mySelf) {
 
 // Prepare the G-Clef. (x, y) = (9, 48)
 GClef = new Image();
-GClef.src = "image/G_Clef.png";
+GClef.src = "images/G_Clef.png";
 
 // Prepare the numbers
 numimg = new Image();
-numimg.src = "image/numbers.png";
+numimg.src = "images/numbers.png";
 
 // Prepare the Mario images
 marioimg = new Image();
-marioimg.src = "image/Mario.png";
+marioimg.src = "images/Mario.png";
 
 sweatimg = new Image();
-sweatimg.src = "image/mario_sweat.png";
+sweatimg.src = "images/mario_sweat.png";
 
 // Prepare the Play button
 playbtnimg = new Image();
-playbtnimg.src = "image/play_button.png";
+playbtnimg.src = "images/play_button.png";
 
 // Prepare the Stop button
 stopbtnimg = new Image();
-stopbtnimg.src = "image/stop_button.png";
+stopbtnimg.src = "images/stop_button.png";
 
 // Prepare the CLEAR button
 clearimg = new Image();
-clearimg.src = "image/clear_button.png";
+clearimg.src = "images/clear_button.png";
 
 // Prepare tempo range slider thumb image
 thumbimg = new Image();
-thumbimg.src = "image/slider_thumb.png";
+thumbimg.src = "images/slider_thumb.png";
 
 // Prepare beat button
 beatimg = new Image();
-beatimg.src = "image/beat_button.png";
+beatimg.src = "images/beat_button.png";
 
 // Prepare Song buttons
 songimg = new Image();
-songimg.src = "image/song_buttons.png";
+songimg.src = "images/song_buttons.png";
 
 // Prepare End Mark
 endimg = new Image();
-endimg.src = "image/end_mark.png";
+endimg.src = "images/end_mark.png";
 
 // Prepare Semitone
 semitoneimg = new Image();
-semitoneimg.src = "image/semitone.png";
+semitoneimg.src = "images/semitone.png";
 
 // Prepare the repeat marks
 repeatimg = new Image();
-repeatimg.src = "image/repeat_head.png";
+repeatimg.src = "images/repeat_head.png";
 
 function drawRepeatHead(x) {
     var w = RepeatMarks[0].width;

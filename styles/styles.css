@@ -1,0 +1,35 @@
+.game {
+    margin: 0;
+    padding: 0;
+    border: 0;
+    left: 0;
+    top: 0;
+    image-rendering: pixelated;
+}
+
+#console {
+    position: relative;
+    margin: 0px auto;
+    padding: 0px;
+    border: 0px;
+    image-rendering: pixelated;
+}
+
+#layer1 {
+    position: static;
+    z-index: 0;
+    opacity: 1;
+}
+
+#layer2 {
+    position: absolute;
+    z-index: 1;
+}
+
+#spinner {
+    position: absolute;
+    top: 35%;
+    left: 47%;
+    z-index: 4;
+    width: 46px;
+}
