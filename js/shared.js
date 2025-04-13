@@ -160,7 +160,7 @@ class MarioClass {
         this.images = null;
         this.marioPosition = 0; // position in bar number
         this.state = 0;
-        this.start = 0;
+        this.startTime = 0;
         this.lastTime = 0;
         this.isJumping = false;
         this.timer = new EasyTimer(100, (timer) => {
@@ -172,7 +172,7 @@ class MarioClass {
     init() {
         this.marioX = -16;
         this.marioPosition = 0;
-        this.start = 0;
+        this.startTime = 0;
         this.state = 0;
         this.marioScroll = 0;
         this.marioOffset = -16;
@@ -181,9 +181,9 @@ class MarioClass {
     }
 
     enter(timeStamp) {
-        if (this.start === 0) this.start = timeStamp;
+        if (this.startTime === 0) this.startTime = timeStamp;
 
-        const timeDifference = timeStamp - this.start;
+        const timeDifference = timeStamp - this.startTime;
         this.marioX = Math.floor(timeDifference / 5) + this.marioOffset;
         if (this.marioX >= 40) this.marioX = 40; // 16 + 32 - 8
         this.state = Math.floor(timeDifference / 100) % 2 === 0 ? 1 : 0;
@@ -192,7 +192,7 @@ class MarioClass {
 
     init4leaving() {
         this.marioOffset = this.marioX;
-        this.start = 0;
+        this.startTime = 0;
         this.isJumping = false;
     }
 
@@ -221,7 +221,7 @@ class MarioClass {
             if (time < 0) time = 0;
             if (!notes || notes.length === 0) return;
 
-            const dic = {};
+            const noteDictionary = {};
             notes.forEach((note) => {
                 if (typeof note === "string") {
                     const tempo = note.split("=")[1];
@@ -230,22 +230,22 @@ class MarioClass {
                     return;
                 }
 
-                const num = note >> 8;
+                const soundNumber = note >> 8;
                 const scale = note & 0xff;
-                if (!dic[num]) dic[num] = [scale];
-                else dic[num].push(scale);
+                if (!noteDictionary[soundNumber]) noteDictionary[soundNumber] = [scale];
+                else noteDictionary[soundNumber].push(scale);
             });
 
-            Object.entries(dic).forEach(([i, scales]) => {
-                SOUNDS[i].playChord(scales, time / 1000); // [ms] -> [s]
+            Object.entries(noteDictionary).forEach(([soundIndex, scales]) => {
+                SOUNDS[soundIndex].playChord(scales, time / 1000); // [ms] -> [s]
             });
         };
 
         const tempo = curScore.tempo;
-        let diff = timeStamp - this.lastTime; // both are [ms]
-        if (diff > 32) diff = 16; // When user hide the tag, force it
+        let timeDifference = timeStamp - this.lastTime; // both are [ms]
+        if (timeDifference > 32) timeDifference = 16; // When user hide the tag, force it
         this.lastTime = timeStamp;
-        const step = (32 * diff * tempo) / 60000; // (60[sec] * 1000)[msec]
+        const step = (32 * timeDifference * tempo) / 60000; // (60[sec] * 1000)[msec]
 
         this.timer.checkAndFire(timeStamp);
         const scroll = document.getElementById("scroll");
@@ -328,9 +328,9 @@ class MarioClass {
     }
 
     leave(timeStamp) {
-        if (this.start === 0) this.start = timeStamp;
+        if (this.startTime === 0) this.startTime = timeStamp;
 
-        const diff = timeStamp - this.start;
+        const diff = timeStamp - this.startTime;
         if (this.marioScroll > 0 && this.marioScroll < 32) {
             this.marioScroll += Math.floor(diff / 4);
             if (this.marioScroll > 32) {
@@ -572,11 +572,11 @@ function drawScore(position, notes, scroll) {
             noteDelta = jumpTable[Math.round(noteIndex)];
         }
         var hasHighNote = false;
-        for (var j = 0; j < barNotes.length; j++) {
-            if (typeof barNotes[j] == "string") continue; // for dynamic TEMPO
+        for (var noteIndex = 0; noteIndex < barNotes.length; noteIndex++) {
+            if (typeof barNotes[noteIndex] == "string") continue; // for dynamic TEMPO
 
-            var soundNumber = barNotes[j] >> 8;
-            var noteScale = barNotes[j] & 0x0f;
+            var soundNumber = barNotes[noteIndex] >> 8;
+            var noteScale = barNotes[noteIndex] & 0x0f;
             // When curChar is eraser, and the mouse cursor is on the note,
             // an Image of note blinks.
             if (curChar == 16 && gridPosition != false && barIndex == gridX && noteScale == gridY && eraserTimer.currentFrame == 1) {
@@ -591,9 +591,9 @@ function drawScore(position, notes, scroll) {
 
             var x2 = x - 13 * MAGNIFY;
             var y = (44 + noteScale * 8 + noteDelta) * MAGNIFY;
-            if ((barNotes[j] & 0x80) != 0) {
+            if ((barNotes[noteIndex] & 0x80) != 0) {
                 L2C.drawImage(Semitones[0], x2, y);
-            } else if ((barNotes[j] & 0x40) != 0) {
+            } else if ((barNotes[noteIndex] & 0x40) != 0) {
                 L2C.drawImage(Semitones[1], x2, y);
             }
         }
