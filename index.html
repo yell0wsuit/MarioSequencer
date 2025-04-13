@@ -1,33 +1,37 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml">
-<head>
-<title>Mario Sequencer</title>
-<style>
-.game {
-  margin:0; padding:0; border:0;
-  left:0; top:0;
-}
-</style>
-</head>
-<body>
-
-<div id="console"
-  style="position: relative; margin:0px auto; padding:0px; border:0px;">
-  <canvas id="layer1" class="game"
-    style="position: static; z-index: 0; opacity:1"></canvas>
-  <canvas id="layer2" class="game"
-    style="position: absolute; z-index: 1;"></canvas>
-  <image id="spinner" src="image/loading_transparent_.gif" width="46px"
-    style="position: absolute; top:35%; left:47%; z-index:4;" />
-</div>
-<center>
-<select id="magnify">
-  <option value="1">1x1</option>
-  <option value="2">2x2</option>
-  <option value="3" selected>3x3</option>
-</select>
-<button onclick="download()">Save</button>
-</center>
-<script src="shared.js"></script>
-</body>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <title>Mario Sequencer | yell0wsuit</title>
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <style>
+            .game {
+                margin: 0;
+                padding: 0;
+                border: 0;
+                left: 0;
+                top: 0;
+            }
+        </style>
+    </head>
+    <body>
+        <div id="console" style="position: relative; margin: 0px auto; padding: 0px; border: 0px">
+            <canvas id="layer1" class="game" style="position: static; z-index: 0; opacity: 1"></canvas>
+            <canvas id="layer2" class="game" style="position: absolute; z-index: 1"></canvas>
+            <image
+                id="spinner"
+                src="image/loading_transparent_.gif"
+                width="46px"
+                style="position: absolute; top: 35%; left: 47%; z-index: 4" />
+        </div>
+        <center>
+            <select id="magnify">
+                <option value="1">1x1</option>
+                <option value="2">2x2</option>
+                <option value="3" selected>3x3</option>
+            </select>
+            <button onclick="download()">Save</button>
+        </center>
+        <script src="shared.js"></script>
+    </body>
 </html>
