@@ -1343,7 +1343,9 @@ function onload() {
             moveDOM(scrollBar, scrollBar.originalX, scrollBar.originalY);
             resizeDOM(scrollBar, scrollBar.originalW, scrollBar.originalH);
             scrollBar.addEventListener("input", function (event) {
-                curPos = parseInt(this.value);
+                if (gameStatus === 0) { // Only allow scrolling in edit mode
+                    curPos = parseInt(this.value);
+                }
             });
             CONSOLE.appendChild(scrollBar);
 
@@ -1667,15 +1669,19 @@ function onload() {
                         break;
 
                     case "ArrowLeft": // left -> scroll left
-                        var scrollBar = document.getElementById("scroll");
-                        if (scrollBar.value > 0) curPos = --scrollBar.value;
-                        event.preventDefault();
+                        if (gameStatus === 0) { // Only allow scrolling in edit mode
+                            var scrollBar = document.getElementById("scroll");
+                            if (scrollBar.value > 0) curPos = --scrollBar.value;
+                            event.preventDefault();
+                        }
                         break;
 
                     case "ArrowRight": // right -> scroll right
-                        var scrollBar = document.getElementById("scroll");
-                        if (scrollBar.value < curMaxBars - 6) curPos = ++scrollBar.value;
-                        event.preventDefault();
+                        if (gameStatus === 0) { // Only allow scrolling in edit mode
+                            var scrollBar = document.getElementById("scroll");
+                            if (scrollBar.value < curMaxBars - 6) curPos = ++scrollBar.value;
+                            event.preventDefault();
+                        }
                         break;
                 }
             });
