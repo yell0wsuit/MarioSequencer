@@ -30,7 +30,7 @@ You can use ♯ and ♭ for semitones. Hold **Shift** for ♯ or **Ctrl** for �
 - **?url=`filename.json`**  
 View the score file.
   - [Super Mario Bros. 3: World 1 Map](https://yell0wsuit.github.io/MarioSequencer/?url=songs/smb3world1map.json)
-  - [Bobby Carrot 5 Music #1](https://yell0wsuit.github.io/MarioSequencer/?url=songs/bobbycarrot5music1.json)
+  - [Bobby Carrot 5 Music #1](https://yell0wsuit.github.io/MarioSequencer/?url=songs/bobbycarrot_ingame1.json)
 
 - **?score=`MSQ's score data`**  
 Pass the score data. Try these links for example:
