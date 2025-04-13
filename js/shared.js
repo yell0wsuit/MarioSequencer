@@ -1619,11 +1619,11 @@ function onload() {
                                 console.error("Downloading File: " + url + " failed :" + error.stack);
                             });
                     } else if (OPTS.S != undefined || OPTS.SCORE != undefined) {
-                        const score = OPTS.SCORE || OPTS.S;
-                        const tempo = OPTS.TEMPO || OPTS.T;
-                        const loop = OPTS.LOOP || OPTS.L;
-                        const end = OPTS.END || OPTS.E;
-                        const beats = OPTS.TIME44 || OPTS.B;
+                        let score = OPTS.SCORE || OPTS.S;
+                        let tempo = OPTS.TEMPO || OPTS.T;
+                        let loop = OPTS.LOOP || OPTS.L;
+                        let end = OPTS.END || OPTS.E;
+                        let beats = OPTS.TIME44 || OPTS.B;
 
                         if (tempo == undefined || loop == undefined || end == undefined || beats == undefined) {
                             throw new Error("Not enough parameters");
