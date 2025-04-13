@@ -1179,7 +1179,7 @@ function onload() {
             //   and so on...
             var bimgs = sliceImage(charSheet, 16, 16);
             for (var i = 0; i < 15; i++) {
-                var b = makeButton(24 + 14 * i, 8, 13, 14);
+                var b = makeButton(24 + 14 * i, 8, 13, 14, "button", `Select note ${i + 1}`);
                 b.num = i;
                 b.se = SOUNDS[i];
                 b.se.image = bimgs[i];
@@ -1195,7 +1195,7 @@ function onload() {
             }
 
             // Prepare End Mark button (Char. No. 15)
-            var b = makeButton(235, 8, 13, 14);
+            var b = makeButton(235, 8, 13, 14, "button", "Add end mark");
             b.images = sliceImage(endImg, 14, 13); // Note: Different size from the button
             endMarkTimer = new EasyTimer(150, function (self) {
                 // If current is not end mark, just return;
@@ -1282,6 +1282,8 @@ function onload() {
             var r = document.createElement("input");
             r.id = "scroll";
             r.type = "range";
+            r.setAttribute("aria-label", "Scroll through music");
+            r.style.cursor = "pointer";
             r.value = 0;
             r.max = curMaxBars - 6;
             r.min = 0;
@@ -1351,14 +1353,14 @@ function onload() {
             }
 
             var imgs = sliceImage(beatImg, 14, 15);
-            var b1 = makeButton(81, 203, 14, 15);
+            var b1 = makeButton(81, 203, 14, 15, "button", "Set 3 beats per measure");
             b1.id = "3beats";
             b1.beats = 3;
             b1.images = [imgs[0], imgs[1]];
             b1.style.backgroundImage = "url(" + b1.images[0].src + ")";
             b1.disabled = false;
             CONSOLE.appendChild(b1);
-            var b2 = makeButton(96, 203, 14, 15);
+            var b2 = makeButton(96, 203, 14, 15, "button", "Set 4 beats per measure");
             b2.id = "4beats";
             b2.beats = 4;
             b2.images = [imgs[2], imgs[3]];
@@ -1374,7 +1376,7 @@ function onload() {
             // Preapre Song Buttons (136, 202) 15x17, 160 - 136 = 24
             var imgs = sliceImage(songImg, 15, 17);
             var b = ["frog", "beak", "1up"].map(function (id, idx) {
-                var b = makeButton(136 + 24 * idx, 202, 15, 17);
+                var b = makeButton(136 + 24 * idx, 202, 15, 17, "button", `Load ${id} song`);
                 b.id = id;
                 b.num = idx;
                 b.images = imgs.slice(idx * 3, idx * 3 + 3);
@@ -1400,7 +1402,7 @@ function onload() {
             b[2].addEventListener("click", makeExclusiveFunction(b, 2, func));
 
             // Prepare Eraser (Warning: Depends on the Song button images)
-            b = makeButton(40, 202, 15, 17);
+            b = makeButton(40, 202, 15, 17, "button", "Erase notes");
             b.id = "eraser";
             b.images = [imgs[9], imgs[10], imgs[11]]; // In the Song button images
             b.style.backgroundImage = "url(" + b.images[0].src + ")";
@@ -1429,6 +1431,8 @@ function onload() {
             var r = document.createElement("input");
             r.id = "tempo";
             r.type = "range";
+            r.setAttribute("aria-label", "Adjust tempo");
+            r.style.cursor = "pointer";
             r.value = 525;
             r.max = 1000;
             r.min = 50;
@@ -1475,7 +1479,7 @@ function onload() {
             s.sheet.insertRule("#tempo:focus {outline: none !important;}", 0);
 
             // Prepare range's side buttons for inc/decrements
-            var b = makeButton(184, 158, 7, 9);
+            var b = makeButton(184, 158, 7, 9, "button", "Scroll left");
             b.id = "toLeft";
             b.addEventListener("click", function (e) {
                 var r = document.getElementById("scroll");
@@ -1485,7 +1489,7 @@ function onload() {
             });
             CONSOLE.appendChild(b);
 
-            var b = makeButton(241, 158, 7, 9);
+            var b = makeButton(241, 158, 7, 9, "button", "Scroll right");
             b.id = "toRight";
             b.addEventListener("click", function (e) {
                 var r = document.getElementById("scroll");
