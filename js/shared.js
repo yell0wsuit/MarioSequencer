@@ -1364,7 +1364,7 @@ function onload() {
                     "px;" +
                     "height:" +
                     7 * MAGNIFY +
-                    "px;}", 
+                    "px;}",
                 0
             );
             style.sheet.insertRule("#scroll:focus {outline: none !important;}", 0);
@@ -1517,7 +1517,7 @@ function onload() {
                     "px;" +
                     "height:" +
                     8 * MAGNIFY +
-                    "px;}", 
+                    "px;}",
                 0
             );
             style.sheet.insertRule("#tempo:focus {outline: none !important;}", 0);
@@ -1700,10 +1700,10 @@ function onload() {
 function clearListener(e) {
     this.style.backgroundImage = "url(" + this.images[1].src + ")";
     SOUNDS[19].play(8);
-    var self = this;
     function makePromise(num) {
         return new Promise(function (resolve, reject) {
             setTimeout(function () {
+                const self = this;
                 self.style.backgroundImage = "url(" + self.images[num].src + ")";
                 resolve();
             }, 150);
@@ -1850,8 +1850,8 @@ function fullInitScore() {
 
 // Initialize Score
 function initScore() {
-    var emptyBars = [];
-    for (var barIndex = 0; barIndex < DEFAULT_MAX_BARS; barIndex++) emptyBars[barIndex] = [];
+    const emptyBars = [];
+    for (let barIndex = 0; barIndex < DEFAULT_MAX_BARS; barIndex++) emptyBars[barIndex] = [];
     curScore.notes = emptyBars;
     curMaxBars = DEFAULT_MAX_BARS;
     const scrollBar = document.getElementById("scroll");
@@ -1863,7 +1863,7 @@ function initScore() {
     curScore.tempo = DEFAULT_TEMPO;
     document.getElementById("tempo").value = DEFAULT_TEMPO;
     curScore.beats = 4;
-    var clickEvent = new Event("click");
+    const clickEvent = new Event("click");
     clickEvent.soundOff = true;
     document.getElementById("4beats").dispatchEvent(clickEvent);
 }
