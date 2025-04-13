@@ -605,23 +605,23 @@ function drawScore(pos, notes, scroll) {
 
 // X is the x of vertical bar (in grid)
 function drawHorizontalBar(gridX, scroll) {
-    var width = 24 * MAGNIFY;
+    const width = 24 * MAGNIFY;
     L2C.fillRect((4 + 32 * gridX - scroll) * MAGNIFY, (38 + 11 * 8) * MAGNIFY + HALFCHARSIZE, width, 2 * MAGNIFY);
 }
 
 function drawBarNumber(gridX, barnum) {
-    var x = (16 + 32 * gridX) * MAGNIFY - 1;
-    var y = (40 - 7) * MAGNIFY;
-    var nums = [];
+    let x = (16 + 32 * gridX) * MAGNIFY - 1;
+    const y = (40 - 7) * MAGNIFY;
+    const nums = [];
     while (barnum > 0) {
         nums.push(barnum % 10);
         barnum = Math.floor(barnum / 10);
     }
-    var len = nums.length;
+    const len = nums.length;
     if (len == 1) x += 2 * MAGNIFY;
     while (nums.length > 0) {
-        var n = nums.pop();
-        var width = n == 4 ? 5 : 4;
+        const n = nums.pop();
+        const width = n == 4 ? 5 : 4;
         L2C.drawImage(NUMBERS[n], x, y, 5 * MAGNIFY, 7 * MAGNIFY);
         x += width * MAGNIFY;
     }
@@ -632,8 +632,8 @@ function changeCursor(num) {
 }
 
 function drawCurChar(image) {
-    var x = 4 * MAGNIFY;
-    var y = 7 * MAGNIFY;
+    const x = 4 * MAGNIFY;
+    const y = 7 * MAGNIFY;
     L1C.beginPath();
     L1C.imageSmoothingEnabled = false;
     L1C.clearRect(x, y, CHARSIZE, CHARSIZE);
@@ -656,16 +656,16 @@ function drawEraserIcon() {
 }
 
 function toGrid(realX, realY) {
-    var gridLeft = (8 + 0) * MAGNIFY;
-    var gridTop = 41 * MAGNIFY;
-    var gridRight = (247 - 4) * MAGNIFY;
-    var gridBottom = (148 - 4) * MAGNIFY;
+    const gridLeft = (8 + 0) * MAGNIFY;
+    const gridTop = 41 * MAGNIFY;
+    const gridRight = (247 - 4) * MAGNIFY;
+    const gridBottom = (148 - 4) * MAGNIFY;
     if (realX < gridLeft || realX > gridRight || realY < gridTop || realY > gridBottom) return false;
 
-    var gridX = Math.floor((realX - gridLeft) / CHARSIZE);
+    let gridX = Math.floor((realX - gridLeft) / CHARSIZE);
     if (gridX % 2 != 0) return false; // Not near the bar
     gridX /= 2;
-    var gridY = Math.floor((realY - gridTop) / HALFCHARSIZE);
+    const gridY = Math.floor((realY - gridTop) / HALFCHARSIZE);
 
     // Consider G-Clef and repeat head area
     if ((curPos == 0 && gridX < 2) || (curPos == 1 && gridX == 0)) return false;
@@ -693,16 +693,16 @@ function mouseClickListener(e) {
     if (gameStatus != 0) return;
     e.preventDefault();
 
-    var realX = e.clientX - offsetLeft;
-    var realY = e.clientY - offsetTop;
+    const realX = e.clientX - offsetLeft;
+    const realY = e.clientY - offsetTop;
 
-    var g = toGrid(realX, realY);
+    const g = toGrid(realX, realY);
     if (g == false) return;
-    var gridX = g[0];
-    var gridY = g[1];
+    const gridX = g[0];
+    let gridY = g[1];
 
     // Map logical x to real bar number
-    var b = curPos + gridX - 2;
+    const b = curPos + gridX - 2;
 
     // process End Mark
     if (curChar == 15) {
@@ -712,11 +712,11 @@ function mouseClickListener(e) {
 
     if (b >= curScore.end) return;
 
-    var notes = curScore["notes"][b];
+    const notes = curScore["notes"][b];
     // Delete
     if (curChar == 16 || e.button == 2) {
         // Delete Top of the stack
-        for (var i = notes.length - 1; i >= 0; i--) {
+        for (let i = notes.length - 1; i >= 0; i--) {
             if ((notes[i] & 0x3f) == gridY) {
                 notes.splice(i, 1);
                 curScore.notes[b] = notes;
@@ -727,7 +727,7 @@ function mouseClickListener(e) {
         return;
     }
 
-    var note = (curChar << 8) | gridY;
+    let note = (curChar << 8) | gridY;
     if (notes.indexOf(note) != -1) return;
     //
     // Handle semitone
@@ -765,7 +765,7 @@ SCREEN.addEventListener("drop", function (e) {
     // Returns a instance of a Promise.
     function readFile(file) {
         return new Promise(function (resolve, reject) {
-            var reader = new FileReader();
+            const reader = new FileReader();
             reader.name = file.name;
             reader.addEventListener("load", function (e) {
                 resolve(e.target);
@@ -775,18 +775,17 @@ SCREEN.addEventListener("drop", function (e) {
     }
 
     // FileList to Array for Mapping
-    var files = [].slice.call(e.dataTransfer.files);
+    const files = [].slice.call(e.dataTransfer.files);
     // Support Mr.Phenix's files. He numbered files with decimal numbers :-)
     // http://music.geocities.jp/msq_phenix/
     // For example, suite15.5.msq must be after the suite15.msq
     files.sort(function (a, b) {
-        var n1 = a.name;
-        var n2 = b.name;
+        const n1 = a.name;
+        const n2 = b.name;
         function strip(name) {
-            n = /\d+\.\d+|\d+/.exec(name);
+            const n = /\d+\.\d+|\d+/.exec(name);
             if (n == null) return 0;
-            n = n[0];
-            return parseFloat(n);
+            return parseFloat(n[0]);
         }
         return strip(n1) - strip(n2);
     });
@@ -798,7 +797,7 @@ SCREEN.addEventListener("drop", function (e) {
                     return fp;
                 })
                 .then(function (fileReader) {
-                    var ext = fileReader.name.slice(-3);
+                    const ext = fileReader.name.slice(-3);
                     if (ext == "msq") {
                         addMSQ(fileReader.result);
                     } else {
@@ -819,54 +818,54 @@ SCREEN.addEventListener("drop", function (e) {
 //   Configure Score parameters
 function closing() {
     // Finally, after reducing, set parameters to Score
-    var b = document.getElementById(curScore.beats == 3 ? "3beats" : "4beats");
-    var e = new Event("click");
+    const b = document.getElementById(curScore.beats == 3 ? "3beats" : "4beats");
+    const e = new Event("click");
     e.soundOff = true;
     b.dispatchEvent(e);
 
-    var r = document.getElementById("scroll");
+    const r = document.getElementById("scroll");
     curMaxBars = curScore.end + 1;
     r.max = curMaxBars - 6;
     r.value = 0;
     curPos = 0;
 
-    var tempo = curScore.notes[0][0];
+    const tempo = curScore.notes[0][0];
     if (typeof tempo == "string" && tempo.slice(0, 5) == "TEMPO") {
-        tempo = tempo.split("=")[1];
-        curScore.tempo = tempo;
-        document.getElementById("tempo").value = tempo;
+        const tempoValue = tempo.split("=")[1];
+        curScore.tempo = tempoValue;
+        document.getElementById("tempo").value = tempoValue;
     }
 }
 
 function addMSQ(text) {
-    var lines = text.split(/\r\n|\r|\n/);
-    var keyword = ["SCORE", "TEMPO", "LOOP", "END", "TIME44"];
-    var values = {};
+    const lines = text.split(/\r\n|\r|\n/);
+    const keyword = ["SCORE", "TEMPO", "LOOP", "END", "TIME44"];
+    const values = {};
     lines.forEach(function (line, i) {
         if (line === "") return;
-        var kv = line.split("=");
-        var k = kv[0];
-        var v = kv[1];
+        const kv = line.split("=");
+        const k = kv[0];
+        const v = kv[1];
         if (i < keyword.length && k !== keyword[i]) {
             throw new Error("Line " + i + " must start with '" + keyword[i] + "'");
         }
         this[k] = v;
     }, values);
 
-    var oldEnd = curScore.end;
-    var s = values.SCORE;
-    var i = 0,
+    const oldEnd = curScore.end;
+    const s = values.SCORE;
+    let i = 0,
         count = curScore.end;
     // MSQ format is variable length string.
     out: while (i < s.length) {
-        var bar = [];
-        for (var j = 0; j < 3; j++) {
+        const bar = [];
+        for (let j = 0; j < 3; j++) {
             if (s[i] === "\r" || s[i] == undefined) break out;
-            var scale = parseInt(s[i++], 16);
+            let scale = parseInt(s[i++], 16);
             if (scale !== 0) {
                 scale -= 1;
-                var tone = parseInt(s[i++], 16) - 1;
-                var note = (tone << 8) | scale;
+                const tone = parseInt(s[i++], 16) - 1;
+                const note = (tone << 8) | scale;
                 bar.push(note);
             }
         }
@@ -876,10 +875,10 @@ function addMSQ(text) {
     curScore.end += parseInt(values.END) - 1;
     if (curScore.tempo != values.TEMPO) curScore.notes[oldEnd].splice(0, 0, "TEMPO=" + values.TEMPO);
     curScore.tempo = values.TEMPO;
-    var beats = values.TIME44 == "TRUE" ? 4 : 3;
+    const beats = values.TIME44 == "TRUE" ? 4 : 3;
     curScore.beats = beats;
     // click listener will set curScore.loop
-    b = document.getElementById("loop");
+    const b = document.getElementById("loop");
     values.LOOP == "TRUE" ? b.set() : b.reset();
 }
 
@@ -889,12 +888,12 @@ function addMSQ(text) {
 //   but use only its result property.
 //   This means you can use any object with result.
 function addJSON(text) {
-    var json = JSON.parse(text);
-    for (var i = 0; i < json.end; i++) curScore.notes.push(json.notes[i]);
+    const json = JSON.parse(text);
+    for (let i = 0; i < json.end; i++) curScore.notes.push(json.notes[i]);
 
-    var notes = curScore.notes[curScore.end];
+    const notes = curScore.notes[curScore.end];
     if (curScore.tempo != json.tempo && notes.length != 0) {
-        var tempostr = notes[0];
+        const tempostr = notes[0];
         if (typeof tempostr != "string") {
             notes.splice(0, 0, "TEMPO=" + json.tempo);
         }
@@ -903,7 +902,7 @@ function addJSON(text) {
 
     curScore.end += json.end;
 
-    b = document.getElementById("loop");
+    const b = document.getElementById("loop");
     if (curScore.loop) b.set;
     else b.reset();
 }
