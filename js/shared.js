@@ -299,16 +299,16 @@ class MarioClass {
         this.draw();
     }
 
-    jump(x) {
-        const h = [
+    jump(position) {
+        const jumpHeights = [
             0, 2, 4, 6, 8, 10, 12, 13, 14, 15, 16, 17, 18, 18, 19, 19, 19, 19, 19, 18, 18, 17, 16, 15, 14, 13, 12, 10,
             8, 6, 4, 2, 0,
         ];
-        return h[Math.round(x) % 32];
+        return jumpHeights[Math.round(position) % 32];
     }
 
     draw() {
-        let y = 41 - 22;
+        let verticalPosition = 41 - 22;
         let state = this.state;
         if (this.isJumping) {
             state = 2;
@@ -316,15 +316,15 @@ class MarioClass {
                 // In scroll mode
                 // (scroll == 16) is just on the bar, 0 and 32 is on the center of between bars
                 if (this.marioScroll !== 16) {
-                    y -= this.jump(this.marioScroll > 16 ? this.marioScroll - 16 : this.marioScroll + 16);
+                    verticalPosition -= this.jump(this.marioScroll > 16 ? this.marioScroll - 16 : this.marioScroll + 16);
                 } /* if scroll == 16 then Mario should be on the ground */
             } else {
                 // Running to the center, or leaving to the goal
-                y -= this.jump(Math.round((this.marioX - 8) % 32));
+                verticalPosition -= this.jump(Math.round((this.marioX - 8) % 32));
             }
         }
 
-        L2C.drawImage(this.images[state], this.marioX * MAGNIFY, y * MAGNIFY);
+        L2C.drawImage(this.images[state], this.marioX * MAGNIFY, verticalPosition * MAGNIFY);
     }
 
     leave(timeStamp) {
@@ -345,18 +345,18 @@ class MarioClass {
         if (Math.floor(diff / 100) % 2 === 0) {
             this.state = 8;
             this.draw();
-            const w = sweatImg.width;
-            const h = sweatImg.height;
+            const sweatImageWidth = sweatImg.width;
+            const sweatImageHeight = sweatImg.height;
             L2C.drawImage(
                 sweatImg,
                 0,
                 0,
-                w,
-                h,
-                (this.marioX - (w + 1)) * MAGNIFY,
+                sweatImageWidth,
+                sweatImageHeight,
+                (this.marioX - (sweatImageWidth + 1)) * MAGNIFY,
                 (41 - 22) * MAGNIFY,
-                w * MAGNIFY,
-                h * MAGNIFY
+                sweatImageWidth * MAGNIFY,
+                sweatImageHeight * MAGNIFY
             );
         } else {
             this.state = 9;
@@ -384,11 +384,11 @@ class EasyTimer {
 // Asynchronous load of sounds
 const SOUNDS = [];
 for (let i = 1; i < 21; i++) {
-    let tmp = "0";
-    tmp += i.toString();
-    let file = "wav/sound" + tmp.slice(-2) + ".wav";
-    let e = new SoundEntity(file);
-    SOUNDS[i - 1] = e;
+    let paddedNumber = "0";
+    paddedNumber += i.toString();
+    let file = "wav/sound" + paddedNumber.slice(-2) + ".wav";
+    let soundEntity = new SoundEntity(file);
+    SOUNDS[i - 1] = soundEntity;
 }
 
 // Prepare Mat
@@ -397,10 +397,10 @@ MAT.width = ORGWIDTH * MAGNIFY;
 MAT.height = ORGHEIGHT * MAGNIFY;
 const L1C = MAT.getContext("2d");
 L1C.imageSmoothingEnabled = false;
-const mi = new Image();
-mi.src = "images/mat.png";
-mi.onload = function () {
-    L1C.drawImage(mi, 0, 0, mi.width * MAGNIFY, mi.height * MAGNIFY);
+const matImage = new Image();
+matImage.src = "images/mat.png";
+matImage.onload = function () {
+    L1C.drawImage(matImage, 0, 0, matImage.width * MAGNIFY, matImage.height * MAGNIFY);
 };
 
 // Prepare Characters
@@ -416,10 +416,10 @@ bombTimer.switch = true; // always true for the bomb
 bombTimer.currentFrame = 0;
 
 function drawBomb(mySelf) {
-    var x = 9 * MAGNIFY;
-    var y = 202 * MAGNIFY;
-    var img = BOMBS[mySelf.currentFrame];
-    L1C.drawImage(img, x, y);
+    var bombX = 9 * MAGNIFY;
+    var bombY = 202 * MAGNIFY;
+    var bombImage = BOMBS[mySelf.currentFrame];
+    L1C.drawImage(bombImage, bombX, bombY);
     switch (mySelf.currentFrame) {
         case 0:
             mySelf.currentFrame = 1;
@@ -485,14 +485,14 @@ semitoneImg.src = "images/semitone.png";
 const repeatImg = new Image();
 repeatImg.src = "images/repeat_head.png";
 
-function drawRepeatHead(x) {
-    var w = repeatMark[0].width;
-    var h = repeatMark[0].height;
-    L2C.drawImage(repeatMark[0], x * MAGNIFY, 56 * MAGNIFY);
+function drawRepeatHead(xPosition) {
+    var repeatMarkWidth = repeatMark[0].width;
+    var repeatMarkHeight = repeatMark[0].height;
+    L2C.drawImage(repeatMark[0], xPosition * MAGNIFY, 56 * MAGNIFY);
 }
 
 // Score Area (8, 41) to (247, 148)
-function drawScore(pos, notes, scroll) {
+function drawScore(position, notes, scroll) {
     // Clip only X
     L2C.clearRect(0, 0, SCREEN.width, SCREEN.height);
     L2C.save();
@@ -512,7 +512,7 @@ function drawScore(pos, notes, scroll) {
         if (gridY >= 11) drawHorizontalBar(gridX, 0);
     }
 
-    if (pos == 0) {
+    if (position == 0) {
         var gClefWidth = GClef.width;
         var gClefHeight = GClef.height;
         // GClef image is NOT magnified yet.
@@ -521,7 +521,7 @@ function drawScore(pos, notes, scroll) {
         if (curScore.loop) {
             drawRepeatHead(41 - scroll);
         }
-    } else if (pos == 1 && curScore.loop) {
+    } else if (position == 1 && curScore.loop) {
         drawRepeatHead(9 - scroll);
     }
 
@@ -529,12 +529,12 @@ function drawScore(pos, notes, scroll) {
     var beats = curScore.beats;
     // orange = 2, 1, 0, 3, 2, 1, 0, 3, ..... (if beats = 4)
     //        = 2, 1, 0, 2, 1, 0, 2, 1, ..... (if beats = 3)
-    var orangeBeat = beats == 4 ? 3 - ((pos + 1) % 4) : 2 - ((pos + 3) % 3);
-    var i = pos < 2 ? 2 - pos : 0;
-    for (; i < 9; i++) {
-        var xorg = 16 + 32 * i - scroll;
-        var x = xorg * MAGNIFY;
-        var barNumber = pos + i - 2;
+    var orangeBeat = beats == 4 ? 3 - ((position + 1) % 4) : 2 - ((position + 3) % 3);
+    var barIndex = position < 2 ? 2 - position : 0;
+    for (; barIndex < 9; barIndex++) {
+        var originalX = 16 + 32 * barIndex - scroll;
+        var x = originalX * MAGNIFY;
+        var barNumber = position + barIndex - 2;
 
         if (barNumber == curScore.end) {
             var endMarkImage = curScore.loop ? repeatMark[1] : endMark;
@@ -544,8 +544,8 @@ function drawScore(pos, notes, scroll) {
         L2C.beginPath();
         L2C.setLineDash([MAGNIFY, MAGNIFY]);
         L2C.lineWidth = MAGNIFY;
-        if (i % beats == orangeBeat) {
-            if (gameStatus == 0) drawBarNumber(i, barNumber / beats + 1);
+        if (barIndex % beats == orangeBeat) {
+            if (gameStatus == 0) drawBarNumber(barIndex, barNumber / beats + 1);
             L2C.strokeStyle = "#F89000";
         } else {
             L2C.strokeStyle = "#A0C0B0";
@@ -564,7 +564,7 @@ function drawScore(pos, notes, scroll) {
             if (mario.marioX == 120) {
                 noteIndex = mario.marioScroll >= 16 ? mario.marioScroll - 16 : mario.marioScroll + 16;
             } else {
-                noteIndex = mario.marioX + 8 - xorg;
+                noteIndex = mario.marioX + 8 - originalX;
             }
             var jumpTable = [
                 0, 1, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 6, 6, 5, 5, 4, 3, 3, 2, 1, 0,
@@ -579,13 +579,13 @@ function drawScore(pos, notes, scroll) {
             var noteScale = barNotes[j] & 0x0f;
             // When curChar is eraser, and the mouse cursor is on the note,
             // an Image of note blinks.
-            if (curChar == 16 && gridPosition != false && i == gridX && noteScale == gridY && eraserTimer.currentFrame == 1) {
+            if (curChar == 16 && gridPosition != false && barIndex == gridX && noteScale == gridY && eraserTimer.currentFrame == 1) {
                 continue;
             }
 
             if (!hasHighNote && noteScale >= 11) {
                 hasHighNote = true;
-                drawHorizontalBar(i, scroll);
+                drawHorizontalBar(barIndex, scroll);
             }
             L2C.drawImage(SOUNDS[soundNumber].image, x - HALFCHARSIZE, (40 + noteScale * 8 + noteDelta) * MAGNIFY);
 
@@ -995,7 +995,7 @@ const resizeScreen = () => {
 
     MAT.width = ORGWIDTH * MAGNIFY;
     MAT.height = ORGHEIGHT * MAGNIFY;
-    L1C.drawImage(mi, 0, 0, mi.width * MAGNIFY, mi.height * MAGNIFY);
+    L1C.drawImage(matImage, 0, 0, matImage.width * MAGNIFY, matImage.height * MAGNIFY);
 
     SCREEN.width = ORGWIDTH * MAGNIFY;
     SCREEN.height = SCRHEIGHT * MAGNIFY;
