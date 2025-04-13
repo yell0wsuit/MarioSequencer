@@ -1765,18 +1765,18 @@ function doMarioLeave(timeStamp) {
 
 // Clear Song Buttons
 function clearSongButtons() {
-    ["frog", "beak", "1up"].map(function (id, idx) {
-        var b = document.getElementById(id);
-        b.disabled = false;
-        b.style.backgroundImage = "url(" + b.images[0].src + ")";
+    ["frog", "beak", "1up"].map(function (buttonId, buttonIndex) {
+        var songButton = document.getElementById(buttonId);
+        songButton.disabled = false;
+        songButton.style.backgroundImage = "url(" + songButton.images[0].src + ")";
     });
     curSong = undefined;
 }
 
 // Clear Eraser Button
 function clearEraserButton() {
-    var b = document.getElementById("eraser");
-    b.style.backgroundImage = "url(" + b.images[0].src + ")";
+    var eraserButton = document.getElementById("eraser");
+    eraserButton.style.backgroundImage = "url(" + eraserButton.images[0].src + ")";
     eraserTimer.switch = false;
 }
 
@@ -1794,22 +1794,22 @@ function fullInitScore() {
 
 // Initialize Score
 function initScore() {
-    var tmpa = [];
-    for (var i = 0; i < DEFAULT_MAX_BARS; i++) tmpa[i] = [];
-    curScore.notes = tmpa;
+    var emptyBars = [];
+    for (var barIndex = 0; barIndex < DEFAULT_MAX_BARS; barIndex++) emptyBars[barIndex] = [];
+    curScore.notes = emptyBars;
     curMaxBars = DEFAULT_MAX_BARS;
-    var s = document.getElementById("scroll");
-    s.max = DEFAULT_MAX_BARS - 6;
-    s.value = 0;
+    var scrollBar = document.getElementById("scroll");
+    scrollBar.max = DEFAULT_MAX_BARS - 6;
+    scrollBar.value = 0;
     curScore.loop = false;
     document.getElementById("loop").reset();
     curScore.end = DEFAULT_MAX_BARS - 1;
     curScore.tempo = DEFAULT_TEMPO;
     document.getElementById("tempo").value = DEFAULT_TEMPO;
     curScore.beats = 4;
-    var e = new Event("click");
-    e.soundOff = true;
-    document.getElementById("4beats").dispatchEvent(e);
+    var clickEvent = new Event("click");
+    clickEvent.soundOff = true;
+    document.getElementById("4beats").dispatchEvent(clickEvent);
 }
 
 // Easiest and Fastest way to clone
