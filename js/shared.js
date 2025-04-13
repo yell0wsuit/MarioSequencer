@@ -1343,7 +1343,8 @@ function onload() {
             moveDOM(scrollBar, scrollBar.originalX, scrollBar.originalY);
             resizeDOM(scrollBar, scrollBar.originalW, scrollBar.originalH);
             scrollBar.addEventListener("input", function (event) {
-                if (gameStatus === 0) { // Only allow scrolling in edit mode
+                if (gameStatus === 0) {
+                    // Only allow scrolling in edit mode
                     curPos = parseInt(this.value);
                 }
             });
@@ -1669,7 +1670,8 @@ function onload() {
                         break;
 
                     case "ArrowLeft": // left -> scroll left
-                        if (gameStatus === 0) { // Only allow scrolling in edit mode
+                        if (gameStatus === 0) {
+                            // Only allow scrolling in edit mode
                             var scrollBar = document.getElementById("scroll");
                             if (scrollBar.value > 0) curPos = --scrollBar.value;
                             event.preventDefault();
@@ -1677,7 +1679,8 @@ function onload() {
                         break;
 
                     case "ArrowRight": // right -> scroll right
-                        if (gameStatus === 0) { // Only allow scrolling in edit mode
+                        if (gameStatus === 0) {
+                            // Only allow scrolling in edit mode
                             var scrollBar = document.getElementById("scroll");
                             if (scrollBar.value < curMaxBars - 6) curPos = ++scrollBar.value;
                             event.preventDefault();
@@ -1735,8 +1738,12 @@ function playListener(e) {
         document.getElementById(id).disabled = true;
     });
 
+    // Reset scroll position to beginning
+    var scrollBar = document.getElementById("scroll");
+    scrollBar.value = 0;
+    curPos = 0;
+
     gameStatus = 1; // Mario Entering the stage
-    curPos = 0; // doAnimation will draw POS 0 and stop
     mario.init();
     requestAnimFrame(doMarioEnter);
 }
