@@ -316,7 +316,9 @@ class MarioClass {
                 // In scroll mode
                 // (scroll == 16) is just on the bar, 0 and 32 is on the center of between bars
                 if (this.marioScroll !== 16) {
-                    verticalPosition -= this.jump(this.marioScroll > 16 ? this.marioScroll - 16 : this.marioScroll + 16);
+                    verticalPosition -= this.jump(
+                        this.marioScroll > 16 ? this.marioScroll - 16 : this.marioScroll + 16
+                    );
                 } /* if scroll == 16 then Mario should be on the ground */
             } else {
                 // Running to the center, or leaving to the goal
@@ -516,7 +518,17 @@ function drawScore(position, notes, scroll) {
         var gClefWidth = GClef.width;
         var gClefHeight = GClef.height;
         // GClef image is NOT magnified yet.
-        L2C.drawImage(GClef, 0, 0, gClefWidth, gClefHeight, (9 - scroll) * MAGNIFY, 48 * MAGNIFY, gClefWidth * MAGNIFY, gClefHeight * MAGNIFY);
+        L2C.drawImage(
+            GClef,
+            0,
+            0,
+            gClefWidth,
+            gClefHeight,
+            (9 - scroll) * MAGNIFY,
+            48 * MAGNIFY,
+            gClefWidth * MAGNIFY,
+            gClefHeight * MAGNIFY
+        );
 
         if (curScore.loop) {
             drawRepeatHead(41 - scroll);
@@ -579,7 +591,13 @@ function drawScore(position, notes, scroll) {
             var noteScale = barNotes[noteIndex] & 0x0f;
             // When curChar is eraser, and the mouse cursor is on the note,
             // an Image of note blinks.
-            if (curChar == 16 && gridPosition != false && barIndex == gridX && noteScale == gridY && eraserTimer.currentFrame == 1) {
+            if (
+                curChar == 16 &&
+                gridPosition != false &&
+                barIndex == gridX &&
+                noteScale == gridY &&
+                eraserTimer.currentFrame == 1
+            ) {
                 continue;
             }
 
@@ -670,7 +688,8 @@ function toGrid(mouseRealX, mouseRealY) {
     const gridTop = 41 * MAGNIFY;
     const gridRight = (247 - 4) * MAGNIFY;
     const gridBottom = (148 - 4) * MAGNIFY;
-    if (mouseRealX < gridLeft || mouseRealX > gridRight || mouseRealY < gridTop || mouseRealY > gridBottom) return false;
+    if (mouseRealX < gridLeft || mouseRealX > gridRight || mouseRealY < gridTop || mouseRealY > gridBottom)
+        return false;
 
     let gridX = Math.floor((mouseRealX - gridLeft) / CHARSIZE);
     if (gridX % 2 != 0) return false; // Not near the bar
@@ -953,6 +972,17 @@ function makeButton(x, y, width, height, type = "button", ariaLabel = "") {
         moveDOM(button, button.originalX, button.originalY);
         resizeDOM(button, button.originalW, button.originalH);
     };
+
+    // Add observer to update cursor based on disabled state
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === "disabled") {
+                button.style.cursor = button.disabled ? "not-allowed" : "pointer";
+            }
+        });
+    });
+    observer.observe(button, { attributes: true });
+
     return button;
 }
 
@@ -1150,7 +1180,17 @@ const sliceImage = (image, width, height) => {
         tempCanvas.height = charHeight;
         const tempContext = tempCanvas.getContext("2d");
         tempContext.imageSmoothingEnabled = false;
-        tempContext.drawImage(image, (i % horizontalCount) * width, Math.floor(i / horizontalCount) * height, width, height, 0, 0, charWidth, charHeight);
+        tempContext.drawImage(
+            image,
+            (i % horizontalCount) * width,
+            Math.floor(i / horizontalCount) * height,
+            width,
+            height,
+            0,
+            0,
+            charWidth,
+            charHeight
+        );
         const charImage = new Image();
         charImage.src = tempCanvas.toDataURL();
         result[i] = charImage;
@@ -1321,7 +1361,8 @@ function onload() {
                     "px;" +
                     "height:" +
                     7 * MAGNIFY +
-                    "px;}", 0
+                    "px;}",
+                0
             );
             style.sheet.insertRule("#scroll:focus {outline: none !important;}", 0);
 
@@ -1473,7 +1514,8 @@ function onload() {
                     "px;" +
                     "height:" +
                     8 * MAGNIFY +
-                    "px;}", 0
+                    "px;}",
+                0
             );
             style.sheet.insertRule("#tempo:focus {outline: none !important;}", 0);
 
