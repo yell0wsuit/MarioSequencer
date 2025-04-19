@@ -729,7 +729,14 @@ SCREEN.addEventListener("click", mouseClickListener);
 // Add undo history tracking
 let undoHistory = [];
 
-// Modify the mouseClickListener to track history
+// Add function to update undo button state
+function updateUndoButtonState() {
+    const undoButton = document.getElementById("undo");
+    undoButton.disabled = undoHistory.length === 0;
+    undoButton.style.cursor = undoButton.disabled ? "not-allowed" : "pointer";
+}
+
+// Modify mouseClickListener to update undo button state
 function mouseClickListener(event) {
     if (gameStatus != 0) return;
     event.preventDefault();
@@ -768,6 +775,7 @@ function mouseClickListener(event) {
                 barNotes.splice(i, 1);
                 curScore.notes[barNumber] = barNotes;
                 SOUNDS[17].play(8);
+                updateUndoButtonState();
                 break;
             }
         }
@@ -790,6 +798,7 @@ function mouseClickListener(event) {
     });
     barNotes.push(note);
     curScore["notes"][barNumber] = barNotes;
+    updateUndoButtonState();
 }
 
 SCREEN.addEventListener("mousemove", function (e) {
@@ -1320,7 +1329,7 @@ function onload() {
                 if (undoHistory.length > 0) {
                     const lastAction = undoHistory.pop();
                     const barNotes = curScore.notes[lastAction.barNumber];
-
+                    
                     if (lastAction.type === "add") {
                         // Remove the note that was added
                         const index = barNotes.indexOf(lastAction.note);
@@ -1331,9 +1340,10 @@ function onload() {
                         // Add back the note that was deleted
                         barNotes.push(lastAction.note);
                     }
-
+                    
                     SOUNDS[20].play(8); // Play dogundo sound
                     drawScore(curPos, curScore.notes, 0);
+                    updateUndoButtonState(); // Update undo button state after undoing
                 }
                 // Add hover effect
                 this.style.backgroundImage = "url(" + this.images[1].src + ")";
@@ -1343,6 +1353,9 @@ function onload() {
             });
             CONSOLE.appendChild(undoButton);
             pseudoSheet.insertRule("#undo:focus {outline: none !important;}", 0);
+
+            // Initialize undo button state after creation
+            updateUndoButtonState();
 
             // Prepare Loop Button (85, 168)
             const loopButton = makeButton(85, 168, 16, 15, "button", "Toggle music loop");
@@ -1778,6 +1791,8 @@ function clearListener(e) {
         .then(function () {
             initScore();
             curPos = 0;
+            undoHistory = []; // Clear undo history
+            updateUndoButtonState(); // Update undo button state
         });
 
     clearSongButtons();
