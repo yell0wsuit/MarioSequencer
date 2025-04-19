@@ -393,6 +393,10 @@ for (let i = 1; i < 21; i++) {
     SOUNDS[i - 1] = soundEntity;
 }
 
+// Add undo dog sound
+const undoDogSound = new SoundEntity("wav/dogundo.wav");
+SOUNDS[20] = undoDogSound;
+
 // Prepare Mat
 const MAT = document.getElementById("layer1");
 MAT.width = ORGWIDTH * MAGNIFY;
@@ -447,6 +451,10 @@ numImg.src = "images/numbers.png";
 // Prepare the Mario images
 const marioImg = new Image();
 marioImg.src = "images/Mario.png";
+
+// Prepare the undo dog image
+const undoDogImg = new Image();
+undoDogImg.src = "images/undo_dog.png";
 
 const sweatImg = new Image();
 sweatImg.src = "images/mario_sweat.png";
@@ -718,6 +726,10 @@ SCREEN.addEventListener("contextmenu", mouseClickListener);
 // ClipRect (8, 41) to (247, 148)
 SCREEN.addEventListener("click", mouseClickListener);
 
+// Add undo history tracking
+let undoHistory = [];
+
+// Modify the mouseClickListener to track history
 function mouseClickListener(event) {
     if (gameStatus != 0) return;
     event.preventDefault();
@@ -747,6 +759,12 @@ function mouseClickListener(event) {
         // Delete Top of the stack
         for (let i = barNotes.length - 1; i >= 0; i--) {
             if ((barNotes[i] & 0x3f) == gridY) {
+                // Store in undo history before deleting
+                undoHistory.push({
+                    type: "delete",
+                    barNumber: barNumber,
+                    note: barNotes[i],
+                });
                 barNotes.splice(i, 1);
                 curScore.notes[barNumber] = barNotes;
                 SOUNDS[17].play(8);
@@ -764,6 +782,12 @@ function mouseClickListener(event) {
     if (event.ctrlKey) gridY |= 0x40;
     SOUNDS[curChar].play(gridY);
     note = (curChar << 8) | gridY;
+    // Store in undo history before adding
+    undoHistory.push({
+        type: "add",
+        barNumber: barNumber,
+        note: note,
+    });
     barNotes.push(note);
     curScore["notes"][barNumber] = barNotes;
 }
@@ -1271,7 +1295,7 @@ function onload() {
             playButton.images = sliceImage(playBtnImg, 12, 15);
             playButton.style.backgroundImage = "url(" + playButton.images[0].src + ")";
             playButton.addEventListener("click", playListener);
-            style.sheet.insertRule("#play:focus {outline: none !important;}", 0);
+            pseudoSheet.insertRule("#play:focus {outline: none !important;}", 0);
             CONSOLE.appendChild(playButton);
 
             // Prepare Stop Button (21, 168)
@@ -1283,8 +1307,42 @@ function onload() {
             stopButton.images = [stopButtonImages[0], stopButtonImages[1]];
             stopButton.style.backgroundImage = "url(" + stopButton.images[1].src + ")";
             stopButton.addEventListener("click", stopListener);
-            style.sheet.insertRule("#stop:focus {outline: none !important;}", 0);
+            pseudoSheet.insertRule("#stop:focus {outline: none !important;}", 0);
             CONSOLE.appendChild(stopButton);
+
+            // Prepare Undo Button (positioned near other control buttons)
+            const undoButton = makeButton(216, 203, 14, 15, "button", "Undo last action");
+            undoButton.id = "undo";
+            const undoButtonImages = sliceImage(undoDogImg, 14, 15);
+            undoButton.images = [undoButtonImages[0], undoButtonImages[1]];
+            undoButton.style.backgroundImage = "url(" + undoButton.images[0].src + ")";
+            undoButton.addEventListener("click", function () {
+                if (undoHistory.length > 0) {
+                    const lastAction = undoHistory.pop();
+                    const barNotes = curScore.notes[lastAction.barNumber];
+
+                    if (lastAction.type === "add") {
+                        // Remove the note that was added
+                        const index = barNotes.indexOf(lastAction.note);
+                        if (index !== -1) {
+                            barNotes.splice(index, 1);
+                        }
+                    } else if (lastAction.type === "delete") {
+                        // Add back the note that was deleted
+                        barNotes.push(lastAction.note);
+                    }
+
+                    SOUNDS[20].play(8); // Play dogundo sound
+                    drawScore(curPos, curScore.notes, 0);
+                }
+                // Add hover effect
+                this.style.backgroundImage = "url(" + this.images[1].src + ")";
+                setTimeout(() => {
+                    this.style.backgroundImage = "url(" + this.images[0].src + ")";
+                }, 150);
+            });
+            CONSOLE.appendChild(undoButton);
+            pseudoSheet.insertRule("#undo:focus {outline: none !important;}", 0);
 
             // Prepare Loop Button (85, 168)
             const loopButton = makeButton(85, 168, 16, 15, "button", "Toggle music loop");
