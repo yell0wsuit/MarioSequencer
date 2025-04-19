@@ -754,7 +754,14 @@ function mouseClickListener(event) {
 
     // process End Mark
     if (curChar == 15) {
+        // Store the old end mark position before changing it
+        undoHistory.push({
+            type: "endmark",
+            oldEnd: curScore.end,
+            newEnd: barNumber
+        });
         curScore.end = barNumber;
+        updateUndoButtonState();
         return;
     }
 
@@ -1328,17 +1335,21 @@ function onload() {
             undoButton.addEventListener("click", function () {
                 if (undoHistory.length > 0) {
                     const lastAction = undoHistory.pop();
-                    const barNotes = curScore.notes[lastAction.barNumber];
                     
                     if (lastAction.type === "add") {
+                        const barNotes = curScore.notes[lastAction.barNumber];
                         // Remove the note that was added
                         const index = barNotes.indexOf(lastAction.note);
                         if (index !== -1) {
                             barNotes.splice(index, 1);
                         }
                     } else if (lastAction.type === "delete") {
+                        const barNotes = curScore.notes[lastAction.barNumber];
                         // Add back the note that was deleted
                         barNotes.push(lastAction.note);
+                    } else if (lastAction.type === "endmark") {
+                        // Restore the previous end mark position
+                        curScore.end = lastAction.oldEnd;
                     }
                     
                     SOUNDS[20].play(8); // Play dogundo sound
