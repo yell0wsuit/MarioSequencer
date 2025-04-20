@@ -1,17 +1,20 @@
 /*
  *  Mario Sequencer Web edition
  *    Programmed by minghai (http://github.com/minghai)
- */
+ *    Modified by yell0wsuit (https://github.com/yell0wsuit)
+*/
 
-// First, check the parameters to get MAGNIFY
-const OPTS = {};
-window.location.search
-    .slice(1)
-    .split("&")
-    .forEach(function (paramString) {
-        const paramPair = paramString.split("=");
-        OPTS[paramPair[0]] = paramPair[1];
-    });
+// Checking the parameters
+const OPTS = Object.fromEntries(
+    window.location.search
+        .slice(1)
+        .split("&")
+        .filter(param => param)
+        .map(param => {
+            const [key, value] = param.split("=");
+            return [key, value];
+        })
+);
 
 // GLOBAL VARIABLES
 //   Constants: Full capital letters
