@@ -142,21 +142,21 @@ class SoundEntity {
 // It's me, Mario!
 class MarioClass {
     constructor() {
-        this.marioOffset = -16; // offset in X
+        this.marioOffset = -16; // X offset for positioning
         this.marioScroll = 0; // Scroll amount in dots
-        this.marioX = -16; // X-position in dots.
-        this.images = null;
-        this.marioPosition = 0; // position in bar number
-        this.state = 0;
-        this.startTime = 0;
-        this.lastTime = 0;
-        this.isJumping = false;
-        this.timer = new EasyTimer(100, (timer) => {
-            this.state = this.state === 1 ? 0 : 1;
-        });
-        this.timer.switch = true; // forever true
+        this.marioX = -16; // X-position in dots
+        this.images = null; // Mario sprite images
+        this.marioPosition = 0; // Position in bar number
+        this.state = 0; // Animation state
+        this.startTime = 0; // Animation start timestamp
+        this.lastTime = 0; // Last animation timestamp
+        this.isJumping = false; // Whether Mario is jumping
+        // Animation timer that alternates Mario's walking state
+        this.timer = new EasyTimer(100, () => (this.state = this.state === 1 ? 0 : 1));
+        this.timer.switch = true; // Keep timer running
     }
 
+    // Reset Mario to initial state
     init() {
         this.marioX = -16;
         this.marioPosition = 0;
@@ -168,22 +168,24 @@ class MarioClass {
         this.isJumping = false;
     }
 
+    // Animate Mario entering the stage
     enter(timeStamp) {
         if (this.startTime === 0) this.startTime = timeStamp;
-
         const timeDifference = timeStamp - this.startTime;
         this.marioX = Math.floor(timeDifference / 5) + this.marioOffset;
-        if (this.marioX >= 40) this.marioX = 40; // 16 + 32 - 8
+        if (this.marioX >= 40) this.marioX = 40; // Cap position at 40
         this.state = Math.floor(timeDifference / 100) % 2 === 0 ? 1 : 0;
         this.draw();
     }
 
+    // Initialize for leaving the stage
     init4leaving() {
         this.marioOffset = this.marioX;
         this.startTime = 0;
         this.isJumping = false;
     }
 
+    // Initialize for playing the music
     init4playing(timeStamp) {
         this.lastTime = timeStamp;
         this.marioOffset = this.marioX;
@@ -193,25 +195,25 @@ class MarioClass {
         this.checkMarioShouldJump();
     }
 
+    // Determine if Mario should jump based on notes at current position
     checkMarioShouldJump() {
         const notes = curScore.notes[this.marioPosition - 1];
-        if (!notes || notes.length === 0) {
-            this.isJumping = false;
-        } else if (notes.length === 1) {
-            this.isJumping = typeof notes[0] !== "string";
-        } else {
-            this.isJumping = true;
-        }
+        // Jump if there are notes and either there's more than one note or the note isn't a string (tempo)
+        this.isJumping = notes && notes.length > 0 && (notes.length > 1 || typeof notes[0] !== "string");
     }
 
+    // Main play animation loop
     play(timeStamp) {
+        // Helper function to play notes at the current position
         const scheduleAndPlay = (notes, time) => {
             if (time < 0) time = 0;
             if (!notes || notes.length === 0) return;
 
+            // Group notes by sound type for chord playing
             const noteDictionary = {};
             notes.forEach((note) => {
                 if (typeof note === "string") {
+                    // Handle tempo change
                     const tempo = note.split("=")[1];
                     curScore.tempo = tempo;
                     document.getElementById("tempo").value = tempo;
@@ -224,62 +226,68 @@ class MarioClass {
                 else noteDictionary[soundNumber].push(scale);
             });
 
+            // Play each sound with its notes
             Object.entries(noteDictionary).forEach(([soundIndex, scales]) => {
-                SOUNDS[soundIndex].playChord(scales, time / 1000); // [ms] -> [s]
+                SOUNDS[soundIndex].playChord(scales, time / 1000); // Convert ms to seconds
             });
         };
 
         const tempo = curScore.tempo;
-        let timeDifference = timeStamp - this.lastTime; // both are [ms]
-        if (timeDifference > 32) timeDifference = 16; // When user hide the tag, force it
+        let timeDifference = timeStamp - this.lastTime;
+        if (timeDifference > 32) timeDifference = 16; // Cap time difference
         this.lastTime = timeStamp;
-        const step = (32 * timeDifference * tempo) / 60000; // (60[sec] * 1000)[msec]
+        // Calculate movement step based on tempo
+        const step = (32 * timeDifference * tempo) / 60000;
 
         this.timer.checkAndFire(timeStamp);
         const scroll = document.getElementById("scroll");
 
+        // Calculate position of next bar
         const nextBar = 16 + 32 * (this.marioPosition - curPos + 1) - 8;
+
         if (this.marioX < 120) {
-            // Mario still has to run
+            // Mario is running toward center
             this.marioX += step;
-            // If this step crosses the bar
             if (this.marioX >= nextBar) {
+                // Crossed a bar line
                 this.marioPosition++;
-                scheduleAndPlay(curScore.notes[this.marioPosition - 2], 0); // Ignore diff
+                scheduleAndPlay(curScore.notes[this.marioPosition - 2], 0);
                 this.checkMarioShouldJump();
-            } else {
-                // 32 dots in t[sec/1beat]
-                if (this.marioX >= 120) {
-                    this.marioScroll = this.marioX - 120;
-                    this.marioX = 120;
-                }
+            } else if (this.marioX >= 120) {
+                // Reached center, start scrolling
+                this.marioScroll = this.marioX - 120;
+                this.marioX = 120;
             }
         } else if (curPos <= curScore.end - 6) {
-            // Scroll
+            // Mario is at center, scrolling the score
             this.marioX = 120;
             if (this.marioScroll < 16 && this.marioScroll + step > 16) {
+                // Crossed middle of a bar while scrolling
                 this.marioPosition++;
                 this.marioScroll += step;
-                scheduleAndPlay(curScore.notes[this.marioPosition - 2], 0); // Ignore error
+                scheduleAndPlay(curScore.notes[this.marioPosition - 2], 0);
                 this.checkMarioShouldJump();
             } else {
                 this.marioScroll += step;
                 if (this.marioScroll > 32) {
+                    // Scrolled past a full bar
                     this.marioScroll -= 32;
                     curPos++;
                     scroll.value = curPos;
                     if (curPos > curScore.end - 6) {
+                        // Reached end of scrollable area
                         this.marioX += this.marioScroll;
                         this.marioScroll = 0;
                     }
                 }
             }
         } else {
+            // Mario is running toward the end
             this.marioX += step;
-            // If this step crosses the bar
             if (this.marioX >= nextBar) {
+                // Crossed a bar line
                 this.marioPosition++;
-                scheduleAndPlay(curScore.notes[this.marioPosition - 2], 0); // Ignore diff
+                scheduleAndPlay(curScore.notes[this.marioPosition - 2], 0);
                 this.checkMarioShouldJump();
             }
         }
@@ -287,6 +295,7 @@ class MarioClass {
         this.draw();
     }
 
+    // Calculate jump height based on position in jump arc
     jump(position) {
         const jumpHeights = [
             0, 2, 4, 6, 8, 10, 12, 13, 14, 15, 16, 17, 18, 18, 19, 19, 19, 19, 19, 18, 18, 17, 16, 15, 14, 13, 12, 10,
@@ -295,21 +304,23 @@ class MarioClass {
         return jumpHeights[Math.round(position) % 32];
     }
 
+    // Draw Mario at current position and state
     draw() {
-        let verticalPosition = 41 - 22;
+        let verticalPosition = 41 - 22; // Base Y position
         let state = this.state;
+
         if (this.isJumping) {
-            state = 2;
+            state = 2; // Jumping sprite
             if (this.marioX === 120) {
                 // In scroll mode
-                // (scroll == 16) is just on the bar, 0 and 32 is on the center of between bars
                 if (this.marioScroll !== 16) {
+                    // Not exactly on a bar line, calculate jump height
                     verticalPosition -= this.jump(
                         this.marioScroll > 16 ? this.marioScroll - 16 : this.marioScroll + 16
                     );
-                } /* if scroll == 16 then Mario should be on the ground */
+                }
             } else {
-                // Running to the center, or leaving to the goal
+                // Running mode, calculate jump height
                 verticalPosition -= this.jump(Math.round((this.marioX - 8) % 32));
             }
         }
@@ -317,11 +328,13 @@ class MarioClass {
         L2C.drawImage(this.images[state], this.marioX * MAGNIFY, verticalPosition * MAGNIFY);
     }
 
+    // Animate Mario leaving the stage
     leave(timeStamp) {
         if (this.startTime === 0) this.startTime = timeStamp;
 
         const diff = timeStamp - this.startTime;
         if (this.marioScroll > 0 && this.marioScroll < 32) {
+            // Complete any remaining scroll
             this.marioScroll += Math.floor(diff / 4);
             if (this.marioScroll > 32) {
                 this.marioX += this.marioScroll - 32;
@@ -329,24 +342,25 @@ class MarioClass {
                 curPos++;
             }
         } else {
+            // Move Mario toward exit
             this.marioX = Math.floor(diff / 4) + this.marioOffset;
         }
 
+        // Alternate between tired states with sweat drop
         if (Math.floor(diff / 100) % 2 === 0) {
             this.state = 8;
             this.draw();
-            const sweatImageWidth = sweatImg.width;
-            const sweatImageHeight = sweatImg.height;
+            // Draw sweat drop
             L2C.drawImage(
                 sweatImg,
                 0,
                 0,
-                sweatImageWidth,
-                sweatImageHeight,
-                (this.marioX - (sweatImageWidth + 1)) * MAGNIFY,
+                sweatImg.width,
+                sweatImg.height,
+                (this.marioX - (sweatImg.width + 1)) * MAGNIFY,
                 (41 - 22) * MAGNIFY,
-                sweatImageWidth * MAGNIFY,
-                sweatImageHeight * MAGNIFY
+                sweatImg.width * MAGNIFY,
+                sweatImg.height * MAGNIFY
             );
         } else {
             this.state = 9;
@@ -372,18 +386,13 @@ class EasyTimer {
 }
 
 // Asynchronous load of sounds
-const SOUNDS = [];
-for (let i = 1; i < 21; i++) {
-    let paddedNumber = "0";
-    paddedNumber += i.toString();
-    let file = "wav/sound" + paddedNumber.slice(-2) + ".wav";
-    let soundEntity = new SoundEntity(file);
-    SOUNDS[i - 1] = soundEntity;
-}
+const SOUNDS = Array.from({ length: 20 }, (_, i) => {
+    const paddedNumber = `0${i + 1}`.slice(-2);
+    return new SoundEntity(`wav/sound${paddedNumber}.wav`);
+});
 
 // Add undo dog sound
-const undoDogSound = new SoundEntity("wav/dogundo.wav");
-SOUNDS[20] = undoDogSound;
+SOUNDS[20] = new SoundEntity("wav/dogundo.wav");
 
 // Prepare Mat
 const MAT = document.getElementById("layer1");
@@ -393,18 +402,15 @@ const L1C = MAT.getContext("2d");
 L1C.imageSmoothingEnabled = false;
 const matImage = new Image();
 matImage.src = "images/mat.png";
-matImage.onload = function () {
-    L1C.drawImage(matImage, 0, 0, matImage.width * MAGNIFY, matImage.height * MAGNIFY);
-};
+matImage.onload = () => L1C.drawImage(matImage, 0, 0, matImage.width * MAGNIFY, matImage.height * MAGNIFY);
 
-// Prepare Characters
+// Prepare image resources
 const charSheet = new Image();
 charSheet.src = "images/character_sheet.png";
 
-// Prepare the Bomb!
-let BOMBS = [];
 const bombImg = new Image();
 bombImg.src = "images/bomb.png";
+let BOMBS = [];
 const bombTimer = new EasyTimer(150, drawBomb);
 bombTimer.switch = true; // always true for the bomb
 bombTimer.currentFrame = 0;
@@ -412,80 +418,39 @@ bombTimer.currentFrame = 0;
 function drawBomb(mySelf) {
     const bombX = 9 * MAGNIFY;
     const bombY = 202 * MAGNIFY;
-    const bombImage = BOMBS[mySelf.currentFrame];
-    L1C.drawImage(bombImage, bombX, bombY);
-    switch (mySelf.currentFrame) {
-        case 0:
-            mySelf.currentFrame = 1;
-            break;
-        case 1:
-            mySelf.currentFrame = 0;
-            break;
-        case 2:
-            break;
+    L1C.drawImage(BOMBS[mySelf.currentFrame], bombX, bombY);
+    mySelf.currentFrame = mySelf.currentFrame === 0 ? 1 : 0;
+
+    if (curSong !== undefined && gameStatus === 2) {
+        curSong.style.backgroundImage = `url(${curSong.images[mySelf.currentFrame + 1].src})`;
     }
-    if (curSong == undefined || gameStatus != 2) return;
-    curSong.style.backgroundImage = "url(" + curSong.images[mySelf.currentFrame + 1].src + ")";
 }
 
-// Prepare the G-Clef. (x, y) = (9, 48)
-const GClef = new Image();
-GClef.src = "images/G_Clef.png";
+// Load all required images
+const imageResources = {
+    GClef: "images/G_Clef.png",
+    numImg: "images/numbers.png",
+    marioImg: "images/Mario.png",
+    undoDogImg: "images/undo_dog.png",
+    sweatImg: "images/mario_sweat.png",
+    playBtnImg: "images/play_button.png",
+    stopBtnImg: "images/stop_button.png",
+    clearImg: "images/clear_button.png",
+    thumbImg: "images/slider_thumb.png",
+    beatImg: "images/beat_button.png",
+    songImg: "images/song_buttons.png",
+    endImg: "images/end_mark.png",
+    semitoneImg: "images/semitone.png",
+    repeatImg: "images/repeat_head.png",
+};
 
-// Prepare the numbers
-const numImg = new Image();
-numImg.src = "images/numbers.png";
-
-// Prepare the Mario images
-const marioImg = new Image();
-marioImg.src = "images/Mario.png";
-
-// Prepare the undo dog image
-const undoDogImg = new Image();
-undoDogImg.src = "images/undo_dog.png";
-
-const sweatImg = new Image();
-sweatImg.src = "images/mario_sweat.png";
-
-// Prepare the Play button
-const playBtnImg = new Image();
-playBtnImg.src = "images/play_button.png";
-
-// Prepare the Stop button
-const stopBtnImg = new Image();
-stopBtnImg.src = "images/stop_button.png";
-
-// Prepare the CLEAR button
-const clearImg = new Image();
-clearImg.src = "images/clear_button.png";
-
-// Prepare tempo range slider thumb image
-const thumbImg = new Image();
-thumbImg.src = "images/slider_thumb.png";
-
-// Prepare beat button
-const beatImg = new Image();
-beatImg.src = "images/beat_button.png";
-
-// Prepare Song buttons
-const songImg = new Image();
-songImg.src = "images/song_buttons.png";
-
-// Prepare End Mark
-const endImg = new Image();
-endImg.src = "images/end_mark.png";
-
-// Prepare Semitone
-const semitoneImg = new Image();
-semitoneImg.src = "images/semitone.png";
-
-// Prepare the repeat marks
-const repeatImg = new Image();
-repeatImg.src = "images/repeat_head.png";
+// Create image objects
+Object.entries(imageResources).forEach(([name, src]) => {
+    window[name] = new Image();
+    window[name].src = src;
+});
 
 function drawRepeatHead(xPosition) {
-    const repeatMarkWidth = repeatMark[0].width;
-    const repeatMarkHeight = repeatMark[0].height;
     L2C.drawImage(repeatMark[0], xPosition * MAGNIFY, 56 * MAGNIFY);
 }
 
