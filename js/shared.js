@@ -88,8 +88,10 @@ class SoundEntity {
         const source = audioContext.createBufferSource();
         const tmps = scale & 0x0f;
         let semitone = this.diff[tmps];
+
         if ((scale & 0x80) !== 0) semitone++;
         else if ((scale & 0x40) !== 0) semitone--;
+
         source.buffer = this.buffer;
         source.playbackRate.value = Math.pow(SEMITONERATIO, semitone);
         source.connect(audioContext.destination);
@@ -113,8 +115,10 @@ class SoundEntity {
             const source = audioContext.createBufferSource();
             const scale = note & 0x0f;
             let semitone = this.diff[scale];
+
             if ((note & 0x80) !== 0) semitone++;
             else if ((note & 0x40) !== 0) semitone--;
+
             source.buffer = this.buffer;
             source.playbackRate.value = Math.pow(SEMITONERATIO, semitone);
             source.connect(audioContext.destination);
@@ -123,29 +127,15 @@ class SoundEntity {
         });
     }
 
-    load() {
-        return new Promise((resolve, reject) => {
-            const request = new XMLHttpRequest();
-            request.open("GET", this.path, true);
-            request.responseType = "arraybuffer";
-
-            request.onload = () => {
-                audioContext.decodeAudioData(
-                    request.response,
-                    (buffer) => {
-                        if (!buffer) {
-                            reject(new Error(`error decoding file data: ${this.path}`));
-                            return;
-                        }
-                        resolve(buffer);
-                    },
-                    (error) => reject(new Error(`decodeAudioData error: ${error}`))
-                );
-            };
-
-            request.onerror = () => reject(new Error("BufferLoader: XHR error"));
-            request.send();
-        });
+    async load() {
+        try {
+            const response = await fetch(this.path);
+            const arrayBuffer = await response.arrayBuffer();
+            this.buffer = await audioContext.decodeAudioData(arrayBuffer);
+            return this.buffer;
+        } catch (error) {
+            throw new Error(`Failed to load audio: ${this.path} - ${error.message}`);
+        }
     }
 }
 
