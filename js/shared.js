@@ -456,29 +456,29 @@ function drawRepeatHead(xPosition) {
 
 // Score Area (8, 41) to (247, 148)
 function drawScore(position, notes, scroll) {
-    // Clip only X
+    // Clear and set clipping region for the score area
     L2C.clearRect(0, 0, SCREEN.width, SCREEN.height);
     L2C.save();
     L2C.rect(8 * MAGNIFY, 0, (247 - 8 + 1) * MAGNIFY, SCRHEIGHT * MAGNIFY);
     L2C.clip();
 
-    // If mouse cursor on or under the C, draw horizontal line
+    // Handle mouse interaction for edit mode
     const mouseRealX = mouseX - offsetLeft;
     const mouseRealY = mouseY - offsetTop;
     let gridPosition = toGrid(mouseRealX, mouseRealY);
-    let gridX;
-    let gridY;
-    // Edit mode only, no scroll
+    let gridX, gridY;
+
+    // Draw horizontal bar for high notes in edit mode
     if (gameStatus == 0 && gridPosition !== false) {
-        gridX = gridPosition[0];
-        gridY = gridPosition[1];
+        [gridX, gridY] = gridPosition;
         if (gridY >= 11) drawHorizontalBar(gridX, 0);
     }
 
+    // Draw G clef and repeat marks at the beginning
     if (position == 0) {
+        // Draw G clef at the start
         const gClefWidth = GClef.width;
         const gClefHeight = GClef.height;
-        // GClef image is NOT magnified yet.
         L2C.drawImage(
             GClef,
             0,
@@ -491,6 +491,7 @@ function drawScore(position, notes, scroll) {
             gClefHeight * MAGNIFY
         );
 
+        // Draw repeat mark if looping is enabled
         if (curScore.loop) {
             drawRepeatHead(41 - scroll);
         }
@@ -498,60 +499,74 @@ function drawScore(position, notes, scroll) {
         drawRepeatHead(9 - scroll);
     }
 
-    //ORANGE #F89000
+    // Calculate which beats should be highlighted orange
     const beats = curScore.beats;
-    // orange = 2, 1, 0, 3, 2, 1, 0, 3, ..... (if beats = 4)
-    //        = 2, 1, 0, 2, 1, 0, 2, 1, ..... (if beats = 3)
+    // For 4 beats: orange = 2,1,0,3,2,1,0,3,...
+    // For 3 beats: orange = 2,1,0,2,1,0,2,1,...
     const orangeBeat = beats == 4 ? 3 - ((position + 1) % 4) : 2 - ((position + 3) % 3);
+
+    // Determine starting bar index based on position
     let barIndex = position < 2 ? 2 - position : 0;
+
+    // Draw each bar in the visible area
     for (; barIndex < 9; barIndex++) {
         const originalX = 16 + 32 * barIndex - scroll;
         const x = originalX * MAGNIFY;
         const barNumber = position + barIndex - 2;
 
+        // Draw end mark if this is the last bar
         if (barNumber == curScore.end) {
             const endMarkImage = curScore.loop ? repeatMark[1] : endMark;
             L2C.drawImage(endMarkImage, x - 7 * MAGNIFY, 56 * MAGNIFY);
         }
 
+        // Draw vertical bar line
         L2C.beginPath();
         L2C.setLineDash([MAGNIFY, MAGNIFY]);
         L2C.lineWidth = MAGNIFY;
+
+        // Highlight first beat of each measure in orange
         if (barIndex % beats == orangeBeat) {
             if (gameStatus == 0) drawBarNumber(barIndex, barNumber / beats + 1);
-            L2C.strokeStyle = "#F89000";
+            L2C.strokeStyle = "#F89000"; // Orange
         } else {
-            L2C.strokeStyle = "#A0C0B0";
+            L2C.strokeStyle = "#A0C0B0"; // Light green
         }
         L2C.moveTo(x, 41 * MAGNIFY);
         L2C.lineTo(x, 148 * MAGNIFY);
         L2C.stroke();
 
+        // Skip if no notes in this bar
         const barNotes = notes[barNumber];
         if (barNotes == undefined) continue;
 
-        // Get notes down
+        // Calculate vertical offset for jumping animation
         let noteDelta = 0;
         if (gameStatus == 2 && mario.marioPosition - 2 == barNumber) {
+            // Calculate jump height based on Mario's position
             let noteIndex;
             if (mario.marioX == 120) {
                 noteIndex = mario.marioScroll >= 16 ? mario.marioScroll - 16 : mario.marioScroll + 16;
             } else {
                 noteIndex = mario.marioX + 8 - originalX;
             }
+            // Jump height table for animation
             const jumpTable = [
                 0, 1, 2, 3, 3, 4, 5, 5, 6, 6, 7, 7, 8, 8, 8, 8, 8, 8, 8, 8, 8, 7, 7, 6, 6, 5, 5, 4, 3, 3, 2, 1, 0,
             ];
             noteDelta = jumpTable[Math.round(noteIndex)];
         }
+
+        // Draw all notes in this bar
         let hasHighNote = false;
         for (let noteIndex = 0; noteIndex < barNotes.length; noteIndex++) {
-            if (typeof barNotes[noteIndex] == "string") continue; // for dynamic TEMPO
+            // Skip tempo markers
+            if (typeof barNotes[noteIndex] == "string") continue;
 
             const soundNumber = barNotes[noteIndex] >> 8;
             const noteScale = barNotes[noteIndex] & 0x0f;
-            // When curChar is eraser, and the mouse cursor is on the note,
-            // an Image of note blinks.
+
+            // Skip drawing note if eraser is hovering over it (blinking effect)
             if (
                 curChar == 16 &&
                 gridPosition != false &&
@@ -562,32 +577,38 @@ function drawScore(position, notes, scroll) {
                 continue;
             }
 
+            // Draw ledger line for high notes
             if (!hasHighNote && noteScale >= 11) {
                 hasHighNote = true;
                 drawHorizontalBar(barIndex, scroll);
             }
+
+            // Draw the note
             L2C.drawImage(SOUNDS[soundNumber].image, x - HALFCHARSIZE, (40 + noteScale * 8 + noteDelta) * MAGNIFY);
 
+            // Draw accidentals (sharps/flats)
             const x2 = x - 13 * MAGNIFY;
             const y = (44 + noteScale * 8 + noteDelta) * MAGNIFY;
             if ((barNotes[noteIndex] & 0x80) != 0) {
-                L2C.drawImage(Semitones[0], x2, y);
+                L2C.drawImage(Semitones[0], x2, y); // Sharp
             } else if ((barNotes[noteIndex] & 0x40) != 0) {
-                L2C.drawImage(Semitones[1], x2, y);
+                L2C.drawImage(Semitones[1], x2, y); // Flat
             }
         }
     }
+
+    // Draw cursor rectangle in edit mode
     if (gameStatus == 0) {
         L2C.beginPath();
         L2C.setLineDash([7 * MAGNIFY, 2 * MAGNIFY, 7 * MAGNIFY, 0]);
         L2C.lineWidth = MAGNIFY;
         L2C.strokeStyle = "#F00";
-        const xorg = 16 + 32 * gridX - 8;
-        const x = xorg * MAGNIFY;
+        const x = (16 + 32 * gridX - 8) * MAGNIFY;
         const y = (40 + gridY * 8) * MAGNIFY;
         L2C.rect(x, y, CHARSIZE, CHARSIZE);
         L2C.stroke();
     }
+
     L2C.restore();
 }
 
