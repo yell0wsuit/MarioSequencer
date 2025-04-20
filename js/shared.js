@@ -758,7 +758,7 @@ function mouseClickListener(event) {
         undoHistory.push({
             type: "endmark",
             oldEnd: curScore.end,
-            newEnd: barNumber
+            newEnd: barNumber,
         });
         curScore.end = barNumber;
         updateUndoButtonState();
@@ -1335,7 +1335,7 @@ function onload() {
             undoButton.addEventListener("click", function () {
                 if (undoHistory.length > 0) {
                     const lastAction = undoHistory.pop();
-                    
+
                     if (lastAction.type === "add") {
                         const barNotes = curScore.notes[lastAction.barNumber];
                         // Remove the note that was added
@@ -1351,7 +1351,7 @@ function onload() {
                         // Restore the previous end mark position
                         curScore.end = lastAction.oldEnd;
                     }
-                    
+
                     SOUNDS[20].play(8); // Play dogundo sound
                     drawScore(curPos, curScore.notes, 0);
                     updateUndoButtonState(); // Update undo button state after undoing
@@ -1766,6 +1766,16 @@ function onload() {
                             const scrollBar = document.getElementById("scroll");
                             if (scrollBar.value < curMaxBars - 6) curPos = ++scrollBar.value;
                             event.preventDefault();
+                        }
+                        break;
+
+                    case "KeyZ": // Ctrl+Z or Command+Z for undo
+                        if ((event.ctrlKey || event.metaKey) && !event.shiftKey && gameStatus === 0) {
+                            const undoButton = document.getElementById("undo");
+                            if (!undoButton.disabled) {
+                                undoButton.click();
+                                event.preventDefault();
+                            }
                         }
                         break;
                 }

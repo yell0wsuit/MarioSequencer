@@ -37,6 +37,7 @@ Mario Sequencer - Web Edition. Fork of <https://github.com/minghai/MarioSequence
 
 - **Undoing Actions**  
   The **Undo Dog** undoes the last action, including adding notes or the End Mark.  
+  You can also use Ctrl + Z (or ⌘ + Z).  
   ⚠️ You *cannot* undo after pressing the **CLEAR** button!
 
 ## Parameters
