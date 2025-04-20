@@ -2,15 +2,15 @@
  *  Mario Sequencer Web edition
  *    Programmed by minghai (http://github.com/minghai)
  *    Modified by yell0wsuit (https://github.com/yell0wsuit)
-*/
+ */
 
 // Checking the parameters
 const OPTS = Object.fromEntries(
     window.location.search
         .slice(1)
         .split("&")
-        .filter(param => param)
-        .map(param => {
+        .filter((param) => param)
+        .map((param) => {
             const [key, value] = param.split("=");
             return [key, value];
         })
@@ -67,18 +67,13 @@ let endMark = null;
 let gameStatus = 0;
 
 // shim layer with setTimeout fallback
-window.requestAnimFrame = (function () {
-    return (
-        window.requestAnimationFrame ||
-        window.webkitRequestAnimationFrame ||
-        window.mozRequestAnimationFrame ||
-        window.oRequestAnimationFrame ||
-        window.msRequestAnimationFrame ||
-        function (callback) {
-            window.setTimeout(callback, 1000 / 60);
-        }
-    );
-})();
+window.requestAnimFrame =
+    window.requestAnimationFrame ||
+    window.webkitRequestAnimationFrame ||
+    window.mozRequestAnimationFrame ||
+    window.oRequestAnimationFrame ||
+    window.msRequestAnimationFrame ||
+    ((callback) => window.setTimeout(callback, 1000 / 60));
 
 // Modernized SoundEntity class
 class SoundEntity {
