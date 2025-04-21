@@ -1118,16 +1118,22 @@ const resizeScreen = () => {
     // Make number images from the number sheet
     NUMBERS = sliceImage(numImg, 5, 7);
 
+    // Get beat buttons and slice images once
     const beats3Button = document.getElementById("3beats");
-    beats3Button.redraw();
-    const beatImages = sliceImage(beatImg, 14, 15);
-    beats3Button.images = [beatImages[0], beatImages[1]];
-    const beatsButtonState = curScore.beats === 3 ? 1 : 0;
-    beats3Button.style.backgroundImage = `url(${beats3Button.images[beatsButtonState].src})`;
     const beats4Button = document.getElementById("4beats");
+    beats3Button.redraw();
     beats4Button.redraw();
+    
+    const beatImages = sliceImage(beatImg, 14, 15);
+    
+    // Set images for both buttons at once
+    beats3Button.images = [beatImages[0], beatImages[1]];
     beats4Button.images = [beatImages[2], beatImages[3]];
-    beats4Button.style.backgroundImage = `url(${beats4Button.images[1 - beatsButtonState].src})`;
+    
+    // Determine state once and apply to both buttons
+    const is3Beats = curScore.beats === 3;
+    beats3Button.style.backgroundImage = `url(${beats3Button.images[is3Beats ? 1 : 0].src})`;
+    beats4Button.style.backgroundImage = `url(${beats4Button.images[is3Beats ? 0 : 1].src})`;
 
     const frogButton = document.getElementById("frog");
     frogButton.redraw();
