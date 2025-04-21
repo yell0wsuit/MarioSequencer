@@ -1135,22 +1135,24 @@ const resizeScreen = () => {
     beats3Button.style.backgroundImage = `url(${beats3Button.images[is3Beats ? 1 : 0].src})`;
     beats4Button.style.backgroundImage = `url(${beats4Button.images[is3Beats ? 0 : 1].src})`;
 
-    const frogButton = document.getElementById("frog");
-    frogButton.redraw();
+    // Slice song button images once
     const songImages = sliceImage(songImg, 15, 17);
-    frogButton.images = [songImages[0], songImages[1], songImages[2]];
-    const frogButtonState = curSong === frogButton ? 1 : 0;
-    frogButton.style.backgroundImage = `url(${frogButton.images[frogButtonState].src})`;
-    const beakButton = document.getElementById("beak");
-    beakButton.redraw();
-    beakButton.images = [songImages[3], songImages[4], songImages[5]];
-    const beakButtonState = curSong === beakButton ? 1 : 0;
-    beakButton.style.backgroundImage = `url(${beakButton.images[beakButtonState].src})`;
-    const oneUpButton = document.getElementById("1up");
-    oneUpButton.redraw();
-    oneUpButton.images = [songImages[6], songImages[7], songImages[8]];
-    const oneUpButtonState = curSong === oneUpButton ? 1 : 0;
-    oneUpButton.style.backgroundImage = `url(${oneUpButton.images[oneUpButtonState].src})`;
+    
+    // Configure all song buttons with a single loop
+    const songButtons = [
+        { id: "frog", imageIndices: [0, 1, 2] },
+        { id: "beak", imageIndices: [3, 4, 5] },
+        { id: "1up", imageIndices: [6, 7, 8] }
+    ];
+    
+    songButtons.forEach(button => {
+        const element = document.getElementById(button.id);
+        element.redraw();
+        element.images = button.imageIndices.map(i => songImages[i]);
+        const buttonState = curSong === element ? 1 : 0;
+        element.style.backgroundImage = `url(${element.images[buttonState].src})`;
+    });
+    
     const eraserButton = document.getElementById("eraser");
     eraserButton.redraw();
     eraserButton.images = [songImages[9], songImages[10], songImages[11]];
