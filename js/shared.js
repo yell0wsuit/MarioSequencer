@@ -1244,25 +1244,30 @@ function onload() {
             // Prepare End Mark button (Char. No. 15)
             const endMarkButton = makeButton(235, 8, 13, 14, "button", "Add end mark");
             endMarkButton.images = sliceImage(endImg, 14, 13); // Note: Different size from the button
-            endMarkTimer = new EasyTimer(150, function (self) {
-                // If current is not end mark, just return;
-                if (curChar != 15) {
+            
+            // Create timer for end mark cursor animation
+            endMarkTimer = new EasyTimer(150, self => {
+                if (curChar !== 15) {
                     self.switch = false;
                     return;
                 }
-                self.currentFrame = self.currentFrame == 0 ? 1 : 0;
-                SCREEN.style.cursor =
-                    "url(" + self.images[self.currentFrame].src + ")" + 7 * MAGNIFY + " " + 7 * MAGNIFY + ", auto";
+                self.currentFrame ^= 1; // Toggle between 0 and 1
+                SCREEN.style.cursor = `url(${self.images[self.currentFrame].src})${7 * MAGNIFY} ${7 * MAGNIFY}, auto`;
             });
+            
+            // Set up timer properties
             endMarkTimer.images = endMarkButton.images;
             endMarkTimer.currentFrame = 0;
-            endMarkButton.addEventListener("click", function () {
+            
+            // Add click handler
+            endMarkButton.addEventListener("click", function() {
                 endMarkTimer.switch = true;
                 curChar = 15;
                 SOUNDS[15].play(8);
                 clearEraserButton();
                 drawEndMarkIcon(this.images[0]);
             });
+            
             CONSOLE.appendChild(endMarkButton);
             BUTTONS[15] = endMarkButton;
 
