@@ -1198,564 +1198,579 @@ const download = () => {
     URL.revokeObjectURL(link.href); // Clean up to avoid memory leaks
 };
 
+function setupNoteButtons() {
+    const buttonImages = sliceImage(charSheet, 16, 16);
+
+    // Create all note buttons at once
+    const createNoteButton = (i) => {
+        const button = makeButton(24 + 14 * i, 8, 13, 14, "button", `Select note ${i + 1}`);
+        button.num = i;
+        button.se = SOUNDS[i];
+        button.se.image = buttonImages[i];
+        button.addEventListener("click", function () {
+            this.se.play(8); // Note F
+            curChar = this.num;
+            clearEraserButton();
+            changeCursor(this.num);
+            drawCurChar(this.se.image);
+        });
+        CONSOLE.appendChild(button);
+        return button;
+    };
+
+    // Create all 15 buttons at once and store them in BUTTONS array
+    BUTTONS.splice(0, 15, ...Array.from({ length: 15 }, (_, i) => createNoteButton(i)));
+
+    // Setup End Mark Button
+    const endMarkButton = makeButton(235, 8, 13, 14, "button", "Add end mark");
+    endMarkButton.images = sliceImage(endImg, 14, 13); // Note: Different size from the button
+
+    // Create timer for end mark cursor animation
+    endMarkTimer = new EasyTimer(150, (self) => {
+        if (curChar !== 15) {
+            self.switch = false;
+            return;
+        }
+        self.currentFrame ^= 1; // Toggle between 0 and 1
+        SCREEN.style.cursor = `url(${self.images[self.currentFrame].src})${7 * MAGNIFY} ${7 * MAGNIFY}, auto`;
+    });
+
+    // Set up timer properties
+    endMarkTimer.images = endMarkButton.images;
+    endMarkTimer.currentFrame = 0;
+
+    // Add click handler
+    endMarkButton.addEventListener("click", function () {
+        endMarkTimer.switch = true;
+        curChar = 15;
+        SOUNDS[15].play(8);
+        clearEraserButton();
+        drawEndMarkIcon(this.images[0]);
+    });
+
+    CONSOLE.appendChild(endMarkButton);
+    BUTTONS[15] = endMarkButton;
+
+    // Setup Eraser Button
+    setupEraserButton();
+}
+
+function setupEraserButton() {
+    const songImages = sliceImage(songImg, 15, 17);
+    const eraserButton = makeButton(40, 202, 15, 17, "button", "Erase notes");
+    eraserButton.id = "eraser";
+    eraserButton.images = [songImages[9], songImages[10], songImages[11]]; // In the Song button images
+    eraserButton.style.backgroundImage = "url(" + eraserButton.images[0].src + ")";
+    eraserTimer = new EasyTimer(200, function (self) {
+        // If current is not end mark, just return;
+        if (curChar != 16) {
+            self.switch = false;
+            return;
+        }
+        self.currentFrame = self.currentFrame == 0 ? 1 : 0;
+    });
+    eraserTimer.currentFrame = 0;
+    eraserButton.addEventListener("click", function () {
+        eraserTimer.switch = true;
+        curChar = 16;
+        SOUNDS[17].play(8);
+        drawEraserIcon();
+        clearSongButtons();
+        this.style.backgroundImage = "url(" + this.images[1].src + ")";
+        SCREEN.style.cursor = "url(" + this.images[2].src + ")" + " 0 0, auto";
+    });
+    CONSOLE.appendChild(eraserButton);
+}
+
+function setupControlButtons() {
+    // For inserting pseudo elements' styles
+    const style = document.createElement("style");
+    document.head.appendChild(style);
+    pseudoSheet = style.sheet;
+
+    // Prepare Play Button (55, 168)
+    const playButton = makeButton(55, 168, 12, 15, "button", "Play music");
+    playButton.id = "play";
+    playButton.images = sliceImage(playBtnImg, 12, 15);
+    playButton.style.backgroundImage = `url(${playButton.images[0].src})`;
+    playButton.addEventListener("click", playListener);
+    pseudoSheet.insertRule("#play:focus {outline: none !important;}", 0);
+    CONSOLE.appendChild(playButton);
+
+    // Stop Button
+    const stopButton = makeButton(21, 168, 16, 15, "button", "Stop music");
+    stopButton.id = "stop";
+    stopButton.disabled = true;
+    // Slice images once and store for reuse (also used by loop button)
+    const stopButtonImages = sliceImage(stopBtnImg, 16, 15);
+    stopButton.images = stopButtonImages.slice(0, 2);
+    stopButton.style.backgroundImage = `url(${stopButton.images[1].src})`;
+    stopButton.addEventListener("click", stopListener);
+    pseudoSheet.insertRule("#stop:focus {outline: none !important;}", 0);
+    CONSOLE.appendChild(stopButton);
+
+    // Undo Button
+    const undoButton = makeButton(216, 203, 14, 15, "button", "Undo last action");
+    undoButton.id = "undo";
+    undoButton.images = sliceImage(undoDogImg, 14, 15);
+    undoButton.style.backgroundImage = `url(${undoButton.images[0].src})`;
+    undoButton.addEventListener("click", function () {
+        if (undoHistory.length === 0) return;
+
+        const lastAction = undoHistory.pop();
+        const barNotes = lastAction.type !== "endmark" ? curScore.notes[lastAction.barNumber] : null;
+
+        switch (lastAction.type) {
+            case "add":
+                const index = barNotes.indexOf(lastAction.note);
+                if (index !== -1) barNotes.splice(index, 1);
+                break;
+            case "delete":
+                barNotes.push(lastAction.note);
+                break;
+            case "endmark":
+                curScore.end = lastAction.oldEnd;
+                break;
+        }
+
+        SOUNDS[20].play(8); // Play dogundo sound
+        drawScore(curPos, curScore.notes, 0);
+        updateUndoButtonState();
+
+        // Add hover effect
+        this.style.backgroundImage = `url(${this.images[1].src})`;
+        setTimeout(() => {
+            this.style.backgroundImage = `url(${this.images[0].src})`;
+        }, 150);
+    });
+    CONSOLE.appendChild(undoButton);
+    pseudoSheet.insertRule("#undo:focus {outline: none !important;}", 0);
+    updateUndoButtonState();
+
+    // Loop Button
+    const loopButton = makeButton(85, 168, 16, 15, "button", "Toggle music loop");
+    loopButton.id = "loop";
+    loopButton.images = [stopButtonImages[2], stopButtonImages[3]]; // made in Stop button (above)
+    loopButton.style.backgroundImage = `url(${loopButton.images[0].src})`;
+    curScore.loop = false;
+    loopButton.addEventListener("click", function () {
+        curScore.loop = !curScore.loop;
+        const buttonState = curScore.loop ? 1 : 0;
+        this.style.backgroundImage = `url(${this.images[buttonState].src})`;
+        SOUNDS[17].play(8);
+    });
+    loopButton.reset = function () {
+        curScore.loop = false;
+        this.style.backgroundImage = `url(${this.images[0].src})`;
+    };
+    loopButton.set = function () {
+        curScore.loop = true;
+        this.style.backgroundImage = `url(${this.images[1].src})`;
+    };
+    pseudoSheet.insertRule("#loop:focus {outline: none !important;}", 0);
+    CONSOLE.appendChild(loopButton);
+
+    // Repeat Button
+    repeatMark = sliceImage(repeatImg, 13, 62);
+    endMark = repeatMark[2];
+
+    // Clear Button
+    const clearButton = makeButton(200, 176, 34, 16, "button", "Clear all notes");
+    clearButton.id = "clear";
+    clearButton.images = sliceImage(clearImg, 34, 16);
+    clearButton.style.backgroundImage = "url(" + clearButton.images[0].src + ")";
+    clearButton.addEventListener("click", clearListener);
+    CONSOLE.appendChild(clearButton);
+    pseudoSheet.insertRule("#clear:focus {outline: none !important;}", 0);
+}
+
+function setupUIControls() {
+    // Scroll Range
+    const scrollBar = document.createElement("input");
+    scrollBar.id = "scroll";
+    scrollBar.type = "range";
+    scrollBar.setAttribute("aria-label", "Scroll through music");
+
+    // Set all properties in a single object
+    Object.assign(scrollBar, {
+        value: 0,
+        max: curMaxBars - 6,
+        min: 0,
+        step: 1,
+        originalX: 191,
+        originalY: 159,
+        originalW: 50,
+        originalH: 7,
+    });
+
+    // Set all styles in a single object
+    Object.assign(scrollBar.style, {
+        cursor: "pointer",
+        "-webkit-appearance": "none",
+        "border-radius": "0px",
+        "background-color": "#F8F8F8",
+        "box-shadow": "inset 0 0 0 #000",
+        "vertical-align": "middle",
+        position: "absolute",
+        margin: 0,
+    });
+
+    // Position and size the element
+    moveDOM(scrollBar, scrollBar.originalX, scrollBar.originalY);
+    resizeDOM(scrollBar, scrollBar.originalW, scrollBar.originalH);
+
+    // Add event listener for scrolling in edit mode only
+    scrollBar.addEventListener("input", () => {
+        if (gameStatus === 0) {
+            curPos = parseInt(scrollBar.value);
+        }
+    });
+
+    CONSOLE.appendChild(scrollBar);
+
+    // Set up scroll bar thumb styling
+    pseudoSheet.insertRule(
+        "#scroll::-webkit-slider-thumb {" +
+            "-webkit-appearance: none !important;" +
+            "border-radius: 0px;" +
+            "background-color: #A870D0;" +
+            "box-shadow:inset 0 0 0px;" +
+            "border: 0px;" +
+            "width: " +
+            5 * MAGNIFY +
+            "px;" +
+            "height:" +
+            7 * MAGNIFY +
+            "px;}",
+        0
+    );
+    pseudoSheet.insertRule("#scroll:focus {outline: none !important;}", 0);
+
+    // Prepare range's side buttons for inc/decrements
+    const leftButton = makeButton(184, 158, 7, 9, "button", "Scroll left");
+    leftButton.id = "toLeft";
+    leftButton.addEventListener("click", function (event) {
+        const scrollBar = document.getElementById("scroll");
+        if (scrollBar.value > 0) {
+            curPos = --scrollBar.value;
+        }
+    });
+    CONSOLE.appendChild(leftButton);
+
+    const rightButton = makeButton(241, 158, 7, 9, "button", "Scroll right");
+    rightButton.id = "toRight";
+    rightButton.addEventListener("click", function (event) {
+        const scrollBar = document.getElementById("scroll");
+        if (scrollBar.value < curMaxBars - 6) {
+            curPos = ++scrollBar.value;
+        }
+    });
+    CONSOLE.appendChild(rightButton);
+
+    // Tempo Range
+    const tempoSlider = document.createElement("input");
+    tempoSlider.id = "tempo";
+    tempoSlider.type = "range";
+    tempoSlider.setAttribute("aria-label", "Adjust tempo");
+
+    // Set all properties in a single object
+    Object.assign(tempoSlider, {
+        value: 525,
+        max: 1000,
+        min: 50,
+        step: 1,
+        originalX: 116,
+        originalY: 172,
+        originalW: 40,
+        originalH: 8,
+    });
+
+    // Set all styles in a single object
+    Object.assign(tempoSlider.style, {
+        cursor: "pointer",
+        "-webkit-appearance": "none",
+        "border-radius": "0px",
+        "background-color": "rgba(0, 0, 0, 0.0)",
+        "box-shadow": "inset 0 0 0 #000",
+        "vertical-align": "middle",
+        position: "absolute",
+        margin: 0,
+    });
+
+    // Position and size the element
+    moveDOM(tempoSlider, tempoSlider.originalX, tempoSlider.originalY);
+    resizeDOM(tempoSlider, tempoSlider.originalW, tempoSlider.originalH);
+
+    // Add event listener
+    tempoSlider.addEventListener("input", function () {
+        curScore.tempo = parseInt(this.value);
+    });
+
+    CONSOLE.appendChild(tempoSlider);
+
+    const thumbImage = sliceImage(thumbImg, 5, 8)[0];
+    tempoSlider.image = thumbImage;
+
+    // Setup tempo slider thumb styling
+    pseudoSheet.insertRule(
+        "#tempo::-webkit-slider-thumb {" +
+            "-webkit-appearance: none !important;" +
+            "background-image: url('" +
+            thumbImage.src +
+            "');" +
+            "background-repeat: no-repeat;" +
+            "background-size: 100% 100%;" +
+            "border: 0px;" +
+            "width: " +
+            5 * MAGNIFY +
+            "px;" +
+            "height:" +
+            8 * MAGNIFY +
+            "px;}",
+        0
+    );
+    pseudoSheet.insertRule("#tempo:focus {outline: none !important;}", 0);
+}
+
+function setupBeatButtons() {
+    // Create utility function for exclusive button selection
+    function makeExclusiveFunction(buttons, index, success) {
+        const buttonList = buttons.slice(0); // Clone the Array
+        const self = buttonList[index];
+        buttonList.splice(index, 1); // Remove No.i element
+        const otherButtons = buttonList;
+
+        return function (event) {
+            // Sound Off for file loading
+            if (!event.soundOff) SOUNDS[17].play(8);
+            self.disabled = true;
+            self.style.backgroundImage = "url(" + self.images[1].src + ")";
+            otherButtons.map(function (button) {
+                button.disabled = false;
+                button.style.backgroundImage = "url(" + button.images[0].src + ")";
+            });
+            success(self);
+        };
+    }
+
+    const beatImages = sliceImage(beatImg, 14, 15);
+
+    // Create 3 beats button
+    const beats3Button = makeButton(81, 203, 14, 15, "button", "Set 3 beats per measure");
+    beats3Button.id = "3beats";
+    beats3Button.beats = 3;
+    beats3Button.images = [beatImages[0], beatImages[1]];
+    beats3Button.style.backgroundImage = "url(" + beats3Button.images[0].src + ")";
+    beats3Button.disabled = false;
+    CONSOLE.appendChild(beats3Button);
+
+    // Create 4 beats button
+    const beats4Button = makeButton(96, 203, 14, 15, "button", "Set 4 beats per measure");
+    beats4Button.id = "4beats";
+    beats4Button.beats = 4;
+    beats4Button.images = [beatImages[2], beatImages[3]];
+    beats4Button.style.backgroundImage = "url(" + beats4Button.images[1].src + ")";
+    beats4Button.disabled = true;
+    CONSOLE.appendChild(beats4Button);
+
+    // Setup beat button event handlers
+    const updateBeats = function (self) {
+        curScore.beats = self.beats;
+    };
+    beats3Button.addEventListener("click", makeExclusiveFunction([beats3Button, beats4Button], 0, updateBeats));
+    beats4Button.addEventListener("click", makeExclusiveFunction([beats3Button, beats4Button], 1, updateBeats));
+
+    // Store makeExclusiveFunction for reuse in other contexts
+    window.makeExclusiveFunction = makeExclusiveFunction;
+}
+
+function setupSongButtons() {
+    const songImages = sliceImage(songImg, 15, 17);
+    const songButtons = ["frog", "beak", "1up"].map(function (id, index) {
+        const button = makeButton(136 + 24 * index, 202, 15, 17, "button", `Load ${id} song`);
+        button.id = id;
+        button.num = index;
+        button.images = songImages.slice(index * 3, index * 3 + 3);
+        button.style.backgroundImage = "url(" + button.images[0].src + ")";
+        button.disabled = false;
+        CONSOLE.appendChild(button);
+        return button;
+    });
+
+    const loadSong = function (self) {
+        curScore = clone(EmbeddedSong[self.num]);
+        document.getElementById("tempo").value = curScore.tempo;
+        const loopButton = document.getElementById("loop");
+        if (curScore.loop) loopButton.set();
+        else loopButton.reset();
+        const scrollBar = document.getElementById("scroll");
+        scrollBar.max = curScore.end - 5;
+        scrollBar.value = 0;
+        curPos = 0;
+        curSong = self;
+    };
+
+    // Use the makeExclusiveFunction created in setupBeatButtons
+    songButtons[0].addEventListener("click", makeExclusiveFunction(songButtons, 0, loadSong));
+    songButtons[1].addEventListener("click", makeExclusiveFunction(songButtons, 1, loadSong));
+    songButtons[2].addEventListener("click", makeExclusiveFunction(songButtons, 2, loadSong));
+}
+
+function setupKeyboardControls() {
+    document.addEventListener("keydown", function (event) {
+        switch (event.code) {
+            case "Space": // space -> play/stop or restart with shift
+                const playButton = document.getElementById("play");
+                if (playButton.disabled == false || event.shiftKey) {
+                    playListener.call(playButton, event);
+                } else {
+                    stopListener.call(document.getElementById("stop"), event);
+                }
+                event.preventDefault();
+                break;
+
+            case "ArrowLeft": // left -> scroll left
+                if (gameStatus === 0) {
+                    // Only allow scrolling in edit mode
+                    const scrollBar = document.getElementById("scroll");
+                    if (scrollBar.value > 0) curPos = --scrollBar.value;
+                    event.preventDefault();
+                }
+                break;
+
+            case "ArrowRight": // right -> scroll right
+                if (gameStatus === 0) {
+                    // Only allow scrolling in edit mode
+                    const scrollBar = document.getElementById("scroll");
+                    if (scrollBar.value < curMaxBars - 6) curPos = ++scrollBar.value;
+                    event.preventDefault();
+                }
+                break;
+
+            case "KeyZ": // Ctrl+Z or Command+Z for undo
+                if ((event.ctrlKey || event.metaKey) && !event.shiftKey && gameStatus === 0) {
+                    const undoButton = document.getElementById("undo");
+                    if (!undoButton.disabled) {
+                        undoButton.click();
+                        event.preventDefault();
+                    }
+                }
+                break;
+        }
+    });
+}
+
+async function loadSoundAndInitialize() {
+    // Number images
+    NUMBERS = sliceImage(numImg, 5, 7);
+
+    // Initialize score
+    initScore();
+
+    // Initialize screen and cursor
+    curPos = 0;
+    curChar = 0;
+    drawCurChar(SOUNDS[curChar].image);
+    changeCursor(curChar);
+    drawScore(curPos, curScore["notes"], 0);
+
+    // Create images
+    BOMBS = sliceImage(bombImg, 14, 18);
+    mario = new MarioClass();
+    mario.images = sliceImage(marioImg, 16, 22);
+    Semitones = sliceImage(semitoneImg, 5, 12);
+
+    // Load Sound Files
+    const buffers = await Promise.all(SOUNDS.map((sound) => sound.load()));
+    // Assign all buffers to their respective sounds
+    buffers.forEach((buffer, index) => {
+        SOUNDS[index].buffer = buffer;
+    });
+    CONSOLE.removeChild(document.getElementById("spinner"));
+    // Process URL parameters if provided
+    processUrlParameters();
+}
+
+function processUrlParameters() {
+    // Exit early if no options are provided
+    if (Object.keys(OPTS).length === 0) return;
+
+    // Initialize score before loading external data
+    if (OPTS.url || OPTS.S || OPTS.SCORE) {
+        fullInitScore();
+    }
+
+    // Handle URL-based score loading
+    if (OPTS.url) {
+        return fetch(OPTS.url)
+            .then((response) => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error ${response.status}`);
+                }
+                return response.text();
+            })
+            .then((data) => {
+                // Determine file type by extension and process accordingly
+                OPTS.url.endsWith(".msq") ? addMSQ(data) : addJSON(data);
+                closing();
+            })
+            .catch((error) => {
+                console.error(`Downloading File: ${OPTS.url} failed:`, error);
+                alert(`Downloading File: ${OPTS.url} failed: ${error.message}`);
+            });
+    }
+    // Handle parameter-based score loading
+    else if (OPTS.S || OPTS.SCORE) {
+        const score = OPTS.SCORE || OPTS.S;
+        const tempo = OPTS.TEMPO || OPTS.T;
+        const loop = OPTS.LOOP || OPTS.L;
+        const end = OPTS.END || OPTS.E;
+        const beats = OPTS.TIME44 || OPTS.B;
+
+        if (!tempo || !loop || !end || !beats) {
+            throw new Error("Not enough parameters");
+        }
+
+        const loopValue = loop.toUpperCase() === "T" || loop.toUpperCase() === "TRUE" ? "TRUE" : "FALSE";
+        const beatsValue = beats.toUpperCase() === "T" || beats.toUpperCase() === "TRUE" ? "TRUE" : "FALSE";
+
+        const text = [
+            `SCORE=${score}`,
+            `TEMPO=${tempo}`,
+            `LOOP=${loopValue}`,
+            `END=${end}`,
+            `TIME44=${beatsValue}`,
+        ].join("\n");
+
+        addMSQ(text);
+        closing();
+    }
+}
+
 // INIT routine
 window.addEventListener("load", onload);
+
 function onload() {
-    // Load embedded songs first
+    // Load embedded songs first, then initialize the UI
     loadEmbeddedSongs()
         .then(() => {
-            // Make buttons for changing a kind of notes.
-            //   1st mario:   x=24, y=8, width=13, height=14
-            //   2nd Kinopio: X=38, y=8, width=13, height=14
-            //   and so on...
-            const buttonImages = sliceImage(charSheet, 16, 16);
-
-            // Create all note buttons at once
-            const createNoteButton = (i) => {
-                const button = makeButton(24 + 14 * i, 8, 13, 14, "button", `Select note ${i + 1}`);
-                button.num = i;
-                button.se = SOUNDS[i];
-                button.se.image = buttonImages[i];
-                button.addEventListener("click", function () {
-                    this.se.play(8); // Note F
-                    curChar = this.num;
-                    clearEraserButton();
-                    changeCursor(this.num);
-                    drawCurChar(this.se.image);
-                });
-                CONSOLE.appendChild(button);
-                return button;
-            };
-
-            // Create all 15 buttons at once and store them in BUTTONS array
-            BUTTONS.splice(0, 15, ...Array.from({ length: 15 }, (_, i) => createNoteButton(i)));
-
-            // Prepare End Mark button (Char. No. 15)
-            const endMarkButton = makeButton(235, 8, 13, 14, "button", "Add end mark");
-            endMarkButton.images = sliceImage(endImg, 14, 13); // Note: Different size from the button
-
-            // Create timer for end mark cursor animation
-            endMarkTimer = new EasyTimer(150, (self) => {
-                if (curChar !== 15) {
-                    self.switch = false;
-                    return;
-                }
-                self.currentFrame ^= 1; // Toggle between 0 and 1
-                SCREEN.style.cursor = `url(${self.images[self.currentFrame].src})${7 * MAGNIFY} ${7 * MAGNIFY}, auto`;
-            });
-
-            // Set up timer properties
-            endMarkTimer.images = endMarkButton.images;
-            endMarkTimer.currentFrame = 0;
-
-            // Add click handler
-            endMarkButton.addEventListener("click", function () {
-                endMarkTimer.switch = true;
-                curChar = 15;
-                SOUNDS[15].play(8);
-                clearEraserButton();
-                drawEndMarkIcon(this.images[0]);
-            });
-
-            CONSOLE.appendChild(endMarkButton);
-            BUTTONS[15] = endMarkButton;
-
-            // For inserting pseudo elements' styles
-            const style = document.createElement("style");
-            document.head.appendChild(style);
-            pseudoSheet = style.sheet;
-
-            // Prepare Play Button (55, 168)
-            const playButton = makeButton(55, 168, 12, 15, "button", "Play music");
-            playButton.id = "play";
-            playButton.images = sliceImage(playBtnImg, 12, 15);
-            playButton.style.backgroundImage = `url(${playButton.images[0].src})`;
-            playButton.addEventListener("click", playListener);
-            pseudoSheet.insertRule("#play:focus {outline: none !important;}", 0);
-            CONSOLE.appendChild(playButton);
-
-            // Prepare Stop Button (21, 168)
-            const stopButton = makeButton(21, 168, 16, 15, "button", "Stop music");
-            stopButton.id = "stop";
-            stopButton.disabled = true;
-
-            // Slice images once and store for reuse (also used by loop button)
-            const stopButtonImages = sliceImage(stopBtnImg, 16, 15);
-            stopButton.images = stopButtonImages.slice(0, 2);
-            stopButton.style.backgroundImage = `url(${stopButton.images[1].src})`;
-
-            stopButton.addEventListener("click", stopListener);
-            pseudoSheet.insertRule("#stop:focus {outline: none !important;}", 0);
-            CONSOLE.appendChild(stopButton);
-
-            // Prepare Undo Button
-            const undoButton = makeButton(216, 203, 14, 15, "button", "Undo last action");
-            undoButton.id = "undo";
-            undoButton.images = sliceImage(undoDogImg, 14, 15);
-            undoButton.style.backgroundImage = `url(${undoButton.images[0].src})`;
-
-            undoButton.addEventListener("click", function () {
-                if (undoHistory.length === 0) return;
-
-                const lastAction = undoHistory.pop();
-                const barNotes = lastAction.type !== "endmark" ? curScore.notes[lastAction.barNumber] : null;
-
-                switch (lastAction.type) {
-                    case "add":
-                        const index = barNotes.indexOf(lastAction.note);
-                        if (index !== -1) barNotes.splice(index, 1);
-                        break;
-                    case "delete":
-                        barNotes.push(lastAction.note);
-                        break;
-                    case "endmark":
-                        curScore.end = lastAction.oldEnd;
-                        break;
-                }
-
-                SOUNDS[20].play(8); // Play dogundo sound
-                drawScore(curPos, curScore.notes, 0);
-                updateUndoButtonState();
-
-                // Add hover effect
-                this.style.backgroundImage = `url(${this.images[1].src})`;
-                setTimeout(() => {
-                    this.style.backgroundImage = `url(${this.images[0].src})`;
-                }, 150);
-            });
-
-            CONSOLE.appendChild(undoButton);
-            pseudoSheet.insertRule("#undo:focus {outline: none !important;}", 0);
-
-            // Initialize undo button state after creation
-            updateUndoButtonState();
-
-            // Prepare Loop Button (85, 168)
-            const loopButton = makeButton(85, 168, 16, 15, "button", "Toggle music loop");
-            loopButton.id = "loop";
-            loopButton.images = [stopButtonImages[2], stopButtonImages[3]]; // made in Stop button (above)
-            loopButton.style.backgroundImage = `url(${loopButton.images[0].src})`;
-            curScore.loop = false;
-
-            loopButton.addEventListener("click", function () {
-                curScore.loop = !curScore.loop;
-                const buttonState = curScore.loop ? 1 : 0;
-                this.style.backgroundImage = `url(${this.images[buttonState].src})`;
-                SOUNDS[17].play(8);
-            });
-
-            loopButton.reset = function () {
-                curScore.loop = false;
-                this.style.backgroundImage = `url(${this.images[0].src})`;
-            };
-
-            loopButton.set = function () {
-                curScore.loop = true;
-                this.style.backgroundImage = `url(${this.images[1].src})`;
-            };
-
-            style.sheet.insertRule("#loop:focus {outline: none !important;}", 0);
-            CONSOLE.appendChild(loopButton);
-
-            // Prepare Repeat (global!)
-            repeatMark = sliceImage(repeatImg, 13, 62);
-            endMark = repeatMark[2];
-
-            // Prepare Scroll Range
-            const scrollBar = document.createElement("input");
-            scrollBar.id = "scroll";
-            scrollBar.type = "range";
-            scrollBar.setAttribute("aria-label", "Scroll through music");
-
-            // Set all properties in a single object
-            Object.assign(scrollBar, {
-                value: 0,
-                max: curMaxBars - 6,
-                min: 0,
-                step: 1,
-                originalX: 191,
-                originalY: 159,
-                originalW: 50,
-                originalH: 7,
-            });
-
-            // Set all styles in a single object
-            Object.assign(scrollBar.style, {
-                cursor: "pointer",
-                "-webkit-appearance": "none",
-                "border-radius": "0px",
-                "background-color": "#F8F8F8",
-                "box-shadow": "inset 0 0 0 #000",
-                "vertical-align": "middle",
-                position: "absolute",
-                margin: 0,
-            });
-
-            // Position and size the element
-            moveDOM(scrollBar, scrollBar.originalX, scrollBar.originalY);
-            resizeDOM(scrollBar, scrollBar.originalW, scrollBar.originalH);
-
-            // Add event listener for scrolling in edit mode only
-            scrollBar.addEventListener("input", () => {
-                if (gameStatus === 0) {
-                    curPos = parseInt(scrollBar.value);
-                }
-            });
-
-            CONSOLE.appendChild(scrollBar);
-
-            // It's very hard to set values to a pseudo element with JS.
-            // http://pankajparashar.com/posts/modify-pseudo-elements-css/
-            style.sheet.insertRule(
-                "#scroll::-webkit-slider-thumb {" +
-                    "-webkit-appearance: none !important;" +
-                    "border-radius: 0px;" +
-                    "background-color: #A870D0;" +
-                    "box-shadow:inset 0 0 0px;" +
-                    "border: 0px;" +
-                    "width: " +
-                    5 * MAGNIFY +
-                    "px;" +
-                    "height:" +
-                    7 * MAGNIFY +
-                    "px;}",
-                0
-            );
-            style.sheet.insertRule("#scroll:focus {outline: none !important;}", 0);
-
-            // Make number images from the number sheet
-            NUMBERS = sliceImage(numImg, 5, 7);
-
-            // Prepare Beat buttons w=14, h=15 (81, 203) (96, 203)
-            // (1) Disable self, Enable the other
-            // (2) Change both images
-            // (3) Play Sound
-            // (4) Set curScore.beat
-            function makeExclusiveFunction(buttons, index, success) {
-                const buttonList = buttons.slice(0); // Clone the Array
-                const self = buttonList[index];
-                buttonList.splice(index, 1); // Remove No.i element
-                const otherButtons = buttonList;
-
-                return function (event) {
-                    // Sound Off for file loading
-                    if (!event.soundOff) SOUNDS[17].play(8);
-                    self.disabled = true;
-                    self.style.backgroundImage = "url(" + self.images[1].src + ")";
-                    otherButtons.map(function (button) {
-                        button.disabled = false;
-                        button.style.backgroundImage = "url(" + button.images[0].src + ")";
-                    });
-                    success(self);
-                };
-            }
-
-            const beatImages = sliceImage(beatImg, 14, 15);
-            const beats3Button = makeButton(81, 203, 14, 15, "button", "Set 3 beats per measure");
-            beats3Button.id = "3beats";
-            beats3Button.beats = 3;
-            beats3Button.images = [beatImages[0], beatImages[1]];
-            beats3Button.style.backgroundImage = "url(" + beats3Button.images[0].src + ")";
-            beats3Button.disabled = false;
-            CONSOLE.appendChild(beats3Button);
-            const beats4Button = makeButton(96, 203, 14, 15, "button", "Set 4 beats per measure");
-            beats4Button.id = "4beats";
-            beats4Button.beats = 4;
-            beats4Button.images = [beatImages[2], beatImages[3]];
-            beats4Button.style.backgroundImage = "url(" + beats4Button.images[1].src + ")";
-            beats4Button.disabled = true;
-            CONSOLE.appendChild(beats4Button);
-            const updateBeats = function (self) {
-                curScore.beats = self.beats;
-            };
-            beats3Button.addEventListener("click", makeExclusiveFunction([beats3Button, beats4Button], 0, updateBeats));
-            beats4Button.addEventListener("click", makeExclusiveFunction([beats3Button, beats4Button], 1, updateBeats));
-
-            // Preapre Song Buttons (136, 202) 15x17, 160 - 136 = 24
-            const songImages = sliceImage(songImg, 15, 17);
-            const songButtons = ["frog", "beak", "1up"].map(function (id, index) {
-                const button = makeButton(136 + 24 * index, 202, 15, 17, "button", `Load ${id} song`);
-                button.id = id;
-                button.num = index;
-                button.images = songImages.slice(index * 3, index * 3 + 3);
-                button.style.backgroundImage = "url(" + button.images[0].src + ")";
-                button.disabled = false;
-                CONSOLE.appendChild(button);
-                return button;
-            });
-            const loadSong = function (self) {
-                curScore = clone(EmbeddedSong[self.num]);
-                document.getElementById("tempo").value = curScore.tempo;
-                const loopButton = document.getElementById("loop");
-                if (curScore.loop) loopButton.set();
-                else loopButton.reset();
-                const scrollBar = document.getElementById("scroll");
-                scrollBar.max = curScore.end - 5;
-                scrollBar.value = 0;
-                curPos = 0;
-                curSong = self;
-            };
-            songButtons[0].addEventListener("click", makeExclusiveFunction(songButtons, 0, loadSong));
-            songButtons[1].addEventListener("click", makeExclusiveFunction(songButtons, 1, loadSong));
-            songButtons[2].addEventListener("click", makeExclusiveFunction(songButtons, 2, loadSong));
-
-            // Prepare Eraser (Warning: Depends on the Song button images)
-            const eraserButton = makeButton(40, 202, 15, 17, "button", "Erase notes");
-            eraserButton.id = "eraser";
-            eraserButton.images = [songImages[9], songImages[10], songImages[11]]; // In the Song button images
-            eraserButton.style.backgroundImage = "url(" + eraserButton.images[0].src + ")";
-            eraserTimer = new EasyTimer(200, function (self) {
-                // If current is not end mark, just return;
-                if (curChar != 16) {
-                    self.switch = false;
-                    return;
-                }
-                self.currentFrame = self.currentFrame == 0 ? 1 : 0;
-            });
-            eraserTimer.currentFrame = 0;
-            eraserButton.addEventListener("click", function () {
-                eraserTimer.switch = true;
-                curChar = 16;
-                SOUNDS[17].play(8);
-                drawEraserIcon();
-                clearSongButtons();
-                this.style.backgroundImage = "url(" + this.images[1].src + ")";
-                SCREEN.style.cursor = "url(" + this.images[2].src + ")" + " 0 0, auto";
-            });
-            CONSOLE.appendChild(eraserButton);
-
-            // Prepare tempo range
-            // (116, 172) width 40px, height 8px
-            const tempoSlider = document.createElement("input");
-            tempoSlider.id = "tempo";
-            tempoSlider.type = "range";
-            tempoSlider.setAttribute("aria-label", "Adjust tempo");
-
-            // Set all properties in a single object
-            Object.assign(tempoSlider, {
-                value: 525,
-                max: 1000,
-                min: 50,
-                step: 1,
-                originalX: 116,
-                originalY: 172,
-                originalW: 40,
-                originalH: 8,
-            });
-
-            // Set all styles in a single object
-            Object.assign(tempoSlider.style, {
-                cursor: "pointer",
-                "-webkit-appearance": "none",
-                "border-radius": "0px",
-                "background-color": "rgba(0, 0, 0, 0.0)",
-                "box-shadow": "inset 0 0 0 #000",
-                "vertical-align": "middle",
-                position: "absolute",
-                margin: 0,
-            });
-
-            // Position and size the element
-            moveDOM(tempoSlider, tempoSlider.originalX, tempoSlider.originalY);
-            resizeDOM(tempoSlider, tempoSlider.originalW, tempoSlider.originalH);
-
-            // Add event listener
-            tempoSlider.addEventListener("input", function () {
-                curScore.tempo = parseInt(this.value);
-            });
-
-            CONSOLE.appendChild(tempoSlider);
-
-            const thumbImage = sliceImage(thumbImg, 5, 8)[0];
-            tempoSlider.image = thumbImage;
-            // It's very hard to set values to a pseudo element with JS.
-            // http://pankajparashar.com/posts/modify-pseudo-elements-css/
-            style.sheet.insertRule(
-                "#tempo::-webkit-slider-thumb {" +
-                    "-webkit-appearance: none !important;" +
-                    "background-image: url('" +
-                    thumbImage.src +
-                    "');" +
-                    "background-repeat: no-repeat;" +
-                    "background-size: 100% 100%;" +
-                    "border: 0px;" +
-                    "width: " +
-                    5 * MAGNIFY +
-                    "px;" +
-                    "height:" +
-                    8 * MAGNIFY +
-                    "px;}",
-                0
-            );
-            style.sheet.insertRule("#tempo:focus {outline: none !important;}", 0);
-
-            // Prepare range's side buttons for inc/decrements
-            const leftButton = makeButton(184, 158, 7, 9, "button", "Scroll left");
-            leftButton.id = "toLeft";
-            leftButton.addEventListener("click", function (event) {
-                const scrollBar = document.getElementById("scroll");
-                if (scrollBar.value > 0) {
-                    curPos = --scrollBar.value;
-                }
-            });
-            CONSOLE.appendChild(leftButton);
-
-            const rightButton = makeButton(241, 158, 7, 9, "button", "Scroll right");
-            rightButton.id = "toRight";
-            rightButton.addEventListener("click", function (event) {
-                const scrollBar = document.getElementById("scroll");
-                if (scrollBar.value < curMaxBars - 6) {
-                    curPos = ++scrollBar.value;
-                }
-            });
-            CONSOLE.appendChild(rightButton);
-
-            // Prepare CLEAR button (200, 176)
-            const clearButton = makeButton(200, 176, 34, 16, "button", "Clear all notes");
-            clearButton.id = "clear";
-            clearButton.images = sliceImage(clearImg, 34, 16);
-            clearButton.style.backgroundImage = "url(" + clearButton.images[0].src + ")";
-            clearButton.addEventListener("click", clearListener);
-            CONSOLE.appendChild(clearButton);
-            style.sheet.insertRule("#clear:focus {outline: none !important;}", 0);
-
-            // Prepare current empty score
-            initScore();
-
-            // Initializing Screen
-            curPos = 0;
-            curChar = 0;
-            drawCurChar(SOUNDS[curChar].image);
-            changeCursor(curChar);
-            drawScore(curPos, curScore["notes"], 0);
-
-            // Make bomb images from the bomb sheet
-            BOMBS = sliceImage(bombImg, 14, 18);
-
-            // Make Mario images
-            mario = new MarioClass();
-            mario.images = sliceImage(marioImg, 16, 22);
-
-            // Make Semitone images
-            Semitones = sliceImage(semitoneImg, 5, 12);
-
-            // Load Sound Files
-            Promise.all(SOUNDS.map((sound) => sound.load()))
-                .then((buffers) => {
-                    // Assign all buffers to their respective sounds
-                    buffers.forEach((buffer, index) => {
-                        SOUNDS[index].buffer = buffer;
-                    });
-
-                    CONSOLE.removeChild(document.getElementById("spinner"));
-
-                    // Exit early if no options are provided
-                    if (Object.keys(OPTS).length === 0) return;
-
-                    // Initialize score before loading external data
-                    if (OPTS.url || OPTS.S || OPTS.SCORE) {
-                        fullInitScore();
-                    }
-
-                    // Handle URL-based score loading
-                    if (OPTS.url) {
-                        fetch(OPTS.url)
-                            .then((response) => {
-                                if (!response.ok) {
-                                    throw new Error(`HTTP error ${response.status}`);
-                                }
-                                return response.text();
-                            })
-                            .then((data) => {
-                                // Determine file type by extension and process accordingly
-                                OPTS.url.endsWith(".msq") ? addMSQ(data) : addJSON(data);
-                                closing();
-                            })
-                            .catch((error) => {
-                                console.error(`Downloading File: ${OPTS.url} failed:`, error);
-                                alert(`Downloading File: ${OPTS.url} failed: ${error.message}`);
-                            });
-                    }
-                    // Handle parameter-based score loading
-                    else if (OPTS.S || OPTS.SCORE) {
-                        const score = OPTS.SCORE || OPTS.S;
-                        const tempo = OPTS.TEMPO || OPTS.T;
-                        const loop = OPTS.LOOP || OPTS.L;
-                        const end = OPTS.END || OPTS.E;
-                        const beats = OPTS.TIME44 || OPTS.B;
-
-                        if (!tempo || !loop || !end || !beats) {
-                            throw new Error("Not enough parameters");
-                        }
-
-                        const loopValue =
-                            loop.toUpperCase() === "T" || loop.toUpperCase() === "TRUE" ? "TRUE" : "FALSE";
-                        const beatsValue =
-                            beats.toUpperCase() === "T" || beats.toUpperCase() === "TRUE" ? "TRUE" : "FALSE";
-
-                        const text = [
-                            `SCORE=${score}`,
-                            `TEMPO=${tempo}`,
-                            `LOOP=${loopValue}`,
-                            `END=${end}`,
-                            `TIME44=${beatsValue}`,
-                        ].join("\n");
-
-                        addMSQ(text);
-                        closing();
-                    }
-                })
-                .catch((error) => {
-                    console.error("Invalid GET parameter:", error);
-                    alert(`Invalid GET parameter: ${error.message}`);
-                });
-
-            document.addEventListener("keydown", function (event) {
-                switch (event.code) {
-                    case "Space": // space -> play/stop or restart with shift
-                        const playButton = document.getElementById("play");
-                        if (playButton.disabled == false || event.shiftKey) {
-                            playListener.call(playButton, event);
-                        } else {
-                            stopListener.call(document.getElementById("stop"), event);
-                        }
-                        event.preventDefault();
-                        break;
-
-                    case "ArrowLeft": // left -> scroll left
-                        if (gameStatus === 0) {
-                            // Only allow scrolling in edit mode
-                            const scrollBar = document.getElementById("scroll");
-                            if (scrollBar.value > 0) curPos = --scrollBar.value;
-                            event.preventDefault();
-                        }
-                        break;
-
-                    case "ArrowRight": // right -> scroll right
-                        if (gameStatus === 0) {
-                            // Only allow scrolling in edit mode
-                            const scrollBar = document.getElementById("scroll");
-                            if (scrollBar.value < curMaxBars - 6) curPos = ++scrollBar.value;
-                            event.preventDefault();
-                        }
-                        break;
-
-                    case "KeyZ": // Ctrl+Z or Command+Z for undo
-                        if ((event.ctrlKey || event.metaKey) && !event.shiftKey && gameStatus === 0) {
-                            const undoButton = document.getElementById("undo");
-                            if (!undoButton.disabled) {
-                                undoButton.click();
-                                event.preventDefault();
-                            }
-                        }
-                        break;
-                }
-            });
-
+            // Setup UI components
+            setupNoteButtons();
+            setupControlButtons();
+            setupUIControls();
+            setupBeatButtons();
+            setupSongButtons();
+            setupKeyboardControls();
+
+            // Load sounds and initialize the application
+            return loadSoundAndInitialize();
+        })
+        .then(() => {
+            // Start the animation loop
             requestAnimFrame(doAnimation);
         })
         .catch((error) => {
-            console.error("Failed to load embedded songs:", error);
+            console.error("Failed to initialize application:", error);
         });
 }
 
