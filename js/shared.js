@@ -1207,11 +1207,10 @@ const sliceImage = (image, width, height) => {
 const download = () => {
     const link = document.createElement("a");
     link.download = "MSQ_Data.json";
-    const json = JSON.stringify(curScore);
-    const blob = new Blob([json], { type: "octet/stream" });
-    const url = window.URL.createObjectURL(blob);
-    link.href = url;
+    const blob = new Blob([JSON.stringify(curScore)], { type: "application/json" });
+    link.href = URL.createObjectURL(blob);
     link.click();
+    URL.revokeObjectURL(link.href); // Clean up to avoid memory leaks
 };
 
 // INIT routine
@@ -1225,12 +1224,14 @@ function onload() {
             //   2nd Kinopio: X=38, y=8, width=13, height=14
             //   and so on...
             const buttonImages = sliceImage(charSheet, 16, 16);
-            for (let i = 0; i < 15; i++) {
+            
+            // Create all note buttons at once
+            const createNoteButton = (i) => {
                 const button = makeButton(24 + 14 * i, 8, 13, 14, "button", `Select note ${i + 1}`);
                 button.num = i;
                 button.se = SOUNDS[i];
                 button.se.image = buttonImages[i];
-                button.addEventListener("click", function () {
+                button.addEventListener("click", function() {
                     this.se.play(8); // Note F
                     curChar = this.num;
                     clearEraserButton();
@@ -1238,8 +1239,11 @@ function onload() {
                     drawCurChar(this.se.image);
                 });
                 CONSOLE.appendChild(button);
-                BUTTONS[i] = button;
-            }
+                return button;
+            };
+            
+            // Create all 15 buttons at once and store them in BUTTONS array
+            BUTTONS.splice(0, 15, ...Array.from({length: 15}, (_, i) => createNoteButton(i)));
 
             // Prepare End Mark button (Char. No. 15)
             const endMarkButton = makeButton(235, 8, 13, 14, "button", "Add end mark");
