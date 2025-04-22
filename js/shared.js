@@ -1173,33 +1173,43 @@ const resizeScreen = () => {
 
 const sliceImage = (image, width, height) => {
     const result = [];
-    const imageWidth = image.width * MAGNIFY;
-    const imageHeight = image.height * MAGNIFY;
     const horizontalCount = Math.floor(image.width / width);
-    const totalCount = horizontalCount * Math.floor(image.height / height);
+    const verticalCount = Math.floor(image.height / height);
     const charWidth = width * MAGNIFY;
     const charHeight = height * MAGNIFY;
-
-    for (let i = 0; i < totalCount; i++) {
-        const tempCanvas = document.createElement("canvas");
-        tempCanvas.width = charWidth;
-        tempCanvas.height = charHeight;
-        const tempContext = tempCanvas.getContext("2d");
-        tempContext.imageSmoothingEnabled = false;
-        tempContext.drawImage(
-            image,
-            (i % horizontalCount) * width,
-            Math.floor(i / horizontalCount) * height,
-            width,
-            height,
-            0,
-            0,
-            charWidth,
-            charHeight
-        );
-        const charImage = new Image();
-        charImage.src = tempCanvas.toDataURL();
-        result[i] = charImage;
+    
+    // Create a single reusable canvas
+    const tempCanvas = document.createElement("canvas");
+    tempCanvas.width = charWidth;
+    tempCanvas.height = charHeight;
+    const tempContext = tempCanvas.getContext("2d");
+    tempContext.imageSmoothingEnabled = false;
+    
+    for (let y = 0; y < verticalCount; y++) {
+        for (let x = 0; x < horizontalCount; x++) {
+            const i = y * horizontalCount + x;
+            
+            // Clear canvas before reuse
+            tempContext.clearRect(0, 0, charWidth, charHeight);
+            
+            // Draw the sprite slice
+            tempContext.drawImage(
+                image,
+                x * width,
+                y * height,
+                width,
+                height,
+                0,
+                0,
+                charWidth,
+                charHeight
+            );
+            
+            // Create image from canvas
+            const charImage = new Image();
+            charImage.src = tempCanvas.toDataURL();
+            result[i] = charImage;
+        }
     }
     return result;
 };
