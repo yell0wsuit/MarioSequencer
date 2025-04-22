@@ -941,7 +941,7 @@ function addJSON(text) {
     curScore.tempo = json.tempo;
 
     curScore.end += json.end;
-    
+
     // Update curScore.loop with json.loop value
     curScore.loop = json.loop;
 
