@@ -142,45 +142,42 @@ class SoundEntity {
 // It's me, Mario!
 class MarioClass {
     constructor() {
-        this.marioOffset = -16; // X offset for positioning
-        this.marioScroll = 0; // Scroll amount in dots
-        this.marioX = -16; // X-position in dots
+        // Initialize Mario's properties
+        this.resetProperties();
         this.images = null; // Mario sprite images
-        this.marioPosition = 0; // Position in bar number
-        this.state = 0; // Animation state
-        this.startTime = 0; // Animation start timestamp
-        this.lastTime = 0; // Last animation timestamp
-        this.isJumping = false; // Whether Mario is jumping
         // Animation timer that alternates Mario's walking state
         this.timer = new EasyTimer(100, () => (this.state = this.state === 1 ? 0 : 1));
         this.timer.switch = true; // Keep timer running
     }
 
+    // Reset Mario's properties to initial state
+    resetProperties() {
+        this.marioOffset = this.marioX = -16; // X offset and position in dots
+        this.marioScroll = 0; // Scroll amount in dots
+        this.marioPosition = 0; // Position in bar number
+        this.state = 0; // Animation state
+        this.startTime = this.lastTime = 0; // Animation timestamps
+        this.isJumping = false; // Whether Mario is jumping
+    }
+
     // Reset Mario to initial state
     init() {
-        this.marioX = -16;
-        this.marioPosition = 0;
-        this.startTime = 0;
-        this.state = 0;
-        this.marioScroll = 0;
-        this.marioOffset = -16;
+        this.resetProperties();
         this.timer.switch = true;
-        this.isJumping = false;
     }
 
     // Animate Mario entering the stage
     enter(timeStamp) {
-        if (this.startTime === 0) this.startTime = timeStamp;
+        if (this.startTime === 0) this.startTime = timeStamp; // Set start time if not set
         const timeDifference = timeStamp - this.startTime;
-        this.marioX = Math.floor(timeDifference / 5) + this.marioOffset;
-        if (this.marioX >= 40) this.marioX = 40; // Cap position at 40
-        this.state = Math.floor(timeDifference / 100) % 2 === 0 ? 1 : 0;
+        this.marioX = Math.min(Math.floor(timeDifference / 5) + this.marioOffset, 40); // Cap position at 40
+        this.state = Math.floor(timeDifference / 100) % 2 === 0 ? 1 : 0; // Alternate state
         this.draw();
     }
 
     // Initialize for leaving the stage
     init4leaving() {
-        this.marioOffset = this.marioX;
+        this.marioOffset = this.marioX; // Set offset to current position
         this.startTime = 0;
         this.isJumping = false;
     }
@@ -204,16 +201,13 @@ class MarioClass {
 
     // Main play animation loop
     play(timeStamp) {
-        // Helper function to play notes at the current position
         const scheduleAndPlay = (notes, time) => {
             if (time < 0) time = 0;
             if (!notes || notes.length === 0) return;
 
-            // Group notes by sound type for chord playing
             const noteDictionary = {};
             notes.forEach((note) => {
                 if (typeof note === "string") {
-                    // Handle tempo change
                     const tempo = note.split("=")[1];
                     curScore.tempo = tempo;
                     document.getElementById("tempo").value = tempo;
@@ -226,7 +220,6 @@ class MarioClass {
                 else noteDictionary[soundNumber].push(scale);
             });
 
-            // Play each sound with its notes
             Object.entries(noteDictionary).forEach(([soundIndex, scales]) => {
                 SOUNDS[soundIndex].playChord(scales, time / 1000); // Convert ms to seconds
             });
@@ -236,33 +229,26 @@ class MarioClass {
         let timeDifference = timeStamp - this.lastTime;
         if (timeDifference > 32) timeDifference = 16; // Cap time difference
         this.lastTime = timeStamp;
-        // Calculate movement step based on tempo
-        const step = (32 * timeDifference * tempo) / 60000;
+        const step = (32 * timeDifference * tempo) / 60000; // Calculate movement step based on tempo
 
         this.timer.checkAndFire(timeStamp);
         const scroll = document.getElementById("scroll");
 
-        // Calculate position of next bar
-        const nextBar = 16 + 32 * (this.marioPosition - curPos + 1) - 8;
+        const nextBar = 16 + 32 * (this.marioPosition - curPos + 1) - 8; // Calculate position of next bar
 
         if (this.marioX < 120) {
-            // Mario is running toward center
             this.marioX += step;
             if (this.marioX >= nextBar) {
-                // Crossed a bar line
                 this.marioPosition++;
                 scheduleAndPlay(curScore.notes[this.marioPosition - 2], 0);
                 this.checkMarioShouldJump();
             } else if (this.marioX >= 120) {
-                // Reached center, start scrolling
                 this.marioScroll = this.marioX - 120;
                 this.marioX = 120;
             }
         } else if (curPos <= curScore.end - 6) {
-            // Mario is at center, scrolling the score
             this.marioX = 120;
             if (this.marioScroll < 16 && this.marioScroll + step > 16) {
-                // Crossed middle of a bar while scrolling
                 this.marioPosition++;
                 this.marioScroll += step;
                 scheduleAndPlay(curScore.notes[this.marioPosition - 2], 0);
@@ -270,22 +256,18 @@ class MarioClass {
             } else {
                 this.marioScroll += step;
                 if (this.marioScroll > 32) {
-                    // Scrolled past a full bar
                     this.marioScroll -= 32;
                     curPos++;
                     scroll.value = curPos;
                     if (curPos > curScore.end - 6) {
-                        // Reached end of scrollable area
                         this.marioX += this.marioScroll;
                         this.marioScroll = 0;
                     }
                 }
             }
         } else {
-            // Mario is running toward the end
             this.marioX += step;
             if (this.marioX >= nextBar) {
-                // Crossed a bar line
                 this.marioPosition++;
                 scheduleAndPlay(curScore.notes[this.marioPosition - 2], 0);
                 this.checkMarioShouldJump();
@@ -312,15 +294,12 @@ class MarioClass {
         if (this.isJumping) {
             state = 2; // Jumping sprite
             if (this.marioX === 120) {
-                // In scroll mode
                 if (this.marioScroll !== 16) {
-                    // Not exactly on a bar line, calculate jump height
                     verticalPosition -= this.jump(
                         this.marioScroll > 16 ? this.marioScroll - 16 : this.marioScroll + 16
                     );
                 }
             } else {
-                // Running mode, calculate jump height
                 verticalPosition -= this.jump(Math.round((this.marioX - 8) % 32));
             }
         }
@@ -334,7 +313,6 @@ class MarioClass {
 
         const diff = timeStamp - this.startTime;
         if (this.marioScroll > 0 && this.marioScroll < 32) {
-            // Complete any remaining scroll
             this.marioScroll += Math.floor(diff / 4);
             if (this.marioScroll > 32) {
                 this.marioX += this.marioScroll - 32;
@@ -342,15 +320,12 @@ class MarioClass {
                 curPos++;
             }
         } else {
-            // Move Mario toward exit
             this.marioX = Math.floor(diff / 4) + this.marioOffset;
         }
 
-        // Alternate between tired states with sweat drop
         if (Math.floor(diff / 100) % 2 === 0) {
             this.state = 8;
             this.draw();
-            // Draw sweat drop
             L2C.drawImage(
                 sweatImg,
                 0,
@@ -950,7 +925,7 @@ function doAnimation(time) {
 
 function makeButton(x, y, width, height, type = "button", ariaLabel = "") {
     const button = document.createElement("button");
-    
+
     // Set multiple properties at once
     Object.assign(button, {
         className: "game",
@@ -958,32 +933,32 @@ function makeButton(x, y, width, height, type = "button", ariaLabel = "") {
         originalX: x,
         originalY: y,
         originalW: width,
-        originalH: height
+        originalH: height,
     });
-    
+
     // Set multiple styles at once
     Object.assign(button.style, {
         position: "absolute",
         cursor: "pointer",
         zIndex: "3",
-        background: "rgba(0,0,0,0)"
+        background: "rgba(0,0,0,0)",
     });
-    
+
     // Set aria-label if provided
     if (ariaLabel) button.setAttribute("aria-label", ariaLabel);
-    
+
     // Position and size the button
     moveDOM(button, x, y);
     resizeDOM(button, width, height);
-    
+
     // Add redraw method
     button.redraw = () => {
         moveDOM(button, button.originalX, button.originalY);
         resizeDOM(button, button.originalW, button.originalH);
     };
-    
+
     // Observe disabled attribute changes
-    new MutationObserver(mutations => {
+    new MutationObserver((mutations) => {
         for (const mutation of mutations) {
             if (mutation.attributeName === "disabled") {
                 button.style.cursor = button.disabled ? "not-allowed" : "pointer";
@@ -991,7 +966,7 @@ function makeButton(x, y, width, height, type = "button", ariaLabel = "") {
             }
         }
     }).observe(button, { attributes: true });
-    
+
     return button;
 }
 
@@ -1187,34 +1162,24 @@ const sliceImage = (image, width, height) => {
     const verticalCount = Math.floor(image.height / height);
     const charWidth = width * MAGNIFY;
     const charHeight = height * MAGNIFY;
-    
+
     // Create a single reusable canvas
     const tempCanvas = document.createElement("canvas");
     tempCanvas.width = charWidth;
     tempCanvas.height = charHeight;
     const tempContext = tempCanvas.getContext("2d");
     tempContext.imageSmoothingEnabled = false;
-    
+
     for (let y = 0; y < verticalCount; y++) {
         for (let x = 0; x < horizontalCount; x++) {
             const i = y * horizontalCount + x;
-            
+
             // Clear canvas before reuse
             tempContext.clearRect(0, 0, charWidth, charHeight);
-            
+
             // Draw the sprite slice
-            tempContext.drawImage(
-                image,
-                x * width,
-                y * height,
-                width,
-                height,
-                0,
-                0,
-                charWidth,
-                charHeight
-            );
-            
+            tempContext.drawImage(image, x * width, y * height, width, height, 0, 0, charWidth, charHeight);
+
             // Create image from canvas
             const charImage = new Image();
             charImage.src = tempCanvas.toDataURL();
@@ -1244,14 +1209,14 @@ function onload() {
             //   2nd Kinopio: X=38, y=8, width=13, height=14
             //   and so on...
             const buttonImages = sliceImage(charSheet, 16, 16);
-            
+
             // Create all note buttons at once
             const createNoteButton = (i) => {
                 const button = makeButton(24 + 14 * i, 8, 13, 14, "button", `Select note ${i + 1}`);
                 button.num = i;
                 button.se = SOUNDS[i];
                 button.se.image = buttonImages[i];
-                button.addEventListener("click", function() {
+                button.addEventListener("click", function () {
                     this.se.play(8); // Note F
                     curChar = this.num;
                     clearEraserButton();
@@ -1261,9 +1226,9 @@ function onload() {
                 CONSOLE.appendChild(button);
                 return button;
             };
-            
+
             // Create all 15 buttons at once and store them in BUTTONS array
-            BUTTONS.splice(0, 15, ...Array.from({length: 15}, (_, i) => createNoteButton(i)));
+            BUTTONS.splice(0, 15, ...Array.from({ length: 15 }, (_, i) => createNoteButton(i)));
 
             // Prepare End Mark button (Char. No. 15)
             const endMarkButton = makeButton(235, 8, 13, 14, "button", "Add end mark");
