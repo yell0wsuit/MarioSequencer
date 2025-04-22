@@ -1340,28 +1340,26 @@ function onload() {
             const loopButton = makeButton(85, 168, 16, 15, "button", "Toggle music loop");
             loopButton.id = "loop";
             loopButton.images = [stopButtonImages[2], stopButtonImages[3]]; // made in Stop button (above)
-            loopButton.style.backgroundImage = "url(" + loopButton.images[0].src + ")";
+            loopButton.style.backgroundImage = `url(${loopButton.images[0].src})`;
             curScore.loop = false;
-            loopButton.addEventListener("click", function (event) {
-                let buttonState;
-                if (curScore.loop) {
-                    curScore.loop = false;
-                    buttonState = 0;
-                } else {
-                    curScore.loop = true;
-                    buttonState = 1;
-                }
-                this.style.backgroundImage = "url(" + this.images[buttonState].src + ")";
+            
+            loopButton.addEventListener("click", function() {
+                curScore.loop = !curScore.loop;
+                const buttonState = curScore.loop ? 1 : 0;
+                this.style.backgroundImage = `url(${this.images[buttonState].src})`;
                 SOUNDS[17].play(8);
             });
-            loopButton.reset = function () {
+            
+            loopButton.reset = function() {
                 curScore.loop = false;
-                this.style.backgroundImage = "url(" + this.images[0].src + ")";
+                this.style.backgroundImage = `url(${this.images[0].src})`;
             };
-            loopButton.set = function () {
+            
+            loopButton.set = function() {
                 curScore.loop = true;
-                this.style.backgroundImage = "url(" + this.images[1].src + ")";
+                this.style.backgroundImage = `url(${this.images[1].src})`;
             };
+            
             style.sheet.insertRule("#loop:focus {outline: none !important;}", 0);
             CONSOLE.appendChild(loopButton);
 
