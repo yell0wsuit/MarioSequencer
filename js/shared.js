@@ -1275,7 +1275,7 @@ function onload() {
             const playButton = makeButton(55, 168, 12, 15, "button", "Play music");
             playButton.id = "play";
             playButton.images = sliceImage(playBtnImg, 12, 15);
-            playButton.style.backgroundImage = "url(" + playButton.images[0].src + ")";
+            playButton.style.backgroundImage = `url(${playButton.images[0].src})`;
             playButton.addEventListener("click", playListener);
             pseudoSheet.insertRule("#play:focus {outline: none !important;}", 0);
             CONSOLE.appendChild(playButton);
@@ -1284,50 +1284,52 @@ function onload() {
             const stopButton = makeButton(21, 168, 16, 15, "button", "Stop music");
             stopButton.id = "stop";
             stopButton.disabled = true;
-            // stopbtn image including loop button (next)
+            
+            // Slice images once and store for reuse (also used by loop button)
             const stopButtonImages = sliceImage(stopBtnImg, 16, 15);
-            stopButton.images = [stopButtonImages[0], stopButtonImages[1]];
-            stopButton.style.backgroundImage = "url(" + stopButton.images[1].src + ")";
+            stopButton.images = stopButtonImages.slice(0, 2);
+            stopButton.style.backgroundImage = `url(${stopButton.images[1].src})`;
+            
             stopButton.addEventListener("click", stopListener);
             pseudoSheet.insertRule("#stop:focus {outline: none !important;}", 0);
             CONSOLE.appendChild(stopButton);
 
-            // Prepare Undo Button (positioned near other control buttons)
+            // Prepare Undo Button
             const undoButton = makeButton(216, 203, 14, 15, "button", "Undo last action");
             undoButton.id = "undo";
-            const undoButtonImages = sliceImage(undoDogImg, 14, 15);
-            undoButton.images = [undoButtonImages[0], undoButtonImages[1]];
-            undoButton.style.backgroundImage = "url(" + undoButton.images[0].src + ")";
-            undoButton.addEventListener("click", function () {
-                if (undoHistory.length > 0) {
-                    const lastAction = undoHistory.pop();
-
-                    if (lastAction.type === "add") {
-                        const barNotes = curScore.notes[lastAction.barNumber];
-                        // Remove the note that was added
+            undoButton.images = sliceImage(undoDogImg, 14, 15);
+            undoButton.style.backgroundImage = `url(${undoButton.images[0].src})`;
+            
+            undoButton.addEventListener("click", function() {
+                if (undoHistory.length === 0) return;
+                
+                const lastAction = undoHistory.pop();
+                const barNotes = lastAction.type !== "endmark" ? curScore.notes[lastAction.barNumber] : null;
+                
+                switch (lastAction.type) {
+                    case "add":
                         const index = barNotes.indexOf(lastAction.note);
-                        if (index !== -1) {
-                            barNotes.splice(index, 1);
-                        }
-                    } else if (lastAction.type === "delete") {
-                        const barNotes = curScore.notes[lastAction.barNumber];
-                        // Add back the note that was deleted
+                        if (index !== -1) barNotes.splice(index, 1);
+                        break;
+                    case "delete":
                         barNotes.push(lastAction.note);
-                    } else if (lastAction.type === "endmark") {
-                        // Restore the previous end mark position
+                        break;
+                    case "endmark":
                         curScore.end = lastAction.oldEnd;
-                    }
-
-                    SOUNDS[20].play(8); // Play dogundo sound
-                    drawScore(curPos, curScore.notes, 0);
-                    updateUndoButtonState(); // Update undo button state after undoing
+                        break;
                 }
+
+                SOUNDS[20].play(8); // Play dogundo sound
+                drawScore(curPos, curScore.notes, 0);
+                updateUndoButtonState();
+                
                 // Add hover effect
-                this.style.backgroundImage = "url(" + this.images[1].src + ")";
+                this.style.backgroundImage = `url(${this.images[1].src})`;
                 setTimeout(() => {
-                    this.style.backgroundImage = "url(" + this.images[0].src + ")";
+                    this.style.backgroundImage = `url(${this.images[0].src})`;
                 }, 150);
             });
+            
             CONSOLE.appendChild(undoButton);
             pseudoSheet.insertRule("#undo:focus {outline: none !important;}", 0);
 
