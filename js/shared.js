@@ -148,7 +148,7 @@ class SoundEntity {
             if (typeof note === "string") {
                 const tempo = note.split("=")[1];
                 curScore.tempo = tempo;
-                document.getElementById("tempo").value = tempo;
+                DOM.tempo.value = tempo;
                 return;
             }
 
@@ -250,7 +250,7 @@ class MarioClass {
                 if (typeof note === "string") {
                     const tempo = note.split("=")[1];
                     curScore.tempo = tempo;
-                    document.getElementById("tempo").value = tempo;
+                    DOM.tempo.value = tempo;
                     return;
                 }
 
@@ -272,7 +272,6 @@ class MarioClass {
         const step = (32 * timeDifference * tempo) / 60000; // Calculate movement step based on tempo
 
         this.timer.checkAndFire(timeStamp);
-        const scroll = document.getElementById("scroll");
 
         const nextBar = 16 + 32 * (this.marioPosition - curPos + 1) - 8; // Calculate position of next bar
 
@@ -298,7 +297,7 @@ class MarioClass {
                 if (this.marioScroll > 32) {
                     this.marioScroll -= 32;
                     curPos++;
-                    scroll.value = curPos;
+                    DOM.scrollBar.value = curPos;
                     if (curPos > curScore.end - 6) {
                         this.marioX += this.marioScroll;
                         this.marioScroll = 0;
@@ -943,9 +942,8 @@ function addJSON(text) {
 
     curScore.end += json.end;
 
-    const b = document.getElementById("loop");
-    if (curScore.loop) b.set;
-    else b.reset();
+    if (curScore.loop) DOM.loopButton.set();
+    else DOM.loopButton.reset();
 }
 
 function doAnimation(time) {
@@ -1069,31 +1067,31 @@ const download = () => {
 const resizeScreen = () => {
     // Update core dimensions
     updateCoreDimensions();
-    
+
     // Resize canvas and screen elements
     resizeCanvasElements();
-    
+
     // Resize note and end mark buttons
     resizeNoteButtons();
-    
+
     // Resize control buttons (play, stop, loop, etc.)
     resizeControlButtons();
-    
+
     // Resize slider elements
     resizeSliderElements();
-    
+
     // Resize navigation buttons
     resizeNavigationButtons();
-    
+
     // Resize beat buttons
     resizeBeatButtons();
-    
+
     // Resize song buttons
     resizeSongButtons();
-    
+
     // Resize eraser button
     resizeEraserButton();
-    
+
     // Resize undo dog button
     resizeUndoDogButton();
 };
@@ -1116,7 +1114,7 @@ function updateCoreDimensions() {
     mario.images = sliceImage(marioImg, 16, 22);
     Semitones = sliceImage(semitoneImg, 5, 12);
     NUMBERS = sliceImage(numImg, 5, 7);
-    
+
     // Prepare Repeat marks
     repeatMark = sliceImage(repeatImg, 13, 62);
     endMark = repeatMark[2];
@@ -1137,13 +1135,13 @@ function resizeCanvasElements() {
 // Resize note buttons and end mark button
 function resizeNoteButtons() {
     const characterImages = sliceImage(charSheet, 16, 16);
-    
+
     // Resize all buttons
     BUTTONS.forEach((button, index) => {
         button.redraw();
         if (index < 15) button.se.image = characterImages[index];
     });
-    
+
     // Update end mark button
     BUTTONS[15].images = sliceImage(endImg, 14, 13);
     endMarkTimer.images = BUTTONS[15].images;
@@ -1160,11 +1158,6 @@ function resizeNoteButtons() {
 
 // Resize control buttons (play, stop, loop)
 function resizeControlButtons() {
-    // Cache DOM elements if not already initialized
-    if (!DOM.playButton) {
-        initControlButtonsDOMCache();
-    }
-    
     // Resize play button
     DOM.playButton.redraw();
     DOM.playButton.images = sliceImage(playBtnImg, 12, 15);
@@ -1182,32 +1175,19 @@ function resizeControlButtons() {
     DOM.loopButton.images = [stopButtonImages[2], stopButtonImages[3]]; // reuse images from stop button
     const loopButtonState = curScore.loop ? 1 : 0;
     DOM.loopButton.style.backgroundImage = `url(${DOM.loopButton.images[loopButtonState].src})`;
-    
+
     // Resize clear button
     DOM.clearButton.redraw();
     DOM.clearButton.images = sliceImage(clearImg, 34, 16);
     DOM.clearButton.style.backgroundImage = `url(${DOM.clearButton.images[0].src})`;
 }
 
-// Initialize control buttons DOM cache if needed
-function initControlButtonsDOMCache() {
-    DOM.playButton = document.getElementById("play");
-    DOM.stopButton = document.getElementById("stop");
-    DOM.loopButton = document.getElementById("loop");
-    DOM.clearButton = document.getElementById("clear");
-}
-
 // Resize slider elements (scroll bar, tempo)
 function resizeSliderElements() {
-    // Cache DOM elements if not already initialized
-    if (!DOM.scrollBar || !DOM.tempo) {
-        initSliderDOMCache();
-    }
-    
     // Resize scroll bar
     moveDOM(DOM.scrollBar, DOM.scrollBar.originalX, DOM.scrollBar.originalY);
     resizeDOM(DOM.scrollBar, DOM.scrollBar.originalW, DOM.scrollBar.originalH);
-    
+
     // Update scroll bar thumb style
     updateSliderThumbStyle("#scroll::-webkit-slider-thumb", {
         properties: {
@@ -1215,20 +1195,20 @@ function resizeSliderElements() {
             "border-radius": "0px",
             "background-color": "#A870D0",
             "box-shadow": "inset 0 0 0px",
-            "border": "0px"
+            border: "0px",
         },
         width: 5 * MAGNIFY,
-        height: 7 * MAGNIFY
+        height: 7 * MAGNIFY,
     });
-    
+
     // Resize tempo slider
     moveDOM(DOM.tempo, DOM.tempo.originalX, DOM.tempo.originalY);
     resizeDOM(DOM.tempo, DOM.tempo.originalW, DOM.tempo.originalH);
-    
+
     // Get thumb image for tempo slider
     const thumbImage = sliceImage(thumbImg, 5, 8)[0];
     DOM.tempo.image = thumbImage;
-    
+
     // Update tempo slider thumb style
     updateSliderThumbStyle("#tempo::-webkit-slider-thumb", {
         properties: {
@@ -1236,23 +1216,17 @@ function resizeSliderElements() {
             "background-image": `url('${thumbImage.src}')`,
             "background-repeat": "no-repeat",
             "background-size": "100% 100%",
-            "border": "0px"
+            border: "0px",
         },
         width: 5 * MAGNIFY,
-        height: 8 * MAGNIFY
+        height: 8 * MAGNIFY,
     });
-}
-
-// Initialize slider DOM cache if needed
-function initSliderDOMCache() {
-    DOM.scrollBar = document.getElementById("scroll");
-    DOM.tempo = document.getElementById("tempo");
 }
 
 // Helper function to update slider thumb styles
 function updateSliderThumbStyle(selector, config) {
     const styleRules = pseudoSheet.cssRules;
-    
+
     // Find and remove existing rule
     for (let i = 0; i < styleRules.length; i++) {
         if (styleRules[i].selectorText === selector) {
@@ -1260,143 +1234,86 @@ function updateSliderThumbStyle(selector, config) {
             break;
         }
     }
-    
+
     // Build CSS properties string
     let cssProperties = "";
     for (const [property, value] of Object.entries(config.properties)) {
         cssProperties += `${property}: ${value};\n`;
     }
-    
+
     // Add width and height
     cssProperties += `width: ${config.width}px;\n`;
     cssProperties += `height: ${config.height}px;`;
-    
+
     // Insert new rule
-    pseudoSheet.insertRule(
-        `${selector} {${cssProperties}}`,
-        0
-    );
+    pseudoSheet.insertRule(`${selector} {${cssProperties}}`, 0);
 }
 
 // Resize navigation buttons
 function resizeNavigationButtons() {
-    // Cache DOM elements if not already initialized
-    if (!DOM.leftButton || !DOM.rightButton) {
-        initNavigationDOMCache();
-    }
-    
     // Resize left and right navigation buttons
     DOM.leftButton.redraw();
     DOM.rightButton.redraw();
 }
 
-// Initialize navigation buttons DOM cache if needed
-function initNavigationDOMCache() {
-    DOM.leftButton = document.getElementById("toLeft");
-    DOM.rightButton = document.getElementById("toRight");
-}
-
 // Resize beat buttons
 function resizeBeatButtons() {
-    // Cache DOM elements if not already initialized
-    if (!DOM.beats3Button || !DOM.beats4Button) {
-        initBeatButtonsDOMCache();
-    }
-    
     // Resize beat buttons
     DOM.beats3Button.redraw();
     DOM.beats4Button.redraw();
-    
+
     const beatImages = sliceImage(beatImg, 14, 15);
-    
+
     // Set images for both buttons
     DOM.beats3Button.images = [beatImages[0], beatImages[1]];
     DOM.beats4Button.images = [beatImages[2], beatImages[3]];
-    
+
     // Determine state and apply to both buttons
     const is3Beats = curScore.beats === 3;
     DOM.beats3Button.style.backgroundImage = `url(${DOM.beats3Button.images[is3Beats ? 1 : 0].src})`;
     DOM.beats4Button.style.backgroundImage = `url(${DOM.beats4Button.images[is3Beats ? 0 : 1].src})`;
 }
 
-// Initialize beat buttons DOM cache if needed
-function initBeatButtonsDOMCache() {
-    DOM.beats3Button = document.getElementById("3beats");
-    DOM.beats4Button = document.getElementById("4beats");
-}
-
 // Resize song buttons
 function resizeSongButtons() {
-    // Cache DOM elements if not already initialized
-    if (!DOM.songButtons.frog || !DOM.songButtons.beak || !DOM.songButtons["1up"]) {
-        initSongButtonsDOMCache();
-    }
-    
     const songImages = sliceImage(songImg, 15, 17);
-    
+
     // Configure all song buttons
     const songButtonsConfig = [
         { button: DOM.songButtons.frog, imageIndices: [0, 1, 2] },
         { button: DOM.songButtons.beak, imageIndices: [3, 4, 5] },
-        { button: DOM.songButtons["1up"], imageIndices: [6, 7, 8] }
+        { button: DOM.songButtons["1up"], imageIndices: [6, 7, 8] },
     ];
-    
-    songButtonsConfig.forEach(config => {
+
+    songButtonsConfig.forEach((config) => {
         const button = config.button;
         button.redraw();
-        button.images = config.imageIndices.map(i => songImages[i]);
+        button.images = config.imageIndices.map((i) => songImages[i]);
         const buttonState = curSong === button ? 1 : 0;
         button.style.backgroundImage = `url(${button.images[buttonState].src})`;
     });
 }
 
-// Initialize song buttons DOM cache if needed
-function initSongButtonsDOMCache() {
-    DOM.songButtons.frog = document.getElementById("frog");
-    DOM.songButtons.beak = document.getElementById("beak");
-    DOM.songButtons["1up"] = document.getElementById("1up");
-}
-
 // Resize eraser button
 function resizeEraserButton() {
-    // Cache DOM elements if not already initialized
-    if (!DOM.eraserButton) {
-        initEraserButtonDOMCache();
-    }
-    
     const songImages = sliceImage(songImg, 15, 17);
-    
+
     DOM.eraserButton.redraw();
     DOM.eraserButton.images = [songImages[9], songImages[10], songImages[11]];
     const eraserButtonState = curChar === 16 ? 1 : 0;
-    
+
     if (curChar === 16) {
         SCREEN.style.cursor = `url(${DOM.eraserButton.images[2].src}) 0 0, auto`;
     }
-    
-    DOM.eraserButton.style.backgroundImage = `url(${DOM.eraserButton.images[eraserButtonState].src})`;
-}
 
-// Initialize eraser button DOM cache if needed
-function initEraserButtonDOMCache() {
-    DOM.eraserButton = document.getElementById("eraser");
+    DOM.eraserButton.style.backgroundImage = `url(${DOM.eraserButton.images[eraserButtonState].src})`;
 }
 
 // Resize undo dog button
 function resizeUndoDogButton() {
-    // Cache DOM elements if not already initialized
-    if (!DOM.undoButton) {
-        initUndoButtonDOMCache();
-    }
-    
     DOM.undoButton.redraw();
     DOM.undoButton.images = sliceImage(undoDogImg, 14, 15);
     DOM.undoButton.style.backgroundImage = `url(${DOM.undoButton.images[0].src})`;
-}
-
-// Initialize undo button DOM cache if needed
-function initUndoButtonDOMCache() {
-    DOM.undoButton = document.getElementById("undo");
 }
 
 function setupNoteButtons() {
@@ -1663,9 +1580,8 @@ function setupUIControls() {
     const leftButton = makeButton(184, 158, 7, 9, "button", "Scroll left");
     leftButton.id = "toLeft";
     leftButton.addEventListener("click", function (event) {
-        const scrollBar = document.getElementById("scroll");
-        if (scrollBar.value > 0) {
-            curPos = --scrollBar.value;
+        if (DOM.scrollBar.value > 0) {
+            curPos = --DOM.scrollBar.value;
         }
     });
     CONSOLE.appendChild(leftButton);
@@ -1673,9 +1589,8 @@ function setupUIControls() {
     const rightButton = makeButton(241, 158, 7, 9, "button", "Scroll right");
     rightButton.id = "toRight";
     rightButton.addEventListener("click", function (event) {
-        const scrollBar = document.getElementById("scroll");
-        if (scrollBar.value < curMaxBars - 6) {
-            curPos = ++scrollBar.value;
+        if (DOM.scrollBar.value < curMaxBars - 6) {
+            curPos = ++DOM.scrollBar.value;
         }
     });
     CONSOLE.appendChild(rightButton);
