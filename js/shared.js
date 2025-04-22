@@ -544,7 +544,7 @@ function drawScore(position, notes, scroll) {
             // Skip drawing note if eraser is hovering over it (blinking effect)
             if (
                 curChar == 16 &&
-                gridPosition != false &&
+                gridPosition !== false &&
                 barIndex == gridX &&
                 noteScale == gridY &&
                 eraserTimer.currentFrame == 1
@@ -564,9 +564,9 @@ function drawScore(position, notes, scroll) {
             // Draw accidentals (sharps/flats)
             const x2 = x - 13 * MAGNIFY;
             const y = (44 + noteScale * 8 + noteDelta) * MAGNIFY;
-            if ((barNotes[noteIndex] & 0x80) != 0) {
+            if ((barNotes[noteIndex] & 0x80) !== 0) {
                 L2C.drawImage(Semitones[0], x2, y); // Sharp
-            } else if ((barNotes[noteIndex] & 0x40) != 0) {
+            } else if ((barNotes[noteIndex] & 0x40) !== 0) {
                 L2C.drawImage(Semitones[1], x2, y); // Flat
             }
         }
@@ -649,7 +649,7 @@ function toGrid(mouseRealX, mouseRealY) {
         return false;
 
     let gridX = Math.floor((mouseRealX - gridLeft) / CHARSIZE);
-    if (gridX % 2 != 0) return false; // Not near the bar
+    if (gridX % 2 !== 0) return false; // Not near the bar
     gridX /= 2;
     const gridY = Math.floor((mouseRealY - gridTop) / HALFCHARSIZE);
 
@@ -687,7 +687,7 @@ function updateUndoButtonState() {
 
 // Modify mouseClickListener to update undo button state
 function mouseClickListener(event) {
-    if (gameStatus != 0) return;
+    if (gameStatus !== 0) return;
     event.preventDefault();
 
     const mouseRealX = event.clientX - offsetLeft;
@@ -739,7 +739,7 @@ function mouseClickListener(event) {
     }
 
     let note = (curChar << 8) | gridY;
-    if (barNotes.indexOf(note) != -1) return;
+    if (barNotes.indexOf(note) !== -1) return;
     //
     // Handle semitone
     if (event.shiftKey) gridY |= 0x80;
@@ -876,7 +876,7 @@ function addMSQ(text) {
     }
 
     curScore.end += parseInt(values.END) - 1;
-    if (curScore.tempo != values.TEMPO) curScore.notes[oldEnd].splice(0, 0, "TEMPO=" + values.TEMPO);
+    if (curScore.tempo !== values.TEMPO) curScore.notes[oldEnd].splice(0, 0, "TEMPO=" + values.TEMPO);
     curScore.tempo = values.TEMPO;
     const beats = values.TIME44 == "TRUE" ? 4 : 3;
     curScore.beats = beats;
@@ -895,9 +895,9 @@ function addJSON(text) {
     for (let i = 0; i < json.end; i++) curScore.notes.push(json.notes[i]);
 
     const notes = curScore.notes[curScore.end];
-    if (curScore.tempo != json.tempo && notes.length != 0) {
+    if (curScore.tempo !== json.tempo && notes.length !== 0) {
         const tempostr = notes[0];
-        if (typeof tempostr != "string") {
+        if (typeof tempostr !== "string") {
             notes.splice(0, 0, "TEMPO=" + json.tempo);
         }
     }
@@ -918,7 +918,7 @@ function doAnimation(time) {
 
     drawScore(curPos, curScore["notes"], 0);
 
-    if (gameStatus != 0) return;
+    if (gameStatus !== 0) return;
 
     requestAnimFrame(doAnimation);
 }
@@ -1263,7 +1263,7 @@ function setupEraserButton() {
     eraserButton.style.backgroundImage = "url(" + eraserButton.images[0].src + ")";
     eraserTimer = new EasyTimer(200, function (self) {
         // If current is not end mark, just return;
-        if (curChar != 16) {
+        if (curChar !== 16) {
             self.switch = false;
             return;
         }
@@ -1833,7 +1833,7 @@ function playListener(event) {
 function stopListener(event) {
     this.style.backgroundImage = "url(" + this.images[1].src + ")";
     // Sound ON: click , OFF: called by doMarioPlay
-    if (event != undefined) SOUNDS[17].play(8);
+    if (event !== undefined) SOUNDS[17].play(8);
     const playButton = document.getElementById("play");
     playButton.style.backgroundImage = "url(" + playButton.images[0].src + ")";
     //playButton.disabled = false; // Do after Mario left the stage
@@ -1841,7 +1841,7 @@ function stopListener(event) {
 
     gameStatus = 3; // Mario leaves from the stage
     mario.init4leaving();
-    if (animationFrameId != 0) cancelAnimationFrame(animationFrameId);
+    if (animationFrameId !== 0) cancelAnimationFrame(animationFrameId);
     requestAnimFrame(doMarioLeave);
 }
 
@@ -1865,7 +1865,7 @@ function doMarioPlay(timeStamp) {
     bombTimer.checkAndFire(timeStamp);
     mario.play(timeStamp);
     if (gameStatus == 2) {
-        if (mario.marioPosition - 2 != curScore.end - 1) {
+        if (mario.marioPosition - 2 !== curScore.end - 1) {
             animationFrameId = requestAnimFrame(doMarioPlay);
         } else if (curScore.loop) {
             curPos = 0;
