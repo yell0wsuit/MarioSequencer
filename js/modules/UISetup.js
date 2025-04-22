@@ -472,6 +472,13 @@ function clearSongButtons() {
 }
 
 export {
-    clearSongButtons, initDOM, setupBeatButtons, setupControlButtons, setupEraserButton, setupNoteButtons, setupSongButtons, setupUIControls, updateUndoButtonState
+    clearSongButtons,
+    initDOM,
+    setupBeatButtons,
+    setupControlButtons,
+    setupEraserButton,
+    setupNoteButtons,
+    setupSongButtons,
+    setupUIControls,
+    updateUndoButtonState,
 };
-

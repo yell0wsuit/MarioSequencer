@@ -569,6 +569,5 @@ export {
     processUrlParameters,
     setupKeyboardControls,
     stopListener,
-    updateUndoButtonState
+    updateUndoButtonState,
 };
-
