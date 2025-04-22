@@ -941,8 +941,12 @@ function addJSON(text) {
     curScore.tempo = json.tempo;
 
     curScore.end += json.end;
+    
+    // Update curScore.loop with json.loop value
+    curScore.loop = json.loop;
 
-    if (curScore.loop) DOM.loopButton.set();
+    // Use json.loop instead of curScore.loop to determine button state
+    if (json.loop) DOM.loopButton.set();
     else DOM.loopButton.reset();
 }
 
