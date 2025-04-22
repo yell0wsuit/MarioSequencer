@@ -444,13 +444,13 @@ function drawScore(position, notes, scroll) {
     let gridX, gridY;
 
     // Draw horizontal bar for high notes in edit mode
-    if (gameStatus == 0 && gridPosition !== false) {
+    if (gameStatus === 0 && gridPosition !== false) {
         [gridX, gridY] = gridPosition;
         if (gridY >= 11) drawHorizontalBar(gridX, 0);
     }
 
     // Draw G clef and repeat marks at the beginning
-    if (position == 0) {
+    if (position === 0) {
         // Draw G clef at the start
         const gClefWidth = GClef.width;
         const gClefHeight = GClef.height;
@@ -470,7 +470,7 @@ function drawScore(position, notes, scroll) {
         if (curScore.loop) {
             drawRepeatHead(41 - scroll);
         }
-    } else if (position == 1 && curScore.loop) {
+    } else if (position === 1 && curScore.loop) {
         drawRepeatHead(9 - scroll);
     }
 
@@ -478,7 +478,7 @@ function drawScore(position, notes, scroll) {
     const beats = curScore.beats;
     // For 4 beats: orange = 2,1,0,3,2,1,0,3,...
     // For 3 beats: orange = 2,1,0,2,1,0,2,1,...
-    const orangeBeat = beats == 4 ? 3 - ((position + 1) % 4) : 2 - ((position + 3) % 3);
+    const orangeBeat = beats === 4 ? 3 - ((position + 1) % 4) : 2 - ((position + 3) % 3);
 
     // Determine starting bar index based on position
     let barIndex = position < 2 ? 2 - position : 0;
@@ -490,7 +490,7 @@ function drawScore(position, notes, scroll) {
         const barNumber = position + barIndex - 2;
 
         // Draw end mark if this is the last bar
-        if (barNumber == curScore.end) {
+        if (barNumber === curScore.end) {
             const endMarkImage = curScore.loop ? repeatMark[1] : endMark;
             L2C.drawImage(endMarkImage, x - 7 * MAGNIFY, 56 * MAGNIFY);
         }
@@ -501,8 +501,8 @@ function drawScore(position, notes, scroll) {
         L2C.lineWidth = MAGNIFY;
 
         // Highlight first beat of each measure in orange
-        if (barIndex % beats == orangeBeat) {
-            if (gameStatus == 0) drawBarNumber(barIndex, barNumber / beats + 1);
+        if (barIndex % beats === orangeBeat) {
+            if (gameStatus === 0) drawBarNumber(barIndex, barNumber / beats + 1);
             L2C.strokeStyle = "#F89000"; // Orange
         } else {
             L2C.strokeStyle = "#A0C0B0"; // Light green
@@ -513,14 +513,14 @@ function drawScore(position, notes, scroll) {
 
         // Skip if no notes in this bar
         const barNotes = notes[barNumber];
-        if (barNotes == undefined) continue;
+        if (barNotes === undefined) continue;
 
         // Calculate vertical offset for jumping animation
         let noteDelta = 0;
-        if (gameStatus == 2 && mario.marioPosition - 2 == barNumber) {
+        if (gameStatus === 2 && mario.marioPosition - 2 === barNumber) {
             // Calculate jump height based on Mario's position
             let noteIndex;
-            if (mario.marioX == 120) {
+            if (mario.marioX === 120) {
                 noteIndex = mario.marioScroll >= 16 ? mario.marioScroll - 16 : mario.marioScroll + 16;
             } else {
                 noteIndex = mario.marioX + 8 - originalX;
@@ -536,18 +536,18 @@ function drawScore(position, notes, scroll) {
         let hasHighNote = false;
         for (let noteIndex = 0; noteIndex < barNotes.length; noteIndex++) {
             // Skip tempo markers
-            if (typeof barNotes[noteIndex] == "string") continue;
+            if (typeof barNotes[noteIndex] === "string") continue;
 
             const soundNumber = barNotes[noteIndex] >> 8;
             const noteScale = barNotes[noteIndex] & 0x0f;
 
             // Skip drawing note if eraser is hovering over it (blinking effect)
             if (
-                curChar == 16 &&
+                curChar === 16 &&
                 gridPosition !== false &&
-                barIndex == gridX &&
-                noteScale == gridY &&
-                eraserTimer.currentFrame == 1
+                barIndex === gridX &&
+                noteScale === gridY &&
+                eraserTimer.currentFrame === 1
             ) {
                 continue;
             }
@@ -573,7 +573,7 @@ function drawScore(position, notes, scroll) {
     }
 
     // Draw cursor rectangle in edit mode
-    if (gameStatus == 0) {
+    if (gameStatus === 0) {
         L2C.beginPath();
         L2C.setLineDash([7 * MAGNIFY, 2 * MAGNIFY, 7 * MAGNIFY, 0]);
         L2C.lineWidth = MAGNIFY;
@@ -602,10 +602,10 @@ function drawBarNumber(gridX, barNumber) {
         barNumber = Math.floor(barNumber / 10);
     }
     const digitCount = numberDigits.length;
-    if (digitCount == 1) x += 2 * MAGNIFY;
+    if (digitCount === 1) x += 2 * MAGNIFY;
     while (numberDigits.length > 0) {
         const digit = numberDigits.pop();
-        const digitWidth = digit == 4 ? 5 : 4;
+        const digitWidth = digit === 4 ? 5 : 4;
         L2C.drawImage(NUMBERS[digit], x, y, 5 * MAGNIFY, 7 * MAGNIFY);
         x += digitWidth * MAGNIFY;
     }
@@ -654,7 +654,7 @@ function toGrid(mouseRealX, mouseRealY) {
     const gridY = Math.floor((mouseRealY - gridTop) / HALFCHARSIZE);
 
     // Consider G-Clef and repeat head area
-    if ((curPos == 0 && gridX < 2) || (curPos == 1 && gridX == 0)) return false;
+    if ((curPos === 0 && gridX < 2) || (curPos === 1 && gridX === 0)) return false;
     else return [gridX, gridY];
 }
 
@@ -694,7 +694,7 @@ function mouseClickListener(event) {
     const mouseRealY = event.clientY - offsetTop;
 
     const gridPosition = toGrid(mouseRealX, mouseRealY);
-    if (gridPosition == false) return;
+    if (gridPosition === false) return;
     const gridX = gridPosition[0];
     let gridY = gridPosition[1];
 
@@ -702,7 +702,7 @@ function mouseClickListener(event) {
     const barNumber = curPos + gridX - 2;
 
     // process End Mark
-    if (curChar == 15) {
+    if (curChar === 15) {
         // Store the old end mark position before changing it
         undoHistory.push({
             type: "endmark",
@@ -718,10 +718,10 @@ function mouseClickListener(event) {
 
     const barNotes = curScore["notes"][barNumber];
     // Delete
-    if (curChar == 16 || event.button == 2) {
+    if (curChar === 16 || event.button === 2) {
         // Delete Top of the stack
         for (let i = barNotes.length - 1; i >= 0; i--) {
-            if ((barNotes[i] & 0x3f) == gridY) {
+            if ((barNotes[i] & 0x3f) === gridY) {
                 // Store in undo history before deleting
                 undoHistory.push({
                     type: "delete",
@@ -821,7 +821,7 @@ function readFileAsync(file) {
 //   Configure Score parameters
 function closing() {
     // Finally, after reducing, set parameters to Score
-    const b = document.getElementById(curScore.beats == 3 ? "3beats" : "4beats");
+    const b = document.getElementById(curScore.beats === 3 ? "3beats" : "4beats");
     const e = new Event("click");
     e.soundOff = true;
     b.dispatchEvent(e);
@@ -833,7 +833,7 @@ function closing() {
     curPos = 0;
 
     const tempo = curScore.notes[0][0];
-    if (typeof tempo == "string" && tempo.slice(0, 5) == "TEMPO") {
+    if (typeof tempo === "string" && tempo.slice(0, 5) === "TEMPO") {
         const tempoValue = tempo.split("=")[1];
         curScore.tempo = tempoValue;
         document.getElementById("tempo").value = tempoValue;
@@ -863,7 +863,7 @@ function addMSQ(text) {
     out: while (i < s.length) {
         const bar = [];
         for (let j = 0; j < 3; j++) {
-            if (s[i] === "\r" || s[i] == undefined) break out;
+            if (s[i] === "\r" || s[i] === undefined) break out;
             let scale = parseInt(s[i++], 16);
             if (scale !== 0) {
                 scale -= 1;
@@ -878,11 +878,11 @@ function addMSQ(text) {
     curScore.end += parseInt(values.END) - 1;
     if (curScore.tempo !== values.TEMPO) curScore.notes[oldEnd].splice(0, 0, "TEMPO=" + values.TEMPO);
     curScore.tempo = values.TEMPO;
-    const beats = values.TIME44 == "TRUE" ? 4 : 3;
+    const beats = values.TIME44 === "TRUE" ? 4 : 3;
     curScore.beats = beats;
     // click listener will set curScore.loop
     const b = document.getElementById("loop");
-    values.LOOP == "TRUE" ? b.set() : b.reset();
+    values.LOOP === "TRUE" ? b.set() : b.reset();
 }
 
 // addJSON
@@ -1267,7 +1267,7 @@ function setupEraserButton() {
             self.switch = false;
             return;
         }
-        self.currentFrame = self.currentFrame == 0 ? 1 : 0;
+        self.currentFrame = self.currentFrame === 0 ? 1 : 0;
     });
     eraserTimer.currentFrame = 0;
     eraserButton.addEventListener("click", function () {
@@ -1621,7 +1621,7 @@ function setupKeyboardControls() {
         switch (event.code) {
             case "Space": // space -> play/stop or restart with shift
                 const playButton = document.getElementById("play");
-                if (playButton.disabled == false || event.shiftKey) {
+                if (playButton.disabled === false || event.shiftKey) {
                     playListener.call(playButton, event);
                 } else {
                     stopListener.call(document.getElementById("stop"), event);
@@ -1864,7 +1864,7 @@ function doMarioEnter(timeStamp) {
 function doMarioPlay(timeStamp) {
     bombTimer.checkAndFire(timeStamp);
     mario.play(timeStamp);
-    if (gameStatus == 2) {
+    if (gameStatus === 2) {
         if (mario.marioPosition - 2 !== curScore.end - 1) {
             animationFrameId = requestAnimFrame(doMarioPlay);
         } else if (curScore.loop) {
