@@ -1156,13 +1156,12 @@ const resizeScreen = () => {
     const eraserButton = document.getElementById("eraser");
     eraserButton.redraw();
     eraserButton.images = [songImages[9], songImages[10], songImages[11]];
-    let eraserButtonState;
+    const eraserButtonState = curChar === 16 ? 1 : 0;
+    
     if (curChar === 16) {
-        eraserButtonState = 1;
         SCREEN.style.cursor = `url(${eraserButton.images[2].src}) 0 0, auto`;
-    } else {
-        eraserButtonState = 0;
     }
+    
     eraserButton.style.backgroundImage = `url(${eraserButton.images[eraserButtonState].src})`;
 
     const tempoSlider = document.getElementById("tempo");
