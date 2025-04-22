@@ -1661,88 +1661,72 @@ function onload() {
             Semitones = sliceImage(semitoneImg, 5, 12);
 
             // Load Sound Files
-            Promise.all(
-                SOUNDS.map(function (sound) {
-                    return sound.load();
-                })
-            )
-                .then(function (buffers) {
-                    buffers.map(function (buffer, index) {
+            Promise.all(SOUNDS.map(sound => sound.load()))
+                .then(buffers => {
+                    // Assign all buffers to their respective sounds
+                    buffers.forEach((buffer, index) => {
                         SOUNDS[index].buffer = buffer;
                     });
 
                     CONSOLE.removeChild(document.getElementById("spinner"));
 
-                    if (Object.keys(OPTS).length == 0) return;
+                    // Exit early if no options are provided
+                    if (Object.keys(OPTS).length === 0) return;
 
-                    if (OPTS["url"] != undefined) {
+                    // Initialize score before loading external data
+                    if (OPTS.url || OPTS.S || OPTS.SCORE) {
                         fullInitScore();
-                        const url = OPTS["url"];
-                        new Promise(function (resolve, reject) {
-                            const request = new XMLHttpRequest();
-                            request.open("GET", url);
-                            request.onload = function () {
-                                if (request.status == 200) {
-                                    resolve(request.response);
-                                } else {
-                                    reject(Error(request.statusText));
+                    }
+
+                    // Handle URL-based score loading
+                    if (OPTS.url) {
+                        fetch(OPTS.url)
+                            .then(response => {
+                                if (!response.ok) {
+                                    throw new Error(`HTTP error ${response.status}`);
                                 }
-                            };
-
-                            request.onerror = function () {
-                                reject(Error("Network Error"));
-                            };
-
-                            request.send();
-                        })
-                            .then(function (response) {
-                                let msq = false;
-                                if (url.slice(-3) == "msq") addMSQ(response);
-                                else addJSON(response);
-
+                                return response.text();
+                            })
+                            .then(data => {
+                                // Determine file type by extension and process accordingly
+                                OPTS.url.endsWith('.msq') ? addMSQ(data) : addJSON(data);
                                 closing();
                             })
-                            .catch(function (error) {
-                                alert("Downloading File: " + url + " failed :" + error);
-                                console.error("Downloading File: " + url + " failed :" + error.stack);
+                            .catch(error => {
+                                console.error(`Downloading File: ${OPTS.url} failed:`, error);
+                                alert(`Downloading File: ${OPTS.url} failed: ${error.message}`);
                             });
-                    } else if (OPTS.S != undefined || OPTS.SCORE != undefined) {
-                        let score = OPTS.SCORE || OPTS.S;
-                        let tempo = OPTS.TEMPO || OPTS.T;
-                        let loop = OPTS.LOOP || OPTS.L;
-                        let end = OPTS.END || OPTS.E;
-                        let beats = OPTS.TIME44 || OPTS.B;
+                    } 
+                    // Handle parameter-based score loading
+                    else if (OPTS.S || OPTS.SCORE) {
+                        const score = OPTS.SCORE || OPTS.S;
+                        const tempo = OPTS.TEMPO || OPTS.T;
+                        const loop = OPTS.LOOP || OPTS.L;
+                        const end = OPTS.END || OPTS.E;
+                        const beats = OPTS.TIME44 || OPTS.B;
 
-                        if (tempo == undefined || loop == undefined || end == undefined || beats == undefined) {
+                        if (!tempo || !loop || !end || !beats) {
                             throw new Error("Not enough parameters");
                         }
 
-                        loop = loop.toUpperCase();
-                        beats = beats.toUpperCase();
-
-                        const text =
-                            "SCORE=" +
-                            score +
-                            "\n" +
-                            "TEMPO=" +
-                            tempo +
-                            "\n" +
-                            "LOOP=" +
-                            (loop == "T" || loop == "TRUE" ? "TRUE" : "FALSE") +
-                            "\n" +
-                            "END=" +
-                            end +
-                            "\n" +
-                            "TIME44=" +
-                            (beats == "T" || beats == "TRUE" ? "TRUE" : "FALSE");
-                        fullInitScore();
+                        const loopValue = (loop.toUpperCase() === "T" || loop.toUpperCase() === "TRUE") ? "TRUE" : "FALSE";
+                        const beatsValue = (beats.toUpperCase() === "T" || beats.toUpperCase() === "TRUE") ? "TRUE" : "FALSE";
+                        
+                        const text = [
+                            `SCORE=${score}`,
+                            `TEMPO=${tempo}`,
+                            `LOOP=${loopValue}`,
+                            `END=${end}`,
+                            `TIME44=${beatsValue}`
+                        ].join('\n');
+                        
                         addMSQ(text);
                         closing();
                     }
                 })
-                .catch(function (error) {
-                    alert("Invalid GET parameter :" + error);
-                    console.error("Invalid GET parameter :" + error.stack);
+                .catch(error => {
+                    console.error("Invalid GET parameter:", error);
+                    alert(`Invalid GET parameter: ${error.message}`);
                 });
 
             document.addEventListener("keydown", function (event) {
