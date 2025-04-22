@@ -788,74 +788,59 @@ SCREEN.addEventListener("mousemove", function (e) {
 });
 
 // Read MSQ File
-// You really need this "dragover" event listener.
-// Check StackOverflow: http://bit.ly/1hHEINZ
-SCREEN.addEventListener("dragover", function (e) {
+// You need this "dragover" event listener to enable drop functionality
+SCREEN.addEventListener("dragover", (e) => {
     e.preventDefault();
     return false;
 });
-// Translate dropped MSQ files into inner SCORE array.
-// You have to handle each file sequencially,
-// But you might want to download files parallel.
-// In such a case, Promise is very convinient utility.
-// http://www.html5rocks.com/en/tutorials/es6/promises/
-SCREEN.addEventListener("drop", function (e) {
+
+// Handle file drops (MSQ or JSON files)
+SCREEN.addEventListener("drop", async (e) => {
     e.preventDefault();
     clearSongButtons();
     fullInitScore();
-    // function to read a given file
-    // Input is a instance of a File object.
-    // Returns a instance of a Promise.
-    function readFile(file) {
-        return new Promise(function (resolve, reject) {
-            const reader = new FileReader();
-            reader.name = file.name;
-            reader.addEventListener("load", function (e) {
-                resolve(e.target);
-            });
-            reader.readAsText(file, "shift-jis");
+    
+    try {
+        // Convert FileList to Array and sort files by numeric order
+        const files = Array.from(e.dataTransfer.files).sort((a, b) => {
+            // Extract numeric parts from filenames (supports decimal numbers like "15.5")
+            const getNumericPart = (name) => {
+                const match = /\d+\.\d+|\d+/.exec(name);
+                return match ? parseFloat(match[0]) : 0;
+            };
+            return getNumericPart(a.name) - getNumericPart(b.name);
         });
-    }
-
-    // FileList to Array for Mapping
-    const files = [].slice.call(e.dataTransfer.files);
-    // Support Mr.Phenix's files. He numbered files with decimal numbers :-)
-    // http://music.geocities.jp/msq_phenix/
-    // For example, suite15.5.msq must be after the suite15.msq
-    files.sort(function (a, b) {
-        const n1 = a.name;
-        const n2 = b.name;
-        function strip(name) {
-            const n = /\d+\.\d+|\d+/.exec(name);
-            if (n == null) return 0;
-            return parseFloat(n[0]);
+        
+        // Process files sequentially
+        for (const file of files) {
+            const fileContent = await readFileAsync(file);
+            const extension = file.name.slice(-3).toLowerCase();
+            
+            if (extension === "msq") {
+                addMSQ(fileContent);
+            } else {
+                addJSON(fileContent);
+            }
         }
-        return strip(n1) - strip(n2);
-    });
-    files
-        .map(readFile)
-        .reduce(function (chain, fp, idx) {
-            return chain
-                .then(function () {
-                    return fp;
-                })
-                .then(function (fileReader) {
-                    const ext = fileReader.name.slice(-3);
-                    if (ext == "msq") {
-                        addMSQ(fileReader.result);
-                    } else {
-                        addJSON(fileReader.result);
-                    }
-                })
-                .catch(function (err) {
-                    alert("Loading MSQ failed: " + err.message);
-                    console.log(err);
-                });
-        }, Promise.resolve())
-        .then(closing);
-
+        
+        closing();
+    } catch (err) {
+        alert("Loading file failed: " + err.message);
+        console.error(err);
+    }
+    
     return false;
 });
+
+// Promise-based file reader
+function readFileAsync(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = (e) => resolve(e.target.result);
+        reader.onerror = (e) => reject(new Error("File reading failed"));
+        reader.readAsText(file, "shift-jis");
+    });
+}
 
 // Closing to add files to the score
 //   Configure Score parameters
