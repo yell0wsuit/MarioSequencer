@@ -1387,30 +1387,42 @@ function onload() {
             scrollBar.id = "scroll";
             scrollBar.type = "range";
             scrollBar.setAttribute("aria-label", "Scroll through music");
-            scrollBar.style.cursor = "pointer";
-            scrollBar.value = 0;
-            scrollBar.max = curMaxBars - 6;
-            scrollBar.min = 0;
-            scrollBar.step = 1;
-            scrollBar.style["-webkit-appearance"] = "none";
-            scrollBar.style["border-radius"] = "0px";
-            scrollBar.style["background-color"] = "#F8F8F8";
-            scrollBar.style["box-shadow"] = "inset 0 0 0 #000";
-            scrollBar.style["vertical-align"] = "middle";
-            scrollBar.style.position = "absolute";
-            scrollBar.style.margin = 0;
-            scrollBar.originalX = 191;
-            scrollBar.originalY = 159;
-            scrollBar.originalW = 50;
-            scrollBar.originalH = 7;
+            
+            // Set all properties in a single object
+            Object.assign(scrollBar, {
+                value: 0,
+                max: curMaxBars - 6,
+                min: 0,
+                step: 1,
+                originalX: 191,
+                originalY: 159,
+                originalW: 50,
+                originalH: 7
+            });
+            
+            // Set all styles in a single object
+            Object.assign(scrollBar.style, {
+                cursor: "pointer",
+                "-webkit-appearance": "none",
+                "border-radius": "0px",
+                "background-color": "#F8F8F8",
+                "box-shadow": "inset 0 0 0 #000",
+                "vertical-align": "middle",
+                position: "absolute",
+                margin: 0
+            });
+            
+            // Position and size the element
             moveDOM(scrollBar, scrollBar.originalX, scrollBar.originalY);
             resizeDOM(scrollBar, scrollBar.originalW, scrollBar.originalH);
-            scrollBar.addEventListener("input", function (event) {
+            
+            // Add event listener for scrolling in edit mode only
+            scrollBar.addEventListener("input", () => {
                 if (gameStatus === 0) {
-                    // Only allow scrolling in edit mode
-                    curPos = parseInt(this.value);
+                    curPos = parseInt(scrollBar.value);
                 }
             });
+            
             CONSOLE.appendChild(scrollBar);
 
             // It's very hard to set values to a pseudo element with JS.
