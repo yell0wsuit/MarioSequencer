@@ -74,7 +74,7 @@ let DOM = {
     songButtons: {
         frog: null,
         beak: null,
-        "1up": null
+        "1up": null,
     },
 };
 
@@ -918,7 +918,7 @@ function addMSQ(text) {
     curScore.tempo = values.TEMPO;
     const beats = values.TIME44 === "TRUE" ? 4 : 3;
     curScore.beats = beats;
-    
+
     // Set loop button state
     values.LOOP === "TRUE" ? DOM.loopButton.set() : DOM.loopButton.reset();
 }
@@ -1024,176 +1024,6 @@ const selectListener = (event) => {
     resizeScreen();
 };
 
-const resizeScreen = () => {
-    CHARSIZE = 16 * MAGNIFY;
-    HALFCHARSIZE = Math.floor(CHARSIZE / 2);
-
-    // Update console dimensions
-    CONSOLE.style.width = `${ORGWIDTH * MAGNIFY}px`;
-    CONSOLE.style.height = `${ORGHEIGHT * MAGNIFY}px`;
-
-    // Center the console in the viewport
-    //CONSOLE.style.position = 'absolute';
-    //CONSOLE.style.left = `${(window.innerWidth - ORGWIDTH * MAGNIFY) / 2}px`;
-    //CONSOLE.style.top = `${(window.innerHeight - ORGHEIGHT * MAGNIFY) / 2}px`;
-
-    // Update offsets for cursor positioning
-    offsetLeft = CONSOLE.offsetLeft;
-    offsetTop = CONSOLE.offsetTop;
-
-    BOMBS = sliceImage(bombImg, 14, 18);
-    mario.images = sliceImage(marioImg, 16, 22);
-    Semitones = sliceImage(semitoneImg, 5, 12);
-
-    MAT.width = ORGWIDTH * MAGNIFY;
-    MAT.height = ORGHEIGHT * MAGNIFY;
-    L1C.drawImage(matImage, 0, 0, matImage.width * MAGNIFY, matImage.height * MAGNIFY);
-
-    SCREEN.width = ORGWIDTH * MAGNIFY;
-    SCREEN.height = SCRHEIGHT * MAGNIFY;
-
-    const characterImages = sliceImage(charSheet, 16, 16);
-    BUTTONS.forEach((button, index) => {
-        button.redraw();
-        if (index < 15) button.se.image = characterImages[index];
-    });
-    BUTTONS[15].images = sliceImage(endImg, 14, 13);
-    endMarkTimer.images = BUTTONS[15].images;
-
-    // Endmark Cursor (= 15) will be redrawn by its animation
-    // Eraser (= 16) will be redrawn later below
-    if (curChar < 15) {
-        changeCursor(curChar);
-    }
-
-    if (curChar === 15) drawEndMarkIcon(BUTTONS[15].images[0]);
-    else if (curChar === 16) drawEraserIcon();
-    else drawCurChar(SOUNDS[curChar].image);
-
-    const playButton = document.getElementById("play");
-    playButton.redraw();
-    playButton.images = sliceImage(playBtnImg, 12, 15);
-    const playButtonState = playButton.disabled ? 1 : 0;
-    playButton.style.backgroundImage = `url(${playButton.images[playButtonState].src})`;
-
-    const stopButton = document.getElementById("stop");
-    stopButton.redraw();
-    const stopButtonImages = sliceImage(stopBtnImg, 16, 15);
-    stopButton.images = [stopButtonImages[0], stopButtonImages[1]];
-    stopButton.style.backgroundImage = `url(${stopButton.images[1 - playButtonState].src})`;
-
-    const loopButton = document.getElementById("loop");
-    loopButton.redraw();
-    loopButton.images = [stopButtonImages[2], stopButtonImages[3]]; // made in Stop button (above)
-    const loopButtonState = curScore.loop ? 1 : 0;
-    loopButton.style.backgroundImage = `url(${loopButton.images[loopButtonState].src})`;
-
-    // Prepare Repeat (global!)
-    repeatMark = sliceImage(repeatImg, 13, 62);
-    endMark = repeatMark[2];
-
-    const scrollBar = document.getElementById("scroll");
-    moveDOM(scrollBar, scrollBar.originalX, scrollBar.originalY);
-    resizeDOM(scrollBar, scrollBar.originalW, scrollBar.originalH);
-    const styleRules = pseudoSheet.cssRules;
-    for (let i = 0; i < styleRules.length; i++) {
-        if (styleRules[i].selectorText === "#scroll::-webkit-slider-thumb") {
-            pseudoSheet.deleteRule(i);
-            pseudoSheet.insertRule(
-                `#scroll::-webkit-slider-thumb {
-                    -webkit-appearance: none !important;
-                    border-radius: 0px;
-                    background-color: #A870D0;
-                    box-shadow:inset 0 0 0px;
-                    border: 0px;
-                    width: ${5 * MAGNIFY}px;
-                    height:${7 * MAGNIFY}px;
-                }`,
-                0
-            );
-        }
-    }
-
-    const leftButton = document.getElementById("toLeft");
-    leftButton.redraw();
-    const rightButton = document.getElementById("toRight");
-    rightButton.redraw();
-    const clearButton = document.getElementById("clear");
-    clearButton.redraw();
-    clearButton.images = sliceImage(clearImg, 34, 16);
-    clearButton.style.backgroundImage = `url(${clearButton.images[0].src})`;
-
-    // Make number images from the number sheet
-    NUMBERS = sliceImage(numImg, 5, 7);
-
-    // Get beat buttons and slice images once
-    const beats3Button = document.getElementById("3beats");
-    const beats4Button = document.getElementById("4beats");
-    beats3Button.redraw();
-    beats4Button.redraw();
-
-    const beatImages = sliceImage(beatImg, 14, 15);
-
-    // Set images for both buttons at once
-    beats3Button.images = [beatImages[0], beatImages[1]];
-    beats4Button.images = [beatImages[2], beatImages[3]];
-
-    // Determine state once and apply to both buttons
-    const is3Beats = curScore.beats === 3;
-    beats3Button.style.backgroundImage = `url(${beats3Button.images[is3Beats ? 1 : 0].src})`;
-    beats4Button.style.backgroundImage = `url(${beats4Button.images[is3Beats ? 0 : 1].src})`;
-
-    // Slice song button images once
-    const songImages = sliceImage(songImg, 15, 17);
-
-    // Configure all song buttons with a single loop
-    const songButtons = [
-        { id: "frog", imageIndices: [0, 1, 2] },
-        { id: "beak", imageIndices: [3, 4, 5] },
-        { id: "1up", imageIndices: [6, 7, 8] },
-    ];
-
-    songButtons.forEach((button) => {
-        const element = document.getElementById(button.id);
-        element.redraw();
-        element.images = button.imageIndices.map((i) => songImages[i]);
-        const buttonState = curSong === element ? 1 : 0;
-        element.style.backgroundImage = `url(${element.images[buttonState].src})`;
-    });
-
-    const eraserButton = document.getElementById("eraser");
-    eraserButton.redraw();
-    eraserButton.images = [songImages[9], songImages[10], songImages[11]];
-    const eraserButtonState = curChar === 16 ? 1 : 0;
-
-    if (curChar === 16) {
-        SCREEN.style.cursor = `url(${eraserButton.images[2].src}) 0 0, auto`;
-    }
-
-    eraserButton.style.backgroundImage = `url(${eraserButton.images[eraserButtonState].src})`;
-
-    const tempoSlider = document.getElementById("tempo");
-    moveDOM(tempoSlider, tempoSlider.originalX, tempoSlider.originalY);
-    resizeDOM(tempoSlider, tempoSlider.originalW, tempoSlider.originalH);
-    for (let i = 0; i < styleRules.length; i++) {
-        if (styleRules[i].selectorText === "#tempo::-webkit-slider-thumb") {
-            pseudoSheet.deleteRule(i);
-            pseudoSheet.insertRule(
-                `#tempo::-webkit-slider-thumb {
-                    -webkit-appearance: none !important;
-                    background-image: url('${tempoSlider.image.src}');
-                    background-repeat: no-repeat;
-                    background-size: 100% 100%;
-                    border: 0px;
-                    width: ${5 * MAGNIFY}px;
-                    height:${8 * MAGNIFY}px;
-                }`,
-                0
-            );
-        }
-    }
-};
-
 const sliceImage = (image, width, height) => {
     const result = [];
     const horizontalCount = Math.floor(image.width / width);
@@ -1235,6 +1065,339 @@ const download = () => {
     link.click();
     URL.revokeObjectURL(link.href); // Clean up to avoid memory leaks
 };
+
+const resizeScreen = () => {
+    // Update core dimensions
+    updateCoreDimensions();
+    
+    // Resize canvas and screen elements
+    resizeCanvasElements();
+    
+    // Resize note and end mark buttons
+    resizeNoteButtons();
+    
+    // Resize control buttons (play, stop, loop, etc.)
+    resizeControlButtons();
+    
+    // Resize slider elements
+    resizeSliderElements();
+    
+    // Resize navigation buttons
+    resizeNavigationButtons();
+    
+    // Resize beat buttons
+    resizeBeatButtons();
+    
+    // Resize song buttons
+    resizeSongButtons();
+    
+    // Resize eraser button
+    resizeEraserButton();
+    
+    // Resize undo dog button
+    resizeUndoDogButton();
+};
+
+// Update core dimensions based on magnification
+function updateCoreDimensions() {
+    CHARSIZE = 16 * MAGNIFY;
+    HALFCHARSIZE = Math.floor(CHARSIZE / 2);
+
+    // Update console dimensions
+    CONSOLE.style.width = `${ORGWIDTH * MAGNIFY}px`;
+    CONSOLE.style.height = `${ORGHEIGHT * MAGNIFY}px`;
+
+    // Update offsets for cursor positioning
+    offsetLeft = CONSOLE.offsetLeft;
+    offsetTop = CONSOLE.offsetTop;
+
+    // Update global image resources
+    BOMBS = sliceImage(bombImg, 14, 18);
+    mario.images = sliceImage(marioImg, 16, 22);
+    Semitones = sliceImage(semitoneImg, 5, 12);
+    NUMBERS = sliceImage(numImg, 5, 7);
+    
+    // Prepare Repeat marks
+    repeatMark = sliceImage(repeatImg, 13, 62);
+    endMark = repeatMark[2];
+}
+
+// Resize canvas elements
+function resizeCanvasElements() {
+    // Resize and redraw the main canvas
+    MAT.width = ORGWIDTH * MAGNIFY;
+    MAT.height = ORGHEIGHT * MAGNIFY;
+    L1C.drawImage(matImage, 0, 0, matImage.width * MAGNIFY, matImage.height * MAGNIFY);
+
+    // Resize the screen canvas
+    SCREEN.width = ORGWIDTH * MAGNIFY;
+    SCREEN.height = SCRHEIGHT * MAGNIFY;
+}
+
+// Resize note buttons and end mark button
+function resizeNoteButtons() {
+    const characterImages = sliceImage(charSheet, 16, 16);
+    
+    // Resize all buttons
+    BUTTONS.forEach((button, index) => {
+        button.redraw();
+        if (index < 15) button.se.image = characterImages[index];
+    });
+    
+    // Update end mark button
+    BUTTONS[15].images = sliceImage(endImg, 14, 13);
+    endMarkTimer.images = BUTTONS[15].images;
+
+    // Update cursor and character display
+    if (curChar < 15) {
+        changeCursor(curChar);
+    }
+
+    if (curChar === 15) drawEndMarkIcon(BUTTONS[15].images[0]);
+    else if (curChar === 16) drawEraserIcon();
+    else drawCurChar(SOUNDS[curChar].image);
+}
+
+// Resize control buttons (play, stop, loop)
+function resizeControlButtons() {
+    // Cache DOM elements if not already initialized
+    if (!DOM.playButton) {
+        initControlButtonsDOMCache();
+    }
+    
+    // Resize play button
+    DOM.playButton.redraw();
+    DOM.playButton.images = sliceImage(playBtnImg, 12, 15);
+    const playButtonState = DOM.playButton.disabled ? 1 : 0;
+    DOM.playButton.style.backgroundImage = `url(${DOM.playButton.images[playButtonState].src})`;
+
+    // Resize stop button
+    DOM.stopButton.redraw();
+    const stopButtonImages = sliceImage(stopBtnImg, 16, 15);
+    DOM.stopButton.images = [stopButtonImages[0], stopButtonImages[1]];
+    DOM.stopButton.style.backgroundImage = `url(${DOM.stopButton.images[1 - playButtonState].src})`;
+
+    // Resize loop button
+    DOM.loopButton.redraw();
+    DOM.loopButton.images = [stopButtonImages[2], stopButtonImages[3]]; // reuse images from stop button
+    const loopButtonState = curScore.loop ? 1 : 0;
+    DOM.loopButton.style.backgroundImage = `url(${DOM.loopButton.images[loopButtonState].src})`;
+    
+    // Resize clear button
+    DOM.clearButton.redraw();
+    DOM.clearButton.images = sliceImage(clearImg, 34, 16);
+    DOM.clearButton.style.backgroundImage = `url(${DOM.clearButton.images[0].src})`;
+}
+
+// Initialize control buttons DOM cache if needed
+function initControlButtonsDOMCache() {
+    DOM.playButton = document.getElementById("play");
+    DOM.stopButton = document.getElementById("stop");
+    DOM.loopButton = document.getElementById("loop");
+    DOM.clearButton = document.getElementById("clear");
+}
+
+// Resize slider elements (scroll bar, tempo)
+function resizeSliderElements() {
+    // Cache DOM elements if not already initialized
+    if (!DOM.scrollBar || !DOM.tempo) {
+        initSliderDOMCache();
+    }
+    
+    // Resize scroll bar
+    moveDOM(DOM.scrollBar, DOM.scrollBar.originalX, DOM.scrollBar.originalY);
+    resizeDOM(DOM.scrollBar, DOM.scrollBar.originalW, DOM.scrollBar.originalH);
+    
+    // Update scroll bar thumb style
+    updateSliderThumbStyle("#scroll::-webkit-slider-thumb", {
+        properties: {
+            "-webkit-appearance": "none !important",
+            "border-radius": "0px",
+            "background-color": "#A870D0",
+            "box-shadow": "inset 0 0 0px",
+            "border": "0px"
+        },
+        width: 5 * MAGNIFY,
+        height: 7 * MAGNIFY
+    });
+    
+    // Resize tempo slider
+    moveDOM(DOM.tempo, DOM.tempo.originalX, DOM.tempo.originalY);
+    resizeDOM(DOM.tempo, DOM.tempo.originalW, DOM.tempo.originalH);
+    
+    // Get thumb image for tempo slider
+    const thumbImage = sliceImage(thumbImg, 5, 8)[0];
+    DOM.tempo.image = thumbImage;
+    
+    // Update tempo slider thumb style
+    updateSliderThumbStyle("#tempo::-webkit-slider-thumb", {
+        properties: {
+            "-webkit-appearance": "none !important",
+            "background-image": `url('${thumbImage.src}')`,
+            "background-repeat": "no-repeat",
+            "background-size": "100% 100%",
+            "border": "0px"
+        },
+        width: 5 * MAGNIFY,
+        height: 8 * MAGNIFY
+    });
+}
+
+// Initialize slider DOM cache if needed
+function initSliderDOMCache() {
+    DOM.scrollBar = document.getElementById("scroll");
+    DOM.tempo = document.getElementById("tempo");
+}
+
+// Helper function to update slider thumb styles
+function updateSliderThumbStyle(selector, config) {
+    const styleRules = pseudoSheet.cssRules;
+    
+    // Find and remove existing rule
+    for (let i = 0; i < styleRules.length; i++) {
+        if (styleRules[i].selectorText === selector) {
+            pseudoSheet.deleteRule(i);
+            break;
+        }
+    }
+    
+    // Build CSS properties string
+    let cssProperties = "";
+    for (const [property, value] of Object.entries(config.properties)) {
+        cssProperties += `${property}: ${value};\n`;
+    }
+    
+    // Add width and height
+    cssProperties += `width: ${config.width}px;\n`;
+    cssProperties += `height: ${config.height}px;`;
+    
+    // Insert new rule
+    pseudoSheet.insertRule(
+        `${selector} {${cssProperties}}`,
+        0
+    );
+}
+
+// Resize navigation buttons
+function resizeNavigationButtons() {
+    // Cache DOM elements if not already initialized
+    if (!DOM.leftButton || !DOM.rightButton) {
+        initNavigationDOMCache();
+    }
+    
+    // Resize left and right navigation buttons
+    DOM.leftButton.redraw();
+    DOM.rightButton.redraw();
+}
+
+// Initialize navigation buttons DOM cache if needed
+function initNavigationDOMCache() {
+    DOM.leftButton = document.getElementById("toLeft");
+    DOM.rightButton = document.getElementById("toRight");
+}
+
+// Resize beat buttons
+function resizeBeatButtons() {
+    // Cache DOM elements if not already initialized
+    if (!DOM.beats3Button || !DOM.beats4Button) {
+        initBeatButtonsDOMCache();
+    }
+    
+    // Resize beat buttons
+    DOM.beats3Button.redraw();
+    DOM.beats4Button.redraw();
+    
+    const beatImages = sliceImage(beatImg, 14, 15);
+    
+    // Set images for both buttons
+    DOM.beats3Button.images = [beatImages[0], beatImages[1]];
+    DOM.beats4Button.images = [beatImages[2], beatImages[3]];
+    
+    // Determine state and apply to both buttons
+    const is3Beats = curScore.beats === 3;
+    DOM.beats3Button.style.backgroundImage = `url(${DOM.beats3Button.images[is3Beats ? 1 : 0].src})`;
+    DOM.beats4Button.style.backgroundImage = `url(${DOM.beats4Button.images[is3Beats ? 0 : 1].src})`;
+}
+
+// Initialize beat buttons DOM cache if needed
+function initBeatButtonsDOMCache() {
+    DOM.beats3Button = document.getElementById("3beats");
+    DOM.beats4Button = document.getElementById("4beats");
+}
+
+// Resize song buttons
+function resizeSongButtons() {
+    // Cache DOM elements if not already initialized
+    if (!DOM.songButtons.frog || !DOM.songButtons.beak || !DOM.songButtons["1up"]) {
+        initSongButtonsDOMCache();
+    }
+    
+    const songImages = sliceImage(songImg, 15, 17);
+    
+    // Configure all song buttons
+    const songButtonsConfig = [
+        { button: DOM.songButtons.frog, imageIndices: [0, 1, 2] },
+        { button: DOM.songButtons.beak, imageIndices: [3, 4, 5] },
+        { button: DOM.songButtons["1up"], imageIndices: [6, 7, 8] }
+    ];
+    
+    songButtonsConfig.forEach(config => {
+        const button = config.button;
+        button.redraw();
+        button.images = config.imageIndices.map(i => songImages[i]);
+        const buttonState = curSong === button ? 1 : 0;
+        button.style.backgroundImage = `url(${button.images[buttonState].src})`;
+    });
+}
+
+// Initialize song buttons DOM cache if needed
+function initSongButtonsDOMCache() {
+    DOM.songButtons.frog = document.getElementById("frog");
+    DOM.songButtons.beak = document.getElementById("beak");
+    DOM.songButtons["1up"] = document.getElementById("1up");
+}
+
+// Resize eraser button
+function resizeEraserButton() {
+    // Cache DOM elements if not already initialized
+    if (!DOM.eraserButton) {
+        initEraserButtonDOMCache();
+    }
+    
+    const songImages = sliceImage(songImg, 15, 17);
+    
+    DOM.eraserButton.redraw();
+    DOM.eraserButton.images = [songImages[9], songImages[10], songImages[11]];
+    const eraserButtonState = curChar === 16 ? 1 : 0;
+    
+    if (curChar === 16) {
+        SCREEN.style.cursor = `url(${DOM.eraserButton.images[2].src}) 0 0, auto`;
+    }
+    
+    DOM.eraserButton.style.backgroundImage = `url(${DOM.eraserButton.images[eraserButtonState].src})`;
+}
+
+// Initialize eraser button DOM cache if needed
+function initEraserButtonDOMCache() {
+    DOM.eraserButton = document.getElementById("eraser");
+}
+
+// Resize undo dog button
+function resizeUndoDogButton() {
+    // Cache DOM elements if not already initialized
+    if (!DOM.undoButton) {
+        initUndoButtonDOMCache();
+    }
+    
+    DOM.undoButton.redraw();
+    DOM.undoButton.images = sliceImage(undoDogImg, 14, 15);
+    DOM.undoButton.style.backgroundImage = `url(${DOM.undoButton.images[0].src})`;
+}
+
+// Initialize undo button DOM cache if needed
+function initUndoButtonDOMCache() {
+    DOM.undoButton = document.getElementById("undo");
+}
 
 function setupNoteButtons() {
     const buttonImages = sliceImage(charSheet, 16, 16);
@@ -1646,23 +1809,23 @@ function setupSongButtons() {
         CONSOLE.appendChild(button);
         return button;
     });
-    
+
     const loadSong = function (self) {
         curScore = clone(EmbeddedSong[self.num]);
         DOM.tempo.value = curScore.tempo;
-        
+
         if (curScore.loop) {
-        DOM.loopButton.set();
-    } else {
-        DOM.loopButton.reset();
-    }
-        
+            DOM.loopButton.set();
+        } else {
+            DOM.loopButton.reset();
+        }
+
         DOM.scrollBar.max = curScore.end - 5;
         DOM.scrollBar.value = 0;
         curPos = 0;
         curSong = self;
     };
-    
+
     // Use the makeExclusiveFunction created in setupBeatButtons
     songButtons[0].addEventListener("click", makeExclusiveFunction(songButtons, 0, loadSong));
     songButtons[1].addEventListener("click", makeExclusiveFunction(songButtons, 1, loadSong));
@@ -1712,7 +1875,7 @@ function setupKeyboardControls() {
 async function loadSoundAndInitialize() {
     // Number images
     NUMBERS = sliceImage(numImg, 5, 7);
-    
+
     // Initialize score
     initScore();
 
@@ -1812,10 +1975,10 @@ function onload() {
             setupBeatButtons();
             setupSongButtons();
             setupKeyboardControls();
-            
+
             // Initialize DOM references
             initDOM();
-            
+
             // Load sounds and initialize the application
             return loadSoundAndInitialize();
         })
@@ -1965,13 +2128,13 @@ function clearSongButtons() {
     // Reset all song button states
     DOM.songButtons.frog.disabled = false;
     DOM.songButtons.frog.style.backgroundImage = "url(" + DOM.songButtons.frog.images[0].src + ")";
-    
+
     DOM.songButtons.beak.disabled = false;
     DOM.songButtons.beak.style.backgroundImage = "url(" + DOM.songButtons.beak.images[0].src + ")";
-    
+
     DOM.songButtons["1up"].disabled = false;
     DOM.songButtons["1up"].style.backgroundImage = "url(" + DOM.songButtons["1up"].images[0].src + ")";
-    
+
     curSong = undefined;
 }
 
