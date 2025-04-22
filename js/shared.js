@@ -799,7 +799,7 @@ SCREEN.addEventListener("drop", async (e) => {
     e.preventDefault();
     clearSongButtons();
     fullInitScore();
-    
+
     try {
         // Convert FileList to Array and sort files by numeric order
         const files = Array.from(e.dataTransfer.files).sort((a, b) => {
@@ -810,25 +810,25 @@ SCREEN.addEventListener("drop", async (e) => {
             };
             return getNumericPart(a.name) - getNumericPart(b.name);
         });
-        
+
         // Process files sequentially
         for (const file of files) {
             const fileContent = await readFileAsync(file);
             const extension = file.name.slice(-3).toLowerCase();
-            
+
             if (extension === "msq") {
                 addMSQ(fileContent);
             } else {
                 addJSON(fileContent);
             }
         }
-        
+
         closing();
     } catch (err) {
         alert("Loading file failed: " + err.message);
         console.error(err);
     }
-    
+
     return false;
 });
 
@@ -1108,13 +1108,13 @@ const resizeScreen = () => {
     const beats4Button = document.getElementById("4beats");
     beats3Button.redraw();
     beats4Button.redraw();
-    
+
     const beatImages = sliceImage(beatImg, 14, 15);
-    
+
     // Set images for both buttons at once
     beats3Button.images = [beatImages[0], beatImages[1]];
     beats4Button.images = [beatImages[2], beatImages[3]];
-    
+
     // Determine state once and apply to both buttons
     const is3Beats = curScore.beats === 3;
     beats3Button.style.backgroundImage = `url(${beats3Button.images[is3Beats ? 1 : 0].src})`;
@@ -1122,31 +1122,31 @@ const resizeScreen = () => {
 
     // Slice song button images once
     const songImages = sliceImage(songImg, 15, 17);
-    
+
     // Configure all song buttons with a single loop
     const songButtons = [
         { id: "frog", imageIndices: [0, 1, 2] },
         { id: "beak", imageIndices: [3, 4, 5] },
-        { id: "1up", imageIndices: [6, 7, 8] }
+        { id: "1up", imageIndices: [6, 7, 8] },
     ];
-    
-    songButtons.forEach(button => {
+
+    songButtons.forEach((button) => {
         const element = document.getElementById(button.id);
         element.redraw();
-        element.images = button.imageIndices.map(i => songImages[i]);
+        element.images = button.imageIndices.map((i) => songImages[i]);
         const buttonState = curSong === element ? 1 : 0;
         element.style.backgroundImage = `url(${element.images[buttonState].src})`;
     });
-    
+
     const eraserButton = document.getElementById("eraser");
     eraserButton.redraw();
     eraserButton.images = [songImages[9], songImages[10], songImages[11]];
     const eraserButtonState = curChar === 16 ? 1 : 0;
-    
+
     if (curChar === 16) {
         SCREEN.style.cursor = `url(${eraserButton.images[2].src}) 0 0, auto`;
     }
-    
+
     eraserButton.style.backgroundImage = `url(${eraserButton.images[eraserButtonState].src})`;
 
     const tempoSlider = document.getElementById("tempo");
@@ -1244,9 +1244,9 @@ function onload() {
             // Prepare End Mark button (Char. No. 15)
             const endMarkButton = makeButton(235, 8, 13, 14, "button", "Add end mark");
             endMarkButton.images = sliceImage(endImg, 14, 13); // Note: Different size from the button
-            
+
             // Create timer for end mark cursor animation
-            endMarkTimer = new EasyTimer(150, self => {
+            endMarkTimer = new EasyTimer(150, (self) => {
                 if (curChar !== 15) {
                     self.switch = false;
                     return;
@@ -1254,20 +1254,20 @@ function onload() {
                 self.currentFrame ^= 1; // Toggle between 0 and 1
                 SCREEN.style.cursor = `url(${self.images[self.currentFrame].src})${7 * MAGNIFY} ${7 * MAGNIFY}, auto`;
             });
-            
+
             // Set up timer properties
             endMarkTimer.images = endMarkButton.images;
             endMarkTimer.currentFrame = 0;
-            
+
             // Add click handler
-            endMarkButton.addEventListener("click", function() {
+            endMarkButton.addEventListener("click", function () {
                 endMarkTimer.switch = true;
                 curChar = 15;
                 SOUNDS[15].play(8);
                 clearEraserButton();
                 drawEndMarkIcon(this.images[0]);
             });
-            
+
             CONSOLE.appendChild(endMarkButton);
             BUTTONS[15] = endMarkButton;
 
@@ -1289,12 +1289,12 @@ function onload() {
             const stopButton = makeButton(21, 168, 16, 15, "button", "Stop music");
             stopButton.id = "stop";
             stopButton.disabled = true;
-            
+
             // Slice images once and store for reuse (also used by loop button)
             const stopButtonImages = sliceImage(stopBtnImg, 16, 15);
             stopButton.images = stopButtonImages.slice(0, 2);
             stopButton.style.backgroundImage = `url(${stopButton.images[1].src})`;
-            
+
             stopButton.addEventListener("click", stopListener);
             pseudoSheet.insertRule("#stop:focus {outline: none !important;}", 0);
             CONSOLE.appendChild(stopButton);
@@ -1304,13 +1304,13 @@ function onload() {
             undoButton.id = "undo";
             undoButton.images = sliceImage(undoDogImg, 14, 15);
             undoButton.style.backgroundImage = `url(${undoButton.images[0].src})`;
-            
-            undoButton.addEventListener("click", function() {
+
+            undoButton.addEventListener("click", function () {
                 if (undoHistory.length === 0) return;
-                
+
                 const lastAction = undoHistory.pop();
                 const barNotes = lastAction.type !== "endmark" ? curScore.notes[lastAction.barNumber] : null;
-                
+
                 switch (lastAction.type) {
                     case "add":
                         const index = barNotes.indexOf(lastAction.note);
@@ -1327,14 +1327,14 @@ function onload() {
                 SOUNDS[20].play(8); // Play dogundo sound
                 drawScore(curPos, curScore.notes, 0);
                 updateUndoButtonState();
-                
+
                 // Add hover effect
                 this.style.backgroundImage = `url(${this.images[1].src})`;
                 setTimeout(() => {
                     this.style.backgroundImage = `url(${this.images[0].src})`;
                 }, 150);
             });
-            
+
             CONSOLE.appendChild(undoButton);
             pseudoSheet.insertRule("#undo:focus {outline: none !important;}", 0);
 
@@ -1347,24 +1347,24 @@ function onload() {
             loopButton.images = [stopButtonImages[2], stopButtonImages[3]]; // made in Stop button (above)
             loopButton.style.backgroundImage = `url(${loopButton.images[0].src})`;
             curScore.loop = false;
-            
-            loopButton.addEventListener("click", function() {
+
+            loopButton.addEventListener("click", function () {
                 curScore.loop = !curScore.loop;
                 const buttonState = curScore.loop ? 1 : 0;
                 this.style.backgroundImage = `url(${this.images[buttonState].src})`;
                 SOUNDS[17].play(8);
             });
-            
-            loopButton.reset = function() {
+
+            loopButton.reset = function () {
                 curScore.loop = false;
                 this.style.backgroundImage = `url(${this.images[0].src})`;
             };
-            
-            loopButton.set = function() {
+
+            loopButton.set = function () {
                 curScore.loop = true;
                 this.style.backgroundImage = `url(${this.images[1].src})`;
             };
-            
+
             style.sheet.insertRule("#loop:focus {outline: none !important;}", 0);
             CONSOLE.appendChild(loopButton);
 
@@ -1377,7 +1377,7 @@ function onload() {
             scrollBar.id = "scroll";
             scrollBar.type = "range";
             scrollBar.setAttribute("aria-label", "Scroll through music");
-            
+
             // Set all properties in a single object
             Object.assign(scrollBar, {
                 value: 0,
@@ -1387,9 +1387,9 @@ function onload() {
                 originalX: 191,
                 originalY: 159,
                 originalW: 50,
-                originalH: 7
+                originalH: 7,
             });
-            
+
             // Set all styles in a single object
             Object.assign(scrollBar.style, {
                 cursor: "pointer",
@@ -1399,20 +1399,20 @@ function onload() {
                 "box-shadow": "inset 0 0 0 #000",
                 "vertical-align": "middle",
                 position: "absolute",
-                margin: 0
+                margin: 0,
             });
-            
+
             // Position and size the element
             moveDOM(scrollBar, scrollBar.originalX, scrollBar.originalY);
             resizeDOM(scrollBar, scrollBar.originalW, scrollBar.originalH);
-            
+
             // Add event listener for scrolling in edit mode only
             scrollBar.addEventListener("input", () => {
                 if (gameStatus === 0) {
                     curPos = parseInt(scrollBar.value);
                 }
             });
-            
+
             CONSOLE.appendChild(scrollBar);
 
             // It's very hard to set values to a pseudo element with JS.
@@ -1541,7 +1541,7 @@ function onload() {
             tempoSlider.id = "tempo";
             tempoSlider.type = "range";
             tempoSlider.setAttribute("aria-label", "Adjust tempo");
-            
+
             // Set all properties in a single object
             Object.assign(tempoSlider, {
                 value: 525,
@@ -1551,9 +1551,9 @@ function onload() {
                 originalX: 116,
                 originalY: 172,
                 originalW: 40,
-                originalH: 8
+                originalH: 8,
             });
-            
+
             // Set all styles in a single object
             Object.assign(tempoSlider.style, {
                 cursor: "pointer",
@@ -1563,18 +1563,18 @@ function onload() {
                 "box-shadow": "inset 0 0 0 #000",
                 "vertical-align": "middle",
                 position: "absolute",
-                margin: 0
+                margin: 0,
             });
-            
+
             // Position and size the element
             moveDOM(tempoSlider, tempoSlider.originalX, tempoSlider.originalY);
             resizeDOM(tempoSlider, tempoSlider.originalW, tempoSlider.originalH);
-            
+
             // Add event listener
-            tempoSlider.addEventListener("input", function() {
+            tempoSlider.addEventListener("input", function () {
                 curScore.tempo = parseInt(this.value);
             });
-            
+
             CONSOLE.appendChild(tempoSlider);
 
             const thumbImage = sliceImage(thumbImg, 5, 8)[0];
@@ -1651,8 +1651,8 @@ function onload() {
             Semitones = sliceImage(semitoneImg, 5, 12);
 
             // Load Sound Files
-            Promise.all(SOUNDS.map(sound => sound.load()))
-                .then(buffers => {
+            Promise.all(SOUNDS.map((sound) => sound.load()))
+                .then((buffers) => {
                     // Assign all buffers to their respective sounds
                     buffers.forEach((buffer, index) => {
                         SOUNDS[index].buffer = buffer;
@@ -1671,22 +1671,22 @@ function onload() {
                     // Handle URL-based score loading
                     if (OPTS.url) {
                         fetch(OPTS.url)
-                            .then(response => {
+                            .then((response) => {
                                 if (!response.ok) {
                                     throw new Error(`HTTP error ${response.status}`);
                                 }
                                 return response.text();
                             })
-                            .then(data => {
+                            .then((data) => {
                                 // Determine file type by extension and process accordingly
-                                OPTS.url.endsWith('.msq') ? addMSQ(data) : addJSON(data);
+                                OPTS.url.endsWith(".msq") ? addMSQ(data) : addJSON(data);
                                 closing();
                             })
-                            .catch(error => {
+                            .catch((error) => {
                                 console.error(`Downloading File: ${OPTS.url} failed:`, error);
                                 alert(`Downloading File: ${OPTS.url} failed: ${error.message}`);
                             });
-                    } 
+                    }
                     // Handle parameter-based score loading
                     else if (OPTS.S || OPTS.SCORE) {
                         const score = OPTS.SCORE || OPTS.S;
@@ -1699,22 +1699,24 @@ function onload() {
                             throw new Error("Not enough parameters");
                         }
 
-                        const loopValue = (loop.toUpperCase() === "T" || loop.toUpperCase() === "TRUE") ? "TRUE" : "FALSE";
-                        const beatsValue = (beats.toUpperCase() === "T" || beats.toUpperCase() === "TRUE") ? "TRUE" : "FALSE";
-                        
+                        const loopValue =
+                            loop.toUpperCase() === "T" || loop.toUpperCase() === "TRUE" ? "TRUE" : "FALSE";
+                        const beatsValue =
+                            beats.toUpperCase() === "T" || beats.toUpperCase() === "TRUE" ? "TRUE" : "FALSE";
+
                         const text = [
                             `SCORE=${score}`,
                             `TEMPO=${tempo}`,
                             `LOOP=${loopValue}`,
                             `END=${end}`,
-                            `TIME44=${beatsValue}`
-                        ].join('\n');
-                        
+                            `TIME44=${beatsValue}`,
+                        ].join("\n");
+
                         addMSQ(text);
                         closing();
                     }
                 })
-                .catch(error => {
+                .catch((error) => {
                     console.error("Invalid GET parameter:", error);
                     alert(`Invalid GET parameter: ${error.message}`);
                 });
