@@ -950,38 +950,48 @@ function doAnimation(time) {
 
 function makeButton(x, y, width, height, type = "button", ariaLabel = "") {
     const button = document.createElement("button");
-    button.className = "game";
-    button.style.position = "absolute";
-    button.style.cursor = "pointer";
-    button.type = type;
-    if (ariaLabel) {
-        button.setAttribute("aria-label", ariaLabel);
-    }
+    
+    // Set multiple properties at once
+    Object.assign(button, {
+        className: "game",
+        type,
+        originalX: x,
+        originalY: y,
+        originalW: width,
+        originalH: height
+    });
+    
+    // Set multiple styles at once
+    Object.assign(button.style, {
+        position: "absolute",
+        cursor: "pointer",
+        zIndex: "3",
+        background: "rgba(0,0,0,0)"
+    });
+    
+    // Set aria-label if provided
+    if (ariaLabel) button.setAttribute("aria-label", ariaLabel);
+    
+    // Position and size the button
     moveDOM(button, x, y);
     resizeDOM(button, width, height);
-    button.style.zIndex = "3";
-    button.style.background = "rgba(0,0,0,0)";
-
-    // Save position and size for later use
-    button.originalX = x;
-    button.originalY = y;
-    button.originalW = width;
-    button.originalH = height;
+    
+    // Add redraw method
     button.redraw = () => {
         moveDOM(button, button.originalX, button.originalY);
         resizeDOM(button, button.originalW, button.originalH);
     };
-
-    // Add observer to update cursor based on disabled state
-    const observer = new MutationObserver((mutations) => {
-        mutations.forEach((mutation) => {
+    
+    // Observe disabled attribute changes
+    new MutationObserver(mutations => {
+        for (const mutation of mutations) {
             if (mutation.attributeName === "disabled") {
                 button.style.cursor = button.disabled ? "not-allowed" : "pointer";
+                break;
             }
-        });
-    });
-    observer.observe(button, { attributes: true });
-
+        }
+    }).observe(button, { attributes: true });
+    
     return button;
 }
 
