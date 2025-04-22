@@ -57,6 +57,46 @@ let pseudoSheet = null; // CSSRules for manipulating pseudo elements
 let repeatMark = null; // For Score
 let endMark = null;
 
+// DOM element cache to avoid repeated lookups
+let DOM = {
+    scrollBar: null,
+    tempo: null,
+    playButton: null,
+    stopButton: null,
+    loopButton: null,
+    beats3Button: null,
+    beats4Button: null,
+    eraserButton: null,
+    undoButton: null,
+    leftButton: null,
+    rightButton: null,
+    clearButton: null,
+    songButtons: {
+        frog: null,
+        beak: null,
+        "1up": null
+    },
+};
+
+// Initialize DOM references when document is ready
+function initDOM() {
+    DOM.scrollBar = document.getElementById("scroll");
+    DOM.tempo = document.getElementById("tempo");
+    DOM.playButton = document.getElementById("play");
+    DOM.stopButton = document.getElementById("stop");
+    DOM.loopButton = document.getElementById("loop");
+    DOM.beats3Button = document.getElementById("3beats");
+    DOM.beats4Button = document.getElementById("4beats");
+    DOM.eraserButton = document.getElementById("eraser");
+    DOM.undoButton = document.getElementById("undo");
+    DOM.leftButton = document.getElementById("toLeft");
+    DOM.rightButton = document.getElementById("toRight");
+    DOM.clearButton = document.getElementById("clear");
+    DOM.songButtons.frog = document.getElementById("frog");
+    DOM.songButtons.beak = document.getElementById("beak");
+    DOM.songButtons["1up"] = document.getElementById("1up");
+}
+
 /*
  * GameStatus: Game mode
  *   0: Edit
@@ -680,9 +720,8 @@ let undoHistory = [];
 
 // Add function to update undo button state
 function updateUndoButtonState() {
-    const undoButton = document.getElementById("undo");
-    undoButton.disabled = undoHistory.length === 0;
-    undoButton.style.cursor = undoButton.disabled ? "not-allowed" : "pointer";
+    DOM.undoButton.disabled = undoHistory.length === 0;
+    DOM.undoButton.style.cursor = DOM.undoButton.disabled ? "not-allowed" : "pointer";
 }
 
 // Modify mouseClickListener to update undo button state
@@ -821,22 +860,21 @@ function readFileAsync(file) {
 //   Configure Score parameters
 function closing() {
     // Finally, after reducing, set parameters to Score
-    const b = document.getElementById(curScore.beats === 3 ? "3beats" : "4beats");
+    const beatButton = DOM[curScore.beats === 3 ? "beats3Button" : "beats4Button"];
     const e = new Event("click");
     e.soundOff = true;
-    b.dispatchEvent(e);
+    beatButton.dispatchEvent(e);
 
-    const r = document.getElementById("scroll");
     curMaxBars = curScore.end + 1;
-    r.max = curMaxBars - 6;
-    r.value = 0;
+    DOM.scrollBar.max = curMaxBars - 6;
+    DOM.scrollBar.value = 0;
     curPos = 0;
 
     const tempo = curScore.notes[0][0];
     if (typeof tempo === "string" && tempo.slice(0, 5) === "TEMPO") {
         const tempoValue = tempo.split("=")[1];
         curScore.tempo = tempoValue;
-        document.getElementById("tempo").value = tempoValue;
+        DOM.tempo.value = tempoValue;
     }
 }
 
@@ -880,9 +918,9 @@ function addMSQ(text) {
     curScore.tempo = values.TEMPO;
     const beats = values.TIME44 === "TRUE" ? 4 : 3;
     curScore.beats = beats;
-    // click listener will set curScore.loop
-    const b = document.getElementById("loop");
-    values.LOOP === "TRUE" ? b.set() : b.reset();
+    
+    // Set loop button state
+    values.LOOP === "TRUE" ? DOM.loopButton.set() : DOM.loopButton.reset();
 }
 
 // addJSON
@@ -1345,7 +1383,10 @@ function setupControlButtons() {
     });
     CONSOLE.appendChild(undoButton);
     pseudoSheet.insertRule("#undo:focus {outline: none !important;}", 0);
-    updateUndoButtonState();
+
+    // Set initial undo button state directly instead of using updateUndoButtonState
+    undoButton.disabled = undoHistory.length === 0;
+    undoButton.style.cursor = undoButton.disabled ? "not-allowed" : "pointer";
 
     // Loop Button
     const loopButton = makeButton(85, 168, 16, 15, "button", "Toggle music loop");
@@ -1382,6 +1423,15 @@ function setupControlButtons() {
     clearButton.addEventListener("click", clearListener);
     CONSOLE.appendChild(clearButton);
     pseudoSheet.insertRule("#clear:focus {outline: none !important;}", 0);
+}
+
+// Add function to update undo button state - only call after DOM is initialized
+function updateUndoButtonState() {
+    // Only update if DOM has been initialized
+    if (DOM.undoButton) {
+        DOM.undoButton.disabled = undoHistory.length === 0;
+        DOM.undoButton.style.cursor = DOM.undoButton.disabled ? "not-allowed" : "pointer";
+    }
 }
 
 function setupUIControls() {
@@ -1596,20 +1646,23 @@ function setupSongButtons() {
         CONSOLE.appendChild(button);
         return button;
     });
-
+    
     const loadSong = function (self) {
         curScore = clone(EmbeddedSong[self.num]);
-        document.getElementById("tempo").value = curScore.tempo;
-        const loopButton = document.getElementById("loop");
-        if (curScore.loop) loopButton.set();
-        else loopButton.reset();
-        const scrollBar = document.getElementById("scroll");
-        scrollBar.max = curScore.end - 5;
-        scrollBar.value = 0;
+        DOM.tempo.value = curScore.tempo;
+        
+        if (curScore.loop) {
+        DOM.loopButton.set();
+    } else {
+        DOM.loopButton.reset();
+    }
+        
+        DOM.scrollBar.max = curScore.end - 5;
+        DOM.scrollBar.value = 0;
         curPos = 0;
         curSong = self;
     };
-
+    
     // Use the makeExclusiveFunction created in setupBeatButtons
     songButtons[0].addEventListener("click", makeExclusiveFunction(songButtons, 0, loadSong));
     songButtons[1].addEventListener("click", makeExclusiveFunction(songButtons, 1, loadSong));
@@ -1620,11 +1673,10 @@ function setupKeyboardControls() {
     document.addEventListener("keydown", function (event) {
         switch (event.code) {
             case "Space": // space -> play/stop or restart with shift
-                const playButton = document.getElementById("play");
-                if (playButton.disabled === false || event.shiftKey) {
-                    playListener.call(playButton, event);
+                if (DOM.playButton.disabled === false || event.shiftKey) {
+                    playListener.call(DOM.playButton, event);
                 } else {
-                    stopListener.call(document.getElementById("stop"), event);
+                    stopListener.call(DOM.stopButton, event);
                 }
                 event.preventDefault();
                 break;
@@ -1632,8 +1684,7 @@ function setupKeyboardControls() {
             case "ArrowLeft": // left -> scroll left
                 if (gameStatus === 0) {
                     // Only allow scrolling in edit mode
-                    const scrollBar = document.getElementById("scroll");
-                    if (scrollBar.value > 0) curPos = --scrollBar.value;
+                    if (DOM.scrollBar.value > 0) curPos = --DOM.scrollBar.value;
                     event.preventDefault();
                 }
                 break;
@@ -1641,17 +1692,15 @@ function setupKeyboardControls() {
             case "ArrowRight": // right -> scroll right
                 if (gameStatus === 0) {
                     // Only allow scrolling in edit mode
-                    const scrollBar = document.getElementById("scroll");
-                    if (scrollBar.value < curMaxBars - 6) curPos = ++scrollBar.value;
+                    if (DOM.scrollBar.value < curMaxBars - 6) curPos = ++DOM.scrollBar.value;
                     event.preventDefault();
                 }
                 break;
 
             case "KeyZ": // Ctrl+Z or Command+Z for undo
                 if ((event.ctrlKey || event.metaKey) && !event.shiftKey && gameStatus === 0) {
-                    const undoButton = document.getElementById("undo");
-                    if (!undoButton.disabled) {
-                        undoButton.click();
+                    if (!DOM.undoButton.disabled) {
+                        DOM.undoButton.click();
                         event.preventDefault();
                     }
                 }
@@ -1663,7 +1712,7 @@ function setupKeyboardControls() {
 async function loadSoundAndInitialize() {
     // Number images
     NUMBERS = sliceImage(numImg, 5, 7);
-
+    
     // Initialize score
     initScore();
 
@@ -1686,7 +1735,9 @@ async function loadSoundAndInitialize() {
     buffers.forEach((buffer, index) => {
         SOUNDS[index].buffer = buffer;
     });
+
     CONSOLE.removeChild(document.getElementById("spinner"));
+
     // Process URL parameters if provided
     processUrlParameters();
 }
@@ -1761,7 +1812,10 @@ function onload() {
             setupBeatButtons();
             setupSongButtons();
             setupKeyboardControls();
-
+            
+            // Initialize DOM references
+            initDOM();
+            
             // Load sounds and initialize the application
             return loadSoundAndInitialize();
         })
@@ -1809,19 +1863,21 @@ function clearListener(e) {
 function playListener(event) {
     this.style.backgroundImage = "url(" + this.images[1].src + ")";
     SOUNDS[17].play(8);
-    const stopButton = document.getElementById("stop");
-    stopButton.style.backgroundImage = "url(" + stopButton.images[0].src + ")";
-    stopButton.disabled = false;
+    DOM.stopButton.style.backgroundImage = "url(" + DOM.stopButton.images[0].src + ")";
+    DOM.stopButton.disabled = false;
     this.disabled = true; // Would be unlocked by stop button
 
-    const disabledButtonIds = ["toLeft", "toRight", "scroll", "clear", "frog", "beak", "1up"];
-    disabledButtonIds.forEach(function (buttonId) {
-        document.getElementById(buttonId).disabled = true;
-    });
+    // Disable UI controls during playback
+    DOM.leftButton.disabled = true;
+    DOM.rightButton.disabled = true;
+    DOM.scrollBar.disabled = true;
+    DOM.clearButton.disabled = true;
+    DOM.songButtons.frog.disabled = true;
+    DOM.songButtons.beak.disabled = true;
+    DOM.songButtons["1up"].disabled = true;
 
     // Reset scroll position to beginning
-    const scrollBar = document.getElementById("scroll");
-    scrollBar.value = 0;
+    DOM.scrollBar.value = 0;
     curPos = 0;
 
     gameStatus = 1; // Mario Entering the stage
@@ -1832,11 +1888,10 @@ function playListener(event) {
 // Stop Button Listener
 function stopListener(event) {
     this.style.backgroundImage = "url(" + this.images[1].src + ")";
-    // Sound ON: click , OFF: called by doMarioPlay
+    // Sound ON: click, OFF: called by doMarioPlay
     if (event !== undefined) SOUNDS[17].play(8);
-    const playButton = document.getElementById("play");
-    playButton.style.backgroundImage = "url(" + playButton.images[0].src + ")";
-    //playButton.disabled = false; // Do after Mario left the stage
+    DOM.playButton.style.backgroundImage = "url(" + DOM.playButton.images[0].src + ")";
+    //DOM.playButton.disabled = false; // Do after Mario left the stage
     this.disabled = true; // Would be unlocked by play button
 
     gameStatus = 3; // Mario leaves from the stage
@@ -1875,7 +1930,7 @@ function doMarioPlay(timeStamp) {
             animationFrameId = requestAnimFrame(doMarioPlay);
         } else {
             // Calls stopListener without a event arg
-            stopListener.call(document.getElementById("stop"));
+            stopListener.call(DOM.stopButton);
         }
     }
 }
@@ -1891,9 +1946,15 @@ function doMarioLeave(timeStamp) {
     } else {
         gameStatus = 0;
 
-        ["toLeft", "toRight", "scroll", "play", "clear", "frog", "beak", "1up"].map(function (id) {
-            document.getElementById(id).disabled = false;
-        });
+        // Re-enable all controls
+        DOM.leftButton.disabled = false;
+        DOM.rightButton.disabled = false;
+        DOM.scrollBar.disabled = false;
+        DOM.playButton.disabled = false;
+        DOM.clearButton.disabled = false;
+        DOM.songButtons.frog.disabled = false;
+        DOM.songButtons.beak.disabled = false;
+        DOM.songButtons["1up"].disabled = false;
 
         requestAnimFrame(doAnimation);
     }
@@ -1901,18 +1962,22 @@ function doMarioLeave(timeStamp) {
 
 // Clear Song Buttons
 function clearSongButtons() {
-    ["frog", "beak", "1up"].map(function (buttonId, buttonIndex) {
-        const songButton = document.getElementById(buttonId);
-        songButton.disabled = false;
-        songButton.style.backgroundImage = "url(" + songButton.images[0].src + ")";
-    });
+    // Reset all song button states
+    DOM.songButtons.frog.disabled = false;
+    DOM.songButtons.frog.style.backgroundImage = "url(" + DOM.songButtons.frog.images[0].src + ")";
+    
+    DOM.songButtons.beak.disabled = false;
+    DOM.songButtons.beak.style.backgroundImage = "url(" + DOM.songButtons.beak.images[0].src + ")";
+    
+    DOM.songButtons["1up"].disabled = false;
+    DOM.songButtons["1up"].style.backgroundImage = "url(" + DOM.songButtons["1up"].images[0].src + ")";
+    
     curSong = undefined;
 }
 
 // Clear Eraser Button
 function clearEraserButton() {
-    const eraserButton = document.getElementById("eraser");
-    eraserButton.style.backgroundImage = "url(" + eraserButton.images[0].src + ")";
+    DOM.eraserButton.style.backgroundImage = "url(" + DOM.eraserButton.images[0].src + ")";
     eraserTimer.switch = false;
 }
 
@@ -1934,18 +1999,17 @@ function initScore() {
     for (let barIndex = 0; barIndex < DEFAULT_MAX_BARS; barIndex++) emptyBars[barIndex] = [];
     curScore.notes = emptyBars;
     curMaxBars = DEFAULT_MAX_BARS;
-    const scrollBar = document.getElementById("scroll");
-    scrollBar.max = DEFAULT_MAX_BARS - 6;
-    scrollBar.value = 0;
+    DOM.scrollBar.max = DEFAULT_MAX_BARS - 6;
+    DOM.scrollBar.value = 0;
     curScore.loop = false;
-    document.getElementById("loop").reset();
+    DOM.loopButton.reset();
     curScore.end = DEFAULT_MAX_BARS - 1;
     curScore.tempo = DEFAULT_TEMPO;
-    document.getElementById("tempo").value = DEFAULT_TEMPO;
+    DOM.tempo.value = DEFAULT_TEMPO;
     curScore.beats = 4;
     const clickEvent = new Event("click");
     clickEvent.soundOff = true;
-    document.getElementById("4beats").dispatchEvent(clickEvent);
+    DOM.beats4Button.dispatchEvent(clickEvent);
 }
 
 // Easiest and Fastest way to clone
