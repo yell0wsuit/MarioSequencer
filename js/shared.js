@@ -1551,27 +1551,40 @@ function onload() {
             tempoSlider.id = "tempo";
             tempoSlider.type = "range";
             tempoSlider.setAttribute("aria-label", "Adjust tempo");
-            tempoSlider.style.cursor = "pointer";
-            tempoSlider.value = 525;
-            tempoSlider.max = 1000;
-            tempoSlider.min = 50;
-            tempoSlider.step = 1;
-            tempoSlider.style["-webkit-appearance"] = "none";
-            tempoSlider.style["border-radius"] = "0px";
-            tempoSlider.style["background-color"] = "rgba(0, 0, 0, 0.0)";
-            tempoSlider.style["box-shadow"] = "inset 0 0 0 #000";
-            tempoSlider.style["vertical-align"] = "middle";
-            tempoSlider.style.position = "absolute";
-            tempoSlider.style.margin = 0;
-            tempoSlider.originalX = 116;
-            tempoSlider.originalY = 172;
-            tempoSlider.originalW = 40;
-            tempoSlider.originalH = 8;
+            
+            // Set all properties in a single object
+            Object.assign(tempoSlider, {
+                value: 525,
+                max: 1000,
+                min: 50,
+                step: 1,
+                originalX: 116,
+                originalY: 172,
+                originalW: 40,
+                originalH: 8
+            });
+            
+            // Set all styles in a single object
+            Object.assign(tempoSlider.style, {
+                cursor: "pointer",
+                "-webkit-appearance": "none",
+                "border-radius": "0px",
+                "background-color": "rgba(0, 0, 0, 0.0)",
+                "box-shadow": "inset 0 0 0 #000",
+                "vertical-align": "middle",
+                position: "absolute",
+                margin: 0
+            });
+            
+            // Position and size the element
             moveDOM(tempoSlider, tempoSlider.originalX, tempoSlider.originalY);
             resizeDOM(tempoSlider, tempoSlider.originalW, tempoSlider.originalH);
-            tempoSlider.addEventListener("input", function (event) {
+            
+            // Add event listener
+            tempoSlider.addEventListener("input", function() {
                 curScore.tempo = parseInt(this.value);
             });
+            
             CONSOLE.appendChild(tempoSlider);
 
             const thumbImage = sliceImage(thumbImg, 5, 8)[0];
