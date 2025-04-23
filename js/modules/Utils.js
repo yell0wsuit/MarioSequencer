@@ -12,7 +12,7 @@
  * @param {string} ariaLabel - Accessibility label
  * @returns {HTMLButtonElement} The created button
  */
-function makeButton(x, y, width, height, type = "button", ariaLabel = "") {
+const makeButton = (x, y, width, height, type = "button", ariaLabel = "") => {
     const button = document.createElement("button");
 
     // Set multiple properties at once
@@ -57,7 +57,7 @@ function makeButton(x, y, width, height, type = "button", ariaLabel = "") {
     }).observe(button, { attributes: true });
 
     return button;
-}
+};
 
 /**
  * Resizes a DOM element
@@ -65,10 +65,10 @@ function makeButton(x, y, width, height, type = "button", ariaLabel = "") {
  * @param {number} width - New width in game units
  * @param {number} height - New height in game units
  */
-function resizeDOM(element, width, height) {
+const resizeDOM = (element, width, height) => {
     element.style.width = `${width * window.MAGNIFY}px`;
     element.style.height = `${height * window.MAGNIFY}px`;
-}
+};
 
 /**
  * Moves a DOM element
@@ -76,10 +76,10 @@ function resizeDOM(element, width, height) {
  * @param {number} x - New X position in game units
  * @param {number} y - New Y position in game units
  */
-function moveDOM(element, x, y) {
+const moveDOM = (element, x, y) => {
     element.style.left = `${x * window.MAGNIFY}px`;
     element.style.top = `${y * window.MAGNIFY}px`;
-}
+};
 
 /**
  * Slices an image into smaller parts
@@ -88,7 +88,7 @@ function moveDOM(element, x, y) {
  * @param {number} height - Height of each slice
  * @returns {Array<HTMLImageElement>} Array of image elements
  */
-function sliceImage(image, width, height) {
+const sliceImage = (image, width, height) => {
     const result = [];
     const horizontalCount = Math.floor(image.width / width);
     const verticalCount = Math.floor(image.height / height);
@@ -119,26 +119,26 @@ function sliceImage(image, width, height) {
         }
     }
     return result;
-}
+};
 
 /**
  * Function to create a file download
  */
-function download() {
+const download = () => {
     const link = document.createElement("a");
     link.download = "MSQ_Data.json";
     const blob = new Blob([JSON.stringify(window.curScore)], { type: "application/json" });
     link.href = URL.createObjectURL(blob);
     link.click();
     URL.revokeObjectURL(link.href); // Clean up to avoid memory leaks
-}
+};
 
 /**
  * Updates a slider thumb style in CSS
  * @param {string} selector - CSS selector for the thumb
  * @param {Object} config - Configuration object with properties and dimensions
  */
-function updateSliderThumbStyle(selector, config) {
+const updateSliderThumbStyle = (selector, config) => {
     const styleRules = window.pseudoSheet.cssRules;
 
     // Find and remove existing rule
@@ -161,7 +161,7 @@ function updateSliderThumbStyle(selector, config) {
 
     // Insert new rule
     window.pseudoSheet.insertRule(`${selector} {${cssProperties}}`, 0);
-}
+};
 
 /**
  * Utility function for creating exclusive button selections
@@ -170,38 +170,38 @@ function updateSliderThumbStyle(selector, config) {
  * @param {Function} success - Callback function when selection is made
  * @returns {Function} Event handler function
  */
-function makeExclusiveFunction(buttons, index, success) {
+const makeExclusiveFunction = (buttons, index, success) => {
     const buttonList = buttons.slice(0); // Clone the Array
     const self = buttonList[index];
     buttonList.splice(index, 1); // Remove No.i element
     const otherButtons = buttonList;
 
-    return function (event) {
+    return (event) => {
         // Sound Off for file loading
         if (!event.soundOff) window.SOUNDS[17].play(8);
         self.disabled = true;
-        self.style.backgroundImage = "url(" + self.images[1].src + ")";
-        otherButtons.map(function (button) {
+        self.style.backgroundImage = `url(${self.images[1].src})`;
+        otherButtons.map((button) => {
             button.disabled = false;
-            button.style.backgroundImage = "url(" + button.images[0].src + ")";
+            button.style.backgroundImage = `url(${button.images[0].src})`;
         });
         success(self);
     };
-}
+};
 
 /**
  * Promise-based file reader
  * @param {File} file - The file to read
  * @returns {Promise<string>} Promise resolving to the file contents
  */
-function readFileAsync(file) {
+const readFileAsync = (file) => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
         reader.onload = (e) => resolve(e.target.result);
         reader.onerror = (e) => reject(new Error("File reading failed"));
         reader.readAsText(file, "shift-jis");
     });
-}
+};
 
 export {
     download,

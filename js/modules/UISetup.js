@@ -9,7 +9,7 @@ import { makeButton, moveDOM, resizeDOM, sliceImage } from "./Utils.js";
 /**
  * Initialize DOM references when document is ready
  */
-function initDOM() {
+const initDOM = () => {
     window.DOM.scrollBar = document.getElementById("scroll");
     window.DOM.tempo = document.getElementById("tempo");
     window.DOM.playButton = document.getElementById("play");
@@ -25,12 +25,12 @@ function initDOM() {
     window.DOM.songButtons.frog = document.getElementById("frog");
     window.DOM.songButtons.beak = document.getElementById("beak");
     window.DOM.songButtons["1up"] = document.getElementById("1up");
-}
+};
 
 /**
  * Setup note buttons
  */
-function setupNoteButtons() {
+const setupNoteButtons = () => {
     const buttonImages = sliceImage(window.charSheet, 16, 16);
 
     // Create all note buttons at once
@@ -87,18 +87,18 @@ function setupNoteButtons() {
 
     // Setup Eraser Button
     setupEraserButton();
-}
+};
 
 /**
  * Setup eraser button
  */
-function setupEraserButton() {
+const setupEraserButton = () => {
     const songImages = sliceImage(window.songImg, 15, 17);
     const eraserButton = makeButton(40, 202, 15, 17, "button", "Erase notes");
     eraserButton.id = "eraser";
     eraserButton.images = [songImages[9], songImages[10], songImages[11]]; // In the Song button images
-    eraserButton.style.backgroundImage = "url(" + eraserButton.images[0].src + ")";
-    window.eraserTimer = new EasyTimer(200, function (self) {
+    eraserButton.style.backgroundImage = `url(${eraserButton.images[0].src})`;
+    window.eraserTimer = new EasyTimer(200, (self) => {
         // If current is not end mark, just return;
         if (window.curChar !== 16) {
             self.switch = false;
@@ -113,16 +113,16 @@ function setupEraserButton() {
         window.SOUNDS[17].play(8);
         drawEraserIcon();
         clearSongButtons();
-        this.style.backgroundImage = "url(" + this.images[1].src + ")";
-        window.SCREEN.style.cursor = "url(" + this.images[2].src + ")" + " 0 0, auto";
+        this.style.backgroundImage = `url(${this.images[1].src})`;
+        window.SCREEN.style.cursor = `url(${this.images[2].src}) 0 0, auto`;
     });
     window.CONSOLE.appendChild(eraserButton);
-}
+};
 
 /**
  * Setup control buttons (play, stop, loop, clear)
  */
-function setupControlButtons() {
+const setupControlButtons = () => {
     // For inserting pseudo elements' styles
     const style = document.createElement("style");
     document.head.appendChild(style);
@@ -221,16 +221,16 @@ function setupControlButtons() {
     const clearButton = makeButton(200, 176, 34, 16, "button", "Clear all notes");
     clearButton.id = "clear";
     clearButton.images = sliceImage(window.clearImg, 34, 16);
-    clearButton.style.backgroundImage = "url(" + clearButton.images[0].src + ")";
+    clearButton.style.backgroundImage = `url(${clearButton.images[0].src})`;
     clearButton.addEventListener("click", clearListener);
     window.CONSOLE.appendChild(clearButton);
     window.pseudoSheet.insertRule("#clear:focus {outline: none !important;}", 0);
-}
+};
 
 /**
  * Setup UI controls (sliders, etc.)
  */
-function setupUIControls() {
+const setupUIControls = () => {
     // Scroll Range
     const scrollBar = document.createElement("input");
     scrollBar.id = "scroll";
