@@ -192,7 +192,7 @@ window.L2C.imageSmoothingEnabled = false;
 // Add event listeners
 window.SCREEN.addEventListener("contextmenu", mouseClickListener);
 window.SCREEN.addEventListener("click", mouseClickListener);
-window.SCREEN.addEventListener("mousemove", function (e) {
+window.SCREEN.addEventListener("mousemove", (e) => {
     window.mouseX = e.clientX;
     window.mouseY = e.clientY;
 });
@@ -218,9 +218,7 @@ window.addEventListener("resize", () => {
 });
 
 // INIT routine
-window.addEventListener("load", onload);
-
-async function onload() {
+const onload = async () => {
     // Load embedded songs first, then initialize the UI
     await loadEmbeddedSongs();
 
@@ -276,4 +274,6 @@ async function onload() {
     } catch (error) {
         console.error("Failed to initialize application:", error);
     }
-}
+};
+
+window.addEventListener("load", onload);
