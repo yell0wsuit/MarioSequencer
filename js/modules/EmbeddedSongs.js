@@ -10,7 +10,7 @@ const songFiles = ["frog.json", "beak.json", "1up.json"];
  * Load all embedded songs from JSON files
  * @returns {Promise<void>} Promise that resolves when all songs are loaded
  */
-async function loadEmbeddedSongs() {
+const loadEmbeddedSongs = async () => {
     const songs = await Promise.all(
         songFiles.map(async (file) => {
             try {
@@ -26,15 +26,13 @@ async function loadEmbeddedSongs() {
         })
     );
     EmbeddedSong = songs.filter((song) => song !== null);
-}
+};
 
 /**
  * Create a deep clone of an object
  * @param {Object} obj - The object to clone
  * @returns {Object} A deep copy of the object
  */
-function clone(obj) {
-    return JSON.parse(JSON.stringify(obj));
-}
+const clone = (obj) => JSON.parse(JSON.stringify(obj));
 
 export { clone, EmbeddedSong, loadEmbeddedSongs };
