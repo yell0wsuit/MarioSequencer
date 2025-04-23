@@ -15,56 +15,56 @@ class MarioClass {
     }
 
     // Reset Mario's properties to initial state
-    resetProperties() {
+    resetProperties = () => {
         this.marioOffset = this.marioX = -16; // X offset and position in dots
         this.marioScroll = 0; // Scroll amount in dots
         this.marioPosition = 0; // Position in bar number
         this.state = 0; // Animation state
         this.startTime = this.lastTime = 0; // Animation timestamps
         this.isJumping = false; // Whether Mario is jumping
-    }
+    };
 
     // Reset Mario to initial state
-    init() {
+    init = () => {
         this.resetProperties();
         this.timer.switch = true;
-    }
+    };
 
     // Animate Mario entering the stage
-    enter(timeStamp) {
+    enter = (timeStamp) => {
         if (this.startTime === 0) this.startTime = timeStamp; // Set start time if not set
         const timeDifference = timeStamp - this.startTime;
         this.marioX = Math.min(Math.floor(timeDifference / 5) + this.marioOffset, 40); // Cap position at 40
         this.state = Math.floor(timeDifference / 100) % 2 === 0 ? 1 : 0; // Alternate state
         this.draw();
-    }
+    };
 
     // Initialize for leaving the stage
-    init4leaving() {
+    init4leaving = () => {
         this.marioOffset = this.marioX; // Set offset to current position
         this.startTime = 0;
         this.isJumping = false;
-    }
+    };
 
     // Initialize for playing the music
-    init4playing(timeStamp) {
+    init4playing = (timeStamp) => {
         this.lastTime = timeStamp;
         this.marioOffset = this.marioX;
         this.marioScroll = 0;
         this.marioPosition = 1;
         this.state = 1;
         this.checkMarioShouldJump();
-    }
+    };
 
     // Determine if Mario should jump based on notes at current position
-    checkMarioShouldJump() {
+    checkMarioShouldJump = () => {
         const notes = window.curScore.notes[this.marioPosition - 1];
         // Jump if there are notes and either there's more than one note or the note isn't a string (tempo)
         this.isJumping = notes && notes.length > 0 && (notes.length > 1 || typeof notes[0] !== "string");
-    }
+    };
 
     // Main play animation loop
-    play(timeStamp) {
+    play = (timeStamp) => {
         const scheduleAndPlay = (notes, time) => {
             if (time < 0) time = 0;
             if (!notes || notes.length === 0) return;
@@ -138,19 +138,19 @@ class MarioClass {
         }
         drawScore(window.curPos, window.curScore.notes, this.marioScroll);
         this.draw();
-    }
+    };
 
     // Calculate jump height based on position in jump arc
-    jump(position) {
+    jump = (position) => {
         const jumpHeights = [
             0, 2, 4, 6, 8, 10, 12, 13, 14, 15, 16, 17, 18, 18, 19, 19, 19, 19, 19, 18, 18, 17, 16, 15, 14, 13, 12, 10,
             8, 6, 4, 2, 0,
         ];
         return jumpHeights[Math.round(position) % 32];
-    }
+    };
 
     // Draw Mario at current position and state
-    draw() {
+    draw = () => {
         let verticalPosition = 41 - 22; // Base Y position
         let state = this.state;
 
@@ -168,10 +168,10 @@ class MarioClass {
         }
 
         window.L2C.drawImage(this.images[state], this.marioX * window.MAGNIFY, verticalPosition * window.MAGNIFY);
-    }
+    };
 
     // Animate Mario leaving the stage
-    leave(timeStamp) {
+    leave = (timeStamp) => {
         if (this.startTime === 0) this.startTime = timeStamp;
 
         const diff = timeStamp - this.startTime;
@@ -204,7 +204,7 @@ class MarioClass {
             this.state = 9;
             this.draw();
         }
-    }
+    };
 }
 
 export default MarioClass;
