@@ -8,7 +8,7 @@ import { moveDOM, resizeDOM, sliceImage, updateSliderThumbStyle } from "./Utils.
  * @param {number} gridX - X position in grid
  * @param {number} scroll - Scroll amount
  */
-function drawHorizontalBar(gridX, scroll) {
+const drawHorizontalBar = (gridX, scroll) => {
     const width = 24 * window.MAGNIFY;
     window.L2C.fillRect(
         (4 + 32 * gridX - scroll) * window.MAGNIFY,
@@ -16,14 +16,14 @@ function drawHorizontalBar(gridX, scroll) {
         width,
         2 * window.MAGNIFY
     );
-}
+};
 
 /**
  * Draw the bar number
  * @param {number} gridX - X position in grid
  * @param {number} barNumber - Number to display
  */
-function drawBarNumber(gridX, barNumber) {
+const drawBarNumber = (gridX, barNumber) => {
     let x = (16 + 32 * gridX) * window.MAGNIFY - 1;
     const y = (40 - 7) * window.MAGNIFY;
     const numberDigits = [];
@@ -42,7 +42,7 @@ function drawBarNumber(gridX, barNumber) {
         window.L2C.drawImage(window.NUMBERS[digit], x, y, 5 * window.MAGNIFY, 7 * window.MAGNIFY);
         x += digitWidth * window.MAGNIFY;
     }
-}
+};
 
 /**
  * Draws the score area
@@ -50,7 +50,7 @@ function drawBarNumber(gridX, barNumber) {
  * @param {Array} notes - Notes to display
  * @param {number} scroll - Scroll amount
  */
-function drawScore(position, notes, scroll) {
+const drawScore = (position, notes, scroll) => {
     // Clear and set clipping region for the score area
     window.L2C.clearRect(0, 0, window.SCREEN.width, window.SCREEN.height);
     window.L2C.save();
@@ -210,36 +210,30 @@ function drawScore(position, notes, scroll) {
     }
 
     window.L2C.restore();
-}
+};
 
 /**
  * Draw the repeat head marker
  * @param {number} xPosition - X position to draw at
  */
-function drawRepeatHead(xPosition) {
+const drawRepeatHead = (xPosition) => {
     window.L2C.drawImage(window.repeatMark[0], xPosition * window.MAGNIFY, 56 * window.MAGNIFY);
-}
+};
 
 /**
  * Change the cursor to the selected sound
  * @param {number} soundNumber - Index of the sound to use
  */
-function changeCursor(soundNumber) {
+const changeCursor = (soundNumber) => {
     window.SCREEN.style.cursor =
-        "url(" +
-        window.SOUNDS[soundNumber].image.src +
-        ")" +
-        window.HALFCHARSIZE +
-        " " +
-        window.HALFCHARSIZE +
-        ", auto";
-}
+        `url(${window.SOUNDS[soundNumber].image.src})${window.HALFCHARSIZE} ${window.HALFCHARSIZE}, auto`;
+};
 
 /**
  * Draw the current character
  * @param {HTMLImageElement} image - Image to draw
  */
-function drawCurChar(image) {
+const drawCurChar = (image) => {
     const x = 4 * window.MAGNIFY;
     const y = 7 * window.MAGNIFY;
     window.L1C.beginPath();
@@ -248,7 +242,7 @@ function drawCurChar(image) {
     window.L1C.drawImage(image, x, y);
     window.L1C.fillRect(x, y, window.CHARSIZE, window.MAGNIFY);
     window.L1C.fillRect(x, y + window.CHARSIZE - window.MAGNIFY, window.CHARSIZE, window.MAGNIFY);
-}
+};
 
 /**
  * Draw the end mark icon
