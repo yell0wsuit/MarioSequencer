@@ -225,8 +225,7 @@ const drawRepeatHead = (xPosition) => {
  * @param {number} soundNumber - Index of the sound to use
  */
 const changeCursor = (soundNumber) => {
-    window.SCREEN.style.cursor =
-        `url(${window.SOUNDS[soundNumber].image.src})${window.HALFCHARSIZE} ${window.HALFCHARSIZE}, auto`;
+    window.SCREEN.style.cursor = `url(${window.SOUNDS[soundNumber].image.src})${window.HALFCHARSIZE} ${window.HALFCHARSIZE}, auto`;
 };
 
 /**
@@ -248,23 +247,23 @@ const drawCurChar = (image) => {
  * Draw the end mark icon
  * @param {HTMLImageElement} image - Image to draw
  */
-function drawEndMarkIcon(image) {
+const drawEndMarkIcon = (image) => {
     window.L1C.clearRect(4 * window.MAGNIFY, 8 * window.MAGNIFY, 16 * window.MAGNIFY, 14 * window.MAGNIFY);
     window.L1C.drawImage(image, 5 * window.MAGNIFY, 8 * window.MAGNIFY);
-}
+};
 
 /**
  * Clear the eraser icon area
  */
-function drawEraserIcon() {
+const drawEraserIcon = () => {
     window.L1C.clearRect(4 * window.MAGNIFY, 8 * window.MAGNIFY, 16 * window.MAGNIFY, 14 * window.MAGNIFY);
-}
+};
 
 /**
  * Draw bomb animation
  * @param {Object} mySelf - Timer object
  */
-function drawBomb(mySelf) {
+const drawBomb = (mySelf) => {
     const bombX = 9 * window.MAGNIFY;
     const bombY = 202 * window.MAGNIFY;
     window.L1C.drawImage(window.BOMBS[mySelf.currentFrame], bombX, bombY);
@@ -273,7 +272,7 @@ function drawBomb(mySelf) {
     if (window.curSong !== undefined && window.gameStatus === 2) {
         window.curSong.style.backgroundImage = `url(${window.curSong.images[mySelf.currentFrame + 1].src})`;
     }
-}
+};
 
 /**
  * Convert screen coordinates to grid coordinates
@@ -281,7 +280,7 @@ function drawBomb(mySelf) {
  * @param {number} mouseRealY - Mouse Y position
  * @returns {Array|boolean} Grid coordinates [x, y] or false if outside grid
  */
-function toGrid(mouseRealX, mouseRealY) {
+const toGrid = (mouseRealX, mouseRealY) => {
     const gridLeft = (8 + 0) * window.MAGNIFY;
     const gridTop = 41 * window.MAGNIFY;
     const gridRight = (247 - 4) * window.MAGNIFY;
@@ -298,12 +297,12 @@ function toGrid(mouseRealX, mouseRealY) {
     // Consider G-Clef and repeat head area
     if ((window.curPos === 0 && gridX < 2) || (window.curPos === 1 && gridX === 0)) return false;
     else return [gridX, gridY];
-}
+};
 
 /**
  * Resize the screen and UI elements
  */
-function resizeScreen() {
+const resizeScreen = () => {
     // Update core dimensions
     updateCoreDimensions();
 
@@ -333,10 +332,10 @@ function resizeScreen() {
 
     // Resize undo dog button
     resizeUndoDogButton();
-}
+};
 
 // Update core dimensions based on magnification
-function updateCoreDimensions() {
+const updateCoreDimensions = () => {
     window.CHARSIZE = 16 * window.MAGNIFY;
     window.HALFCHARSIZE = Math.floor(window.CHARSIZE / 2);
 
@@ -357,10 +356,10 @@ function updateCoreDimensions() {
     // Prepare Repeat marks
     window.repeatMark = sliceImage(window.repeatImg, 13, 62);
     window.endMark = window.repeatMark[2];
-}
+};
 
 // Resize canvas elements
-function resizeCanvasElements() {
+const resizeCanvasElements = () => {
     // Resize and redraw the main canvas
     window.MAT.width = window.ORGWIDTH * window.MAGNIFY;
     window.MAT.height = window.ORGHEIGHT * window.MAGNIFY;
@@ -375,10 +374,10 @@ function resizeCanvasElements() {
     // Resize the screen canvas
     window.SCREEN.width = window.ORGWIDTH * window.MAGNIFY;
     window.SCREEN.height = window.SCRHEIGHT * window.MAGNIFY;
-}
+};
 
 // Resize note buttons and end mark button
-function resizeNoteButtons() {
+const resizeNoteButtons = () => {
     const characterImages = sliceImage(window.charSheet, 16, 16);
 
     // Resize all buttons
@@ -399,10 +398,10 @@ function resizeNoteButtons() {
     if (window.curChar === 15) drawEndMarkIcon(window.BUTTONS[15].images[0]);
     else if (window.curChar === 16) drawEraserIcon();
     else drawCurChar(window.SOUNDS[window.curChar].image);
-}
+};
 
 // Resize control buttons (play, stop, loop)
-function resizeControlButtons() {
+const resizeControlButtons = () => {
     // Resize play button
     window.DOM.playButton.redraw();
     window.DOM.playButton.images = sliceImage(window.playBtnImg, 12, 15);
@@ -425,10 +424,10 @@ function resizeControlButtons() {
     window.DOM.clearButton.redraw();
     window.DOM.clearButton.images = sliceImage(window.clearImg, 34, 16);
     window.DOM.clearButton.style.backgroundImage = `url(${window.DOM.clearButton.images[0].src})`;
-}
+};
 
 // Resize slider elements (scroll bar, tempo)
-function resizeSliderElements() {
+const resizeSliderElements = () => {
     // Resize scroll bar
     moveDOM(window.DOM.scrollBar, window.DOM.scrollBar.originalX, window.DOM.scrollBar.originalY);
     resizeDOM(window.DOM.scrollBar, window.DOM.scrollBar.originalW, window.DOM.scrollBar.originalH);
@@ -466,17 +465,17 @@ function resizeSliderElements() {
         width: 5 * window.MAGNIFY,
         height: 8 * window.MAGNIFY,
     });
-}
+};
 
 // Resize navigation buttons
-function resizeNavigationButtons() {
+const resizeNavigationButtons = () => {
     // Resize left and right navigation buttons
     window.DOM.leftButton.redraw();
     window.DOM.rightButton.redraw();
-}
+};
 
 // Resize beat buttons
-function resizeBeatButtons() {
+const resizeBeatButtons = () => {
     // Resize beat buttons
     window.DOM.beats3Button.redraw();
     window.DOM.beats4Button.redraw();
@@ -491,10 +490,10 @@ function resizeBeatButtons() {
     const is3Beats = window.curScore.beats === 3;
     window.DOM.beats3Button.style.backgroundImage = `url(${window.DOM.beats3Button.images[is3Beats ? 1 : 0].src})`;
     window.DOM.beats4Button.style.backgroundImage = `url(${window.DOM.beats4Button.images[is3Beats ? 0 : 1].src})`;
-}
+};
 
 // Resize song buttons
-function resizeSongButtons() {
+const resizeSongButtons = () => {
     const songImages = sliceImage(window.songImg, 15, 17);
 
     // Configure all song buttons
@@ -511,10 +510,10 @@ function resizeSongButtons() {
         const buttonState = window.curSong === button ? 1 : 0;
         button.style.backgroundImage = `url(${button.images[buttonState].src})`;
     });
-}
+};
 
 // Resize eraser button
-function resizeEraserButton() {
+const resizeEraserButton = () => {
     const songImages = sliceImage(window.songImg, 15, 17);
 
     window.DOM.eraserButton.redraw();
@@ -526,14 +525,14 @@ function resizeEraserButton() {
     }
 
     window.DOM.eraserButton.style.backgroundImage = `url(${window.DOM.eraserButton.images[eraserButtonState].src})`;
-}
+};
 
 // Resize undo dog button
-function resizeUndoDogButton() {
+const resizeUndoDogButton = () => {
     window.DOM.undoButton.redraw();
     window.DOM.undoButton.images = sliceImage(window.undoDogImg, 14, 15);
     window.DOM.undoButton.style.backgroundImage = `url(${window.DOM.undoButton.images[0].src})`;
-}
+};
 
 export {
     changeCursor,
