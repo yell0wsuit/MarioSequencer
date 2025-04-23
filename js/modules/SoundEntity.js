@@ -9,7 +9,7 @@ class SoundEntity {
         this.diff = [14, 12, 11, 9, 7, 6, 4, 2, 0, -1, -3, -5, -6];
     }
 
-    play(scale, delay = 0) {
+    play = (scale, delay = 0) => {
         const source = audioContext.createBufferSource();
         const tmps = scale & 0x0f;
         let semitone = this.diff[tmps];
@@ -21,9 +21,9 @@ class SoundEntity {
         source.playbackRate.value = Math.pow(SEMITONERATIO, semitone);
         source.connect(audioContext.destination);
         source.start(delay);
-    }
+    };
 
-    playChord(noteList, delay = 0) {
+    playChord = (noteList, delay = 0) => {
         // Cancel previous chord first
         this.prevChord.forEach((source) => source.stop());
         this.prevChord = [];
@@ -50,9 +50,9 @@ class SoundEntity {
             source.start(delay);
             this.prevChord.push(source);
         });
-    }
+    };
 
-    async load() {
+    load = async () => {
         try {
             const response = await fetch(this.path);
             const arrayBuffer = await response.arrayBuffer();
@@ -61,7 +61,7 @@ class SoundEntity {
         } catch (error) {
             throw new Error(`Failed to load audio: ${this.path} - ${error.message}`);
         }
-    }
+    };
 }
 
 export default SoundEntity;
