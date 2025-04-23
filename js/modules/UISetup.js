@@ -374,12 +374,12 @@ const setupUIControls = () => {
         0
     );
     window.pseudoSheet.insertRule("#tempo:focus {outline: none !important;}", 0);
-}
+};
 
 /**
  * Setup beat buttons
  */
-function setupBeatButtons() {
+const setupBeatButtons = () => {
     const beatImages = sliceImage(window.beatImg, 14, 15);
 
     // Create 3 beats button
@@ -401,17 +401,17 @@ function setupBeatButtons() {
     window.CONSOLE.appendChild(beats4Button);
 
     // Setup beat button event handlers
-    const updateBeats = function (self) {
+    const updateBeats = (self) => {
         window.curScore.beats = self.beats;
     };
     beats3Button.addEventListener("click", window.makeExclusiveFunction([beats3Button, beats4Button], 0, updateBeats));
     beats4Button.addEventListener("click", window.makeExclusiveFunction([beats3Button, beats4Button], 1, updateBeats));
-}
+};
 
 /**
  * Setup song buttons
  */
-function setupSongButtons() {
+const setupSongButtons = () => {
     const songImages = sliceImage(window.songImg, 15, 17);
     const songButtons = ["frog", "beak", "1up"].map(function (id, index) {
         const button = makeButton(136 + 24 * index, 202, 15, 17, "button", `Load ${id} song`);
@@ -424,7 +424,7 @@ function setupSongButtons() {
         return button;
     });
 
-    const loadSong = function (self) {
+    const loadSong = (self) => {
         window.curScore = window.clone(window.EmbeddedSong[self.num]);
         window.DOM.tempo.value = window.curScore.tempo;
 
@@ -444,32 +444,32 @@ function setupSongButtons() {
     songButtons[0].addEventListener("click", window.makeExclusiveFunction(songButtons, 0, loadSong));
     songButtons[1].addEventListener("click", window.makeExclusiveFunction(songButtons, 1, loadSong));
     songButtons[2].addEventListener("click", window.makeExclusiveFunction(songButtons, 2, loadSong));
-}
+};
 
 /**
  * Update undo button state
  */
-function updateUndoButtonState() {
+const updateUndoButtonState = () => {
     window.DOM.undoButton.disabled = window.undoHistory.length === 0;
     window.DOM.undoButton.style.cursor = window.DOM.undoButton.disabled ? "not-allowed" : "pointer";
-}
+};
 
 /**
  * Clear song buttons
  */
-function clearSongButtons() {
+const clearSongButtons = () => {
     // Reset all song button states
     window.DOM.songButtons.frog.disabled = false;
-    window.DOM.songButtons.frog.style.backgroundImage = "url(" + window.DOM.songButtons.frog.images[0].src + ")";
+    window.DOM.songButtons.frog.style.backgroundImage = `url(${window.DOM.songButtons.frog.images[0].src})`;
 
     window.DOM.songButtons.beak.disabled = false;
-    window.DOM.songButtons.beak.style.backgroundImage = "url(" + window.DOM.songButtons.beak.images[0].src + ")";
+    window.DOM.songButtons.beak.style.backgroundImage = `url(${window.DOM.songButtons.beak.images[0].src})`;
 
     window.DOM.songButtons["1up"].disabled = false;
-    window.DOM.songButtons["1up"].style.backgroundImage = "url(" + window.DOM.songButtons["1up"].images[0].src + ")";
+    window.DOM.songButtons["1up"].style.backgroundImage = `url(${window.DOM.songButtons["1up"].images[0].src})`;
 
     window.curSong = undefined;
-}
+};
 
 export {
     clearSongButtons,
