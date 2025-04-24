@@ -334,7 +334,7 @@ function initScore() {
 /**
  * Play button event handler
  */
-function playListener(event) {
+function playListener() {
     this.style.backgroundImage = "url(" + this.images[1].src + ")";
     window.SOUNDS[17].play(8);
     window.DOM.stopButton.style.backgroundImage = "url(" + window.DOM.stopButton.images[0].src + ")";
@@ -379,12 +379,12 @@ function stopListener(event) {
 /**
  * Clear button event handler
  */
-function clearListener(e) {
+function clearListener() {
     this.style.backgroundImage = "url(" + this.images[1].src + ")";
     window.SOUNDS[19].play(8);
     const self = this;
     function makePromise(num) {
-        return new Promise(function (resolve, reject) {
+        return new Promise(function (resolve) {
             setTimeout(function () {
                 self.style.backgroundImage = "url(" + self.images[num].src + ")";
                 resolve();

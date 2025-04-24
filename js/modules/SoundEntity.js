@@ -10,7 +10,7 @@ class SoundEntity {
     }
 
     play = (scale, delay = 0) => {
-        const source = audioContext.createBufferSource();
+        const source = window.audioContext.createBufferSource();
         const tmps = scale & 0x0f;
         let semitone = this.diff[tmps];
 
@@ -18,8 +18,8 @@ class SoundEntity {
         else if ((scale & 0x40) !== 0) semitone--;
 
         source.buffer = this.buffer;
-        source.playbackRate.value = Math.pow(SEMITONERATIO, semitone);
-        source.connect(audioContext.destination);
+        source.playbackRate.value = Math.pow(window.SEMITONERATIO, semitone);
+        source.connect(window.audioContext.destination);
         source.start(delay);
     };
 
@@ -32,12 +32,12 @@ class SoundEntity {
             // Dynamic tempo change
             if (typeof note === "string") {
                 const tempo = note.split("=")[1];
-                curScore.tempo = tempo;
-                DOM.tempo.value = tempo;
+                window.curScore.tempo = tempo;
+                window.DOM.tempo.value = tempo;
                 return;
             }
 
-            const source = audioContext.createBufferSource();
+            const source = window.audioContext.createBufferSource();
             const scale = note & 0x0f;
             let semitone = this.diff[scale];
 
@@ -45,8 +45,8 @@ class SoundEntity {
             else if ((note & 0x40) !== 0) semitone--;
 
             source.buffer = this.buffer;
-            source.playbackRate.value = Math.pow(SEMITONERATIO, semitone);
-            source.connect(audioContext.destination);
+            source.playbackRate.value = Math.pow(window.SEMITONERATIO, semitone);
+            source.connect(window.audioContext.destination);
             source.start(delay);
             this.prevChord.push(source);
         });
@@ -56,7 +56,7 @@ class SoundEntity {
         try {
             const response = await fetch(this.path);
             const arrayBuffer = await response.arrayBuffer();
-            this.buffer = await audioContext.decodeAudioData(arrayBuffer);
+            this.buffer = await window.audioContext.decodeAudioData(arrayBuffer);
             return this.buffer;
         } catch (error) {
             throw new Error(`Failed to load audio: ${this.path} - ${error.message}`);

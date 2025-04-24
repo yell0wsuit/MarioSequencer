@@ -159,10 +159,10 @@ const setupControlButtons = () => {
 
         const lastAction = window.undoHistory.pop();
         const barNotes = lastAction.type !== "endmark" ? window.curScore.notes[lastAction.barNumber] : null;
+        const index = barNotes.indexOf(lastAction.note);
 
         switch (lastAction.type) {
             case "add":
-                const index = barNotes.indexOf(lastAction.note);
                 if (index !== -1) barNotes.splice(index, 1);
                 break;
             case "delete":
@@ -295,7 +295,7 @@ const setupUIControls = () => {
     // Prepare range's side buttons for inc/decrements
     const leftButton = makeButton(184, 158, 7, 9, "button", "Scroll left");
     leftButton.id = "toLeft";
-    leftButton.addEventListener("click", function (event) {
+    leftButton.addEventListener("click", function () {
         if (window.DOM.scrollBar.value > 0) {
             window.curPos = --window.DOM.scrollBar.value;
         }
@@ -304,7 +304,7 @@ const setupUIControls = () => {
 
     const rightButton = makeButton(241, 158, 7, 9, "button", "Scroll right");
     rightButton.id = "toRight";
-    rightButton.addEventListener("click", function (event) {
+    rightButton.addEventListener("click", function () {
         if (window.DOM.scrollBar.value < window.curMaxBars - 6) {
             window.curPos = ++window.DOM.scrollBar.value;
         }

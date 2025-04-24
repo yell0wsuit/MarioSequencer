@@ -44,7 +44,7 @@ window.OPTS = Object.fromEntries(
 // GLOBAL VARIABLES - Initialize all globals on window object for easy module access
 //   Constants: Full capital letters
 //   Variables: CamelCase
-window.audioContext = window.AudioContext ? new AudioContext() : new webkitAudioContext();
+window.audioContext = new AudioContext();
 window.SEMITONERATIO = Math.pow(2, 1 / 12);
 window.ORGWIDTH = 256;
 window.ORGHEIGHT = 224;

@@ -197,8 +197,8 @@ const makeExclusiveFunction = (buttons, index, success) => {
 const readFileAsync = (file) => {
     return new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = (e) => resolve(e.target.result);
-        reader.onerror = (e) => reject(new Error("File reading failed"));
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error("File reading failed"));
         reader.readAsText(file, "shift-jis");
     });
 };
