@@ -69,6 +69,10 @@ const mouseClickListener = (event) => {
     // Handle semitone
     if (event.shiftKey) gridY |= 0x80;
     if (event.ctrlKey) gridY |= 0x40;
+
+    // Prevent duplicate semitone notes (same base note, any semitone)
+    if (barNotes.some((n) => n >> 8 === marioSequencer.curChar && (n & 0x3f) === (gridY & 0x3f))) return;
+
     marioSequencer.SOUNDS[marioSequencer.curChar].play(gridY);
     note = (marioSequencer.curChar << 8) | gridY;
     // Store in undo history before adding
