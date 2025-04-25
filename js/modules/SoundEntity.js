@@ -23,11 +23,18 @@ class SoundEntity {
         source.playbackRate.value = Math.pow(marioSequencer.SEMITONERATIO, semitone);
         source.connect(marioSequencer.audioContext.destination);
         source.start(delay);
+
+        source.onended = () => {
+            source.disconnect();
+        };
     };
 
     playChord = (noteList, delay = 0) => {
         // Cancel previous chord first
-        this.prevChord.forEach((source) => source.stop());
+        this.prevChord.forEach((source) => {
+            source.stop();
+            source.disconnect();
+        });
         this.prevChord = [];
 
         noteList.forEach((note) => {
