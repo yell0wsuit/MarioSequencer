@@ -4,7 +4,7 @@
 import marioSequencer from "../appState.js";
 
 import { EasyTimer } from "./EasyTimer.js";
-import { clearEraserButton, clearListener, playListener, stopListener } from "./eventHandlers.js";
+import { clearEraserButton, clearListener, playListener, stopListener } from "./EventHandlers.js";
 import { changeCursor, drawCurChar, drawEndMarkIcon, drawEraserIcon } from "./UIManager.js";
 import { makeButton, moveDOM, resizeDOM, sliceImage } from "./Utils.js";
 
