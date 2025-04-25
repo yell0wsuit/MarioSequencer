@@ -11,7 +11,7 @@ import { readFileAsync } from "./Utils.js";
  * Handle mouse clicks on the score area
  * @param {MouseEvent} event - The mouse event
  */
-function mouseClickListener(event) {
+const mouseClickListener = (event) => {
     if (marioSequencer.gameStatus !== 0) return;
     event.preventDefault();
 
@@ -80,14 +80,14 @@ function mouseClickListener(event) {
     barNotes.push(note);
     marioSequencer.curScore["notes"][barNumber] = barNotes;
     updateUndoButtonState();
-}
+};
 
 /**
  * Handle file drops on the screen
  * @param {DragEvent} e - The drag event
  * @returns {boolean} False to prevent default handling
  */
-async function handleFileDrop(e) {
+const handleFileDrop = async (e) => {
     e.preventDefault();
     clearSongButtons();
     fullInitScore();
@@ -122,25 +122,25 @@ async function handleFileDrop(e) {
     }
 
     return false;
-}
+};
 
 /**
  * Update undo button state based on history length
  */
-function updateUndoButtonState() {
+const updateUndoButtonState = () => {
     marioSequencer.DOM.undoButton.disabled = marioSequencer.undoHistory.length === 0;
     marioSequencer.DOM.undoButton.style.cursor = marioSequencer.DOM.undoButton.disabled ? "not-allowed" : "pointer";
-}
+};
 
 /**
  * Add MSQ format to score
  * @param {string} text - MSQ file content
  */
-function addMSQ(text) {
+const addMSQ = (text) => {
     const lines = text.split(/\r\n|\r|\n/);
     const keyword = ["SCORE", "TEMPO", "LOOP", "END", "TIME44"];
     const values = {};
-    lines.forEach(function (line, i) {
+    lines.forEach((line, i) => {
         if (line === "") return;
         const kv = line.split("=");
         const k = kv[0];
@@ -148,8 +148,8 @@ function addMSQ(text) {
         if (i < keyword.length && k !== keyword[i]) {
             throw new Error("Line " + i + " must start with '" + keyword[i] + "'");
         }
-        this[k] = v;
-    }, values);
+        values[k] = v;
+    });
 
     const oldEnd = marioSequencer.curScore.end;
     const s = values.SCORE;
@@ -172,20 +172,21 @@ function addMSQ(text) {
     }
 
     marioSequencer.curScore.end += parseInt(values.END) - 1;
-    if (marioSequencer.curScore.tempo !== values.TEMPO) marioSequencer.curScore.notes[oldEnd].splice(0, 0, "TEMPO=" + values.TEMPO);
+    if (marioSequencer.curScore.tempo !== values.TEMPO)
+        marioSequencer.curScore.notes[oldEnd].splice(0, 0, "TEMPO=" + values.TEMPO);
     marioSequencer.curScore.tempo = values.TEMPO;
     const beats = values.TIME44 === "TRUE" ? 4 : 3;
     marioSequencer.curScore.beats = beats;
 
     // Set loop button state
     values.LOOP === "TRUE" ? marioSequencer.DOM.loopButton.set() : marioSequencer.DOM.loopButton.reset();
-}
+};
 
 /**
  * Add JSON format to score
  * @param {string} text - JSON file content
  */
-function addJSON(text) {
+const addJSON = (text) => {
     const json = JSON.parse(text);
     for (let i = 0; i < json.end; i++) marioSequencer.curScore.notes.push(json.notes[i]);
 
@@ -206,7 +207,7 @@ function addJSON(text) {
     // Use json.loop instead of curScore.loop to determine button state
     if (json.loop) marioSequencer.DOM.loopButton.set();
     else marioSequencer.DOM.loopButton.reset();
-}
+};
 
 /**
  * Configure score parameters after loading
@@ -234,8 +235,8 @@ function closing() {
 /**
  * Setup keyboard event handlers
  */
-function setupKeyboardControls() {
-    document.addEventListener("keydown", function (event) {
+const setupKeyboardControls = () => {
+    document.addEventListener("keydown", (event) => {
         switch (event.code) {
             case "Space": // space -> play/stop or restart with shift
                 if (marioSequencer.DOM.playButton.disabled === false || event.shiftKey) {
@@ -249,7 +250,8 @@ function setupKeyboardControls() {
             case "ArrowLeft": // left -> scroll left
                 if (marioSequencer.gameStatus === 0) {
                     // Only allow scrolling in edit mode
-                    if (marioSequencer.DOM.scrollBar.value > 0) marioSequencer.curPos = --marioSequencer.DOM.scrollBar.value;
+                    if (marioSequencer.DOM.scrollBar.value > 0)
+                        marioSequencer.curPos = --marioSequencer.DOM.scrollBar.value;
                     event.preventDefault();
                 }
                 break;
@@ -273,38 +275,41 @@ function setupKeyboardControls() {
                 break;
         }
     });
-}
+};
 
 /**
  * Clear song buttons
  */
-function clearSongButtons() {
+const clearSongButtons = () => {
     // Reset all song button states
     marioSequencer.DOM.songButtons.frog.disabled = false;
-    marioSequencer.DOM.songButtons.frog.style.backgroundImage = "url(" + marioSequencer.DOM.songButtons.frog.images[0].src + ")";
+    marioSequencer.DOM.songButtons.frog.style.backgroundImage =
+        "url(" + marioSequencer.DOM.songButtons.frog.images[0].src + ")";
 
     marioSequencer.DOM.songButtons.beak.disabled = false;
-    marioSequencer.DOM.songButtons.beak.style.backgroundImage = "url(" + marioSequencer.DOM.songButtons.beak.images[0].src + ")";
+    marioSequencer.DOM.songButtons.beak.style.backgroundImage =
+        "url(" + marioSequencer.DOM.songButtons.beak.images[0].src + ")";
 
     marioSequencer.DOM.songButtons["1up"].disabled = false;
     marioSequencer.DOM.songButtons["1up"].style.backgroundImage =
         "url(" + marioSequencer.DOM.songButtons["1up"].images[0].src + ")";
 
     marioSequencer.curSong = undefined;
-}
+};
 
 /**
  * Clear eraser button selection
  */
-function clearEraserButton() {
-    marioSequencer.DOM.eraserButton.style.backgroundImage = "url(" + marioSequencer.DOM.eraserButton.images[0].src + ")";
+const clearEraserButton = () => {
+    marioSequencer.DOM.eraserButton.style.backgroundImage =
+        "url(" + marioSequencer.DOM.eraserButton.images[0].src + ")";
     marioSequencer.eraserTimer.switch = false;
-}
+};
 
 /**
  * Full initialize score for file loading
  */
-function fullInitScore() {
+const fullInitScore = () => {
     marioSequencer.curScore.notes = [];
     marioSequencer.curMaxBars = 0;
     marioSequencer.curScore.beats = 4;
@@ -312,12 +317,12 @@ function fullInitScore() {
     // curScore.loop = false;
     marioSequencer.curScore.end = 0;
     marioSequencer.curScore.tempo = 0;
-}
+};
 
 /**
  * Initialize score to defaults
  */
-function initScore() {
+const initScore = () => {
     const emptyBars = [];
     for (let barIndex = 0; barIndex < marioSequencer.DEFAULT_MAX_BARS; barIndex++) emptyBars[barIndex] = [];
     marioSequencer.curScore.notes = emptyBars;
@@ -333,7 +338,7 @@ function initScore() {
     const clickEvent = new Event("click");
     clickEvent.soundOff = true;
     marioSequencer.DOM.beats4Button.dispatchEvent(clickEvent);
-}
+};
 
 /**
  * Play button event handler
@@ -416,7 +421,7 @@ function clearListener() {
 /**
  * Let Mario run on the stage
  */
-function doMarioEnter(timeStamp) {
+const doMarioEnter = (timeStamp) => {
     marioSequencer.bombTimer.checkAndFire(timeStamp);
     marioSequencer.drawScore(0, marioSequencer.curScore.notes, 0);
     marioSequencer.mario.enter(timeStamp);
@@ -428,12 +433,12 @@ function doMarioEnter(timeStamp) {
         marioSequencer.gameStatus = 2;
         marioSequencer.animationFrameId = requestAnimationFrame(doMarioPlay);
     }
-}
+};
 
 /**
  * Let Mario play the music
  */
-function doMarioPlay(timeStamp) {
+const doMarioPlay = (timeStamp) => {
     marioSequencer.bombTimer.checkAndFire(timeStamp);
     marioSequencer.mario.play(timeStamp);
     if (marioSequencer.gameStatus === 2) {
@@ -450,12 +455,12 @@ function doMarioPlay(timeStamp) {
             stopListener.call(marioSequencer.DOM.stopButton);
         }
     }
-}
+};
 
 /**
  * Let Mario leave the stage
  */
-function doMarioLeave(timeStamp) {
+const doMarioLeave = (timeStamp) => {
     marioSequencer.bombTimer.checkAndFire(timeStamp);
     marioSequencer.drawScore(marioSequencer.curPos, marioSequencer.curScore.notes, marioSequencer.mario.marioScroll);
     marioSequencer.mario.leave(timeStamp);
@@ -477,12 +482,12 @@ function doMarioLeave(timeStamp) {
 
         requestAnimationFrame(doAnimation);
     }
-}
+};
 
 /**
  * Main animation loop
  */
-function doAnimation(time) {
+const doAnimation = (time) => {
     // Bomb
     marioSequencer.bombTimer.checkAndFire(time);
     marioSequencer.eraserTimer.checkAndFire(time);
@@ -493,7 +498,7 @@ function doAnimation(time) {
     if (marioSequencer.gameStatus !== 0) return;
 
     requestAnimationFrame(doAnimation);
-}
+};
 
 /**
  * Process URL parameters if provided
@@ -510,7 +515,7 @@ const OPTS = Object.fromEntries(
         })
 );
 
-function processUrlParameters() {
+const processUrlParameters = () => {
     // Exit early if no options are provided
     if (Object.keys(OPTS).length === 0) return;
 
@@ -564,7 +569,7 @@ function processUrlParameters() {
         addMSQ(text);
         closing();
     }
-}
+};
 
 export {
     addJSON,
