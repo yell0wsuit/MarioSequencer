@@ -364,7 +364,7 @@ function playListener() {
     marioSequencer.gameStatus = 1; // Mario Entering the stage
     marioSequencer.mario.init();
     requestAnimationFrame(doMarioEnter);
-};
+}
 
 /**
  * Stop button event handler
