@@ -17,7 +17,7 @@ import {
     mouseClickListener,
     processUrlParameters,
     setupKeyboardControls,
-} from "./modules/eventHandlers.js";
+} from "./modules/EventHandlers.js";
 import MarioClass from "./modules/MarioClass.js";
 import SoundEntity from "./modules/SoundEntity.js";
 import { changeCursor, drawBomb, drawCurChar, drawScore, resizeScreen } from "./modules/UIManager.js";
