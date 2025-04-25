@@ -1,0 +1,26 @@
+{
+  "name": "mariosequencer",
+  "version": "1.0.0",
+  "description": "Mario Sequencer - Web Edition. Fork of <https://github.com/minghai/MarioSequencer> with quality-of-life improvements.",
+  "main": "index.js",
+  "devDependencies": {
+    "@eslint/js": "^9.25.1",
+    "eslint": "^9.25.1",
+    "globals": "^16.0.0"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/yell0wsuit/MarioSequencer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/yell0wsuit/MarioSequencer/issues"
+  },
+  "homepage": "https://github.com/yell0wsuit/MarioSequencer#readme"
+}
