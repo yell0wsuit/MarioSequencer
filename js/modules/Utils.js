@@ -2,6 +2,8 @@
  * Utility functions for the Mario Sequencer
  */
 
+import marioSequencer from "../appState.js";
+
 /**
  * Creates a button element with the specified properties
  * @param {number} x - X position
@@ -66,8 +68,8 @@ const makeButton = (x, y, width, height, type = "button", ariaLabel = "") => {
  * @param {number} height - New height in game units
  */
 const resizeDOM = (element, width, height) => {
-    element.style.width = `${width * window.MAGNIFY}px`;
-    element.style.height = `${height * window.MAGNIFY}px`;
+    element.style.width = `${width * marioSequencer.MAGNIFY}px`;
+    element.style.height = `${height * marioSequencer.MAGNIFY}px`;
 };
 
 /**
@@ -77,8 +79,8 @@ const resizeDOM = (element, width, height) => {
  * @param {number} y - New Y position in game units
  */
 const moveDOM = (element, x, y) => {
-    element.style.left = `${x * window.MAGNIFY}px`;
-    element.style.top = `${y * window.MAGNIFY}px`;
+    element.style.left = `${x * marioSequencer.MAGNIFY}px`;
+    element.style.top = `${y * marioSequencer.MAGNIFY}px`;
 };
 
 /**
@@ -92,8 +94,8 @@ const sliceImage = (image, width, height) => {
     const result = [];
     const horizontalCount = Math.floor(image.width / width);
     const verticalCount = Math.floor(image.height / height);
-    const charWidth = width * window.MAGNIFY;
-    const charHeight = height * window.MAGNIFY;
+    const charWidth = width * marioSequencer.MAGNIFY;
+    const charHeight = height * marioSequencer.MAGNIFY;
 
     // Create a single reusable canvas
     const tempCanvas = document.createElement("canvas");
@@ -127,7 +129,7 @@ const sliceImage = (image, width, height) => {
 const download = () => {
     const link = document.createElement("a");
     link.download = "MSQ_Data.json";
-    const blob = new Blob([JSON.stringify(window.curScore)], { type: "application/json" });
+    const blob = new Blob([JSON.stringify(marioSequencer.curScore)], { type: "application/json" });
     link.href = URL.createObjectURL(blob);
     link.click();
     URL.revokeObjectURL(link.href); // Clean up to avoid memory leaks
@@ -139,12 +141,12 @@ const download = () => {
  * @param {Object} config - Configuration object with properties and dimensions
  */
 const updateSliderThumbStyle = (selector, config) => {
-    const styleRules = window.pseudoSheet.cssRules;
+    const styleRules = marioSequencer.pseudoSheet.cssRules;
 
     // Find and remove existing rule
     for (let i = 0; i < styleRules.length; i++) {
         if (styleRules[i].selectorText === selector) {
-            window.pseudoSheet.deleteRule(i);
+            marioSequencer.pseudoSheet.deleteRule(i);
             break;
         }
     }
@@ -160,7 +162,7 @@ const updateSliderThumbStyle = (selector, config) => {
     cssProperties += `height: ${config.height}px;`;
 
     // Insert new rule
-    window.pseudoSheet.insertRule(`${selector} {${cssProperties}}`, 0);
+    marioSequencer.pseudoSheet.insertRule(`${selector} {${cssProperties}}`, 0);
 };
 
 /**
@@ -178,7 +180,7 @@ const makeExclusiveFunction = (buttons, index, success) => {
 
     return (event) => {
         // Sound Off for file loading
-        if (!event.soundOff) window.SOUNDS[17].play(8);
+        if (!event.soundOff) marioSequencer.SOUNDS[17].play(8);
         self.disabled = true;
         self.style.backgroundImage = `url(${self.images[1].src})`;
         otherButtons.map((button) => {

@@ -1,6 +1,9 @@
 /**
  * Mario character class for animation and gameplay
  */
+
+import marioSequencer from "../appState.js";
+
 import { EasyTimer } from "./EasyTimer.js";
 import { drawScore } from "./UIManager.js";
 
@@ -58,7 +61,7 @@ class MarioClass {
 
     // Determine if Mario should jump based on notes at current position
     checkMarioShouldJump = () => {
-        const notes = window.curScore.notes[this.marioPosition - 1];
+        const notes = marioSequencer.curScore.notes[this.marioPosition - 1];
         // Jump if there are notes and either there's more than one note or the note isn't a string (tempo)
         this.isJumping = notes && notes.length > 0 && (notes.length > 1 || typeof notes[0] !== "string");
     };
@@ -73,8 +76,8 @@ class MarioClass {
             notes.forEach((note) => {
                 if (typeof note === "string") {
                     const tempo = note.split("=")[1];
-                    window.curScore.tempo = tempo;
-                    window.DOM.tempo.value = tempo;
+                    marioSequencer.curScore.tempo = tempo;
+                    marioSequencer.DOM.tempo.value = tempo;
                     return;
                 }
 
@@ -85,11 +88,11 @@ class MarioClass {
             });
 
             Object.entries(noteDictionary).forEach(([soundIndex, scales]) => {
-                window.SOUNDS[soundIndex].playChord(scales, time / 1000); // Convert ms to seconds
+                marioSequencer.SOUNDS[soundIndex].playChord(scales, time / 1000); // Convert ms to seconds
             });
         };
 
-        const tempo = window.curScore.tempo;
+        const tempo = marioSequencer.curScore.tempo;
         let timeDifference = timeStamp - this.lastTime;
         if (timeDifference > 32) timeDifference = 16; // Cap time difference
         this.lastTime = timeStamp;
@@ -97,32 +100,32 @@ class MarioClass {
 
         this.timer.checkAndFire(timeStamp);
 
-        const nextBar = 16 + 32 * (this.marioPosition - window.curPos + 1) - 8; // Calculate position of next bar
+        const nextBar = 16 + 32 * (this.marioPosition - marioSequencer.curPos + 1) - 8; // Calculate position of next bar
 
         if (this.marioX < 120) {
             this.marioX += step;
             if (this.marioX >= nextBar) {
                 this.marioPosition++;
-                scheduleAndPlay(window.curScore.notes[this.marioPosition - 2], 0);
+                scheduleAndPlay(marioSequencer.curScore.notes[this.marioPosition - 2], 0);
                 this.checkMarioShouldJump();
             } else if (this.marioX >= 120) {
                 this.marioScroll = this.marioX - 120;
                 this.marioX = 120;
             }
-        } else if (window.curPos <= window.curScore.end - 6) {
+        } else if (marioSequencer.curPos <= marioSequencer.curScore.end - 6) {
             this.marioX = 120;
             if (this.marioScroll < 16 && this.marioScroll + step > 16) {
                 this.marioPosition++;
                 this.marioScroll += step;
-                scheduleAndPlay(window.curScore.notes[this.marioPosition - 2], 0);
+                scheduleAndPlay(marioSequencer.curScore.notes[this.marioPosition - 2], 0);
                 this.checkMarioShouldJump();
             } else {
                 this.marioScroll += step;
                 if (this.marioScroll > 32) {
                     this.marioScroll -= 32;
-                    window.curPos++;
-                    window.DOM.scrollBar.value = window.curPos;
-                    if (window.curPos > window.curScore.end - 6) {
+                    marioSequencer.curPos++;
+                    marioSequencer.DOM.scrollBar.value = marioSequencer.curPos;
+                    if (marioSequencer.curPos > marioSequencer.curScore.end - 6) {
                         this.marioX += this.marioScroll;
                         this.marioScroll = 0;
                     }
@@ -132,11 +135,11 @@ class MarioClass {
             this.marioX += step;
             if (this.marioX >= nextBar) {
                 this.marioPosition++;
-                scheduleAndPlay(window.curScore.notes[this.marioPosition - 2], 0);
+                scheduleAndPlay(marioSequencer.curScore.notes[this.marioPosition - 2], 0);
                 this.checkMarioShouldJump();
             }
         }
-        drawScore(window.curPos, window.curScore.notes, this.marioScroll);
+        drawScore(marioSequencer.curPos, marioSequencer.curScore.notes, this.marioScroll);
         this.draw();
     };
 
@@ -167,7 +170,11 @@ class MarioClass {
             }
         }
 
-        window.L2C.drawImage(this.images[state], this.marioX * window.MAGNIFY, verticalPosition * window.MAGNIFY);
+        marioSequencer.L2C.drawImage(
+            this.images[state],
+            this.marioX * marioSequencer.MAGNIFY,
+            verticalPosition * marioSequencer.MAGNIFY
+        );
     };
 
     // Animate Mario leaving the stage
@@ -180,7 +187,7 @@ class MarioClass {
             if (this.marioScroll > 32) {
                 this.marioX += this.marioScroll - 32;
                 this.marioScroll = 0;
-                window.curPos++;
+                marioSequencer.curPos++;
             }
         } else {
             this.marioX = Math.floor(diff / 4) + this.marioOffset;
@@ -189,16 +196,16 @@ class MarioClass {
         if (Math.floor(diff / 100) % 2 === 0) {
             this.state = 8;
             this.draw();
-            window.L2C.drawImage(
-                window.sweatImg,
+            marioSequencer.L2C.drawImage(
+                marioSequencer.sweatImg,
                 0,
                 0,
-                window.sweatImg.width,
-                window.sweatImg.height,
-                (this.marioX - (window.sweatImg.width + 1)) * window.MAGNIFY,
-                (41 - 22) * window.MAGNIFY,
-                window.sweatImg.width * window.MAGNIFY,
-                window.sweatImg.height * window.MAGNIFY
+                marioSequencer.sweatImg.width,
+                marioSequencer.sweatImg.height,
+                (this.marioX - (marioSequencer.sweatImg.width + 1)) * marioSequencer.MAGNIFY,
+                (41 - 22) * marioSequencer.MAGNIFY,
+                marioSequencer.sweatImg.width * marioSequencer.MAGNIFY,
+                marioSequencer.sweatImg.height * marioSequencer.MAGNIFY
             );
         } else {
             this.state = 9;

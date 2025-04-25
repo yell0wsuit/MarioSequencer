@@ -1,6 +1,9 @@
 /**
  * UI Manager module for handling all UI-related operations
  */
+
+import marioSequencer from "../appState.js";
+
 import { moveDOM, resizeDOM, sliceImage, updateSliderThumbStyle } from "./Utils.js";
 
 /**
@@ -9,12 +12,12 @@ import { moveDOM, resizeDOM, sliceImage, updateSliderThumbStyle } from "./Utils.
  * @param {number} scroll - Scroll amount
  */
 const drawHorizontalBar = (gridX, scroll) => {
-    const width = 24 * window.MAGNIFY;
-    window.L2C.fillRect(
-        (4 + 32 * gridX - scroll) * window.MAGNIFY,
-        (38 + 11 * 8) * window.MAGNIFY + window.HALFCHARSIZE,
+    const width = 24 * marioSequencer.MAGNIFY;
+    marioSequencer.L2C.fillRect(
+        (4 + 32 * gridX - scroll) * marioSequencer.MAGNIFY,
+        (38 + 11 * 8) * marioSequencer.MAGNIFY + marioSequencer.HALFCHARSIZE,
         width,
-        2 * window.MAGNIFY
+        2 * marioSequencer.MAGNIFY
     );
 };
 
@@ -24,8 +27,8 @@ const drawHorizontalBar = (gridX, scroll) => {
  * @param {number} barNumber - Number to display
  */
 const drawBarNumber = (gridX, barNumber) => {
-    let x = (16 + 32 * gridX) * window.MAGNIFY - 1;
-    const y = (40 - 7) * window.MAGNIFY;
+    let x = (16 + 32 * gridX) * marioSequencer.MAGNIFY - 1;
+    const y = (40 - 7) * marioSequencer.MAGNIFY;
     const numberDigits = [];
 
     while (barNumber > 0) {
@@ -34,13 +37,19 @@ const drawBarNumber = (gridX, barNumber) => {
     }
 
     const digitCount = numberDigits.length;
-    if (digitCount === 1) x += 2 * window.MAGNIFY;
+    if (digitCount === 1) x += 2 * marioSequencer.MAGNIFY;
 
     while (numberDigits.length > 0) {
         const digit = numberDigits.pop();
         const digitWidth = digit === 4 ? 5 : 4;
-        window.L2C.drawImage(window.NUMBERS[digit], x, y, 5 * window.MAGNIFY, 7 * window.MAGNIFY);
-        x += digitWidth * window.MAGNIFY;
+        marioSequencer.L2C.drawImage(
+            marioSequencer.NUMBERS[digit],
+            x,
+            y,
+            5 * marioSequencer.MAGNIFY,
+            7 * marioSequencer.MAGNIFY
+        );
+        x += digitWidth * marioSequencer.MAGNIFY;
     }
 };
 
@@ -52,19 +61,24 @@ const drawBarNumber = (gridX, barNumber) => {
  */
 const drawScore = (position, notes, scroll) => {
     // Clear and set clipping region for the score area
-    window.L2C.clearRect(0, 0, window.SCREEN.width, window.SCREEN.height);
-    window.L2C.save();
-    window.L2C.rect(8 * window.MAGNIFY, 0, (247 - 8 + 1) * window.MAGNIFY, window.SCRHEIGHT * window.MAGNIFY);
-    window.L2C.clip();
+    marioSequencer.L2C.clearRect(0, 0, marioSequencer.SCREEN.width, marioSequencer.SCREEN.height);
+    marioSequencer.L2C.save();
+    marioSequencer.L2C.rect(
+        8 * marioSequencer.MAGNIFY,
+        0,
+        (247 - 8 + 1) * marioSequencer.MAGNIFY,
+        marioSequencer.SCRHEIGHT * marioSequencer.MAGNIFY
+    );
+    marioSequencer.L2C.clip();
 
     // Handle mouse interaction for edit mode
-    const mouseRealX = window.mouseX - window.offsetLeft;
-    const mouseRealY = window.mouseY - window.offsetTop;
+    const mouseRealX = marioSequencer.mouseX - marioSequencer.offsetLeft;
+    const mouseRealY = marioSequencer.mouseY - marioSequencer.offsetTop;
     let gridPosition = toGrid(mouseRealX, mouseRealY);
     let gridX, gridY;
 
     // Draw horizontal bar for high notes in edit mode
-    if (window.gameStatus === 0 && gridPosition !== false) {
+    if (marioSequencer.gameStatus === 0 && gridPosition !== false) {
         [gridX, gridY] = gridPosition;
         if (gridY >= 11) drawHorizontalBar(gridX, 0);
     }
@@ -72,30 +86,30 @@ const drawScore = (position, notes, scroll) => {
     // Draw G clef and repeat marks at the beginning
     if (position === 0) {
         // Draw G clef at the start
-        const gClefWidth = window.GClef.width;
-        const gClefHeight = window.GClef.height;
-        window.L2C.drawImage(
-            window.GClef,
+        const gClefWidth = marioSequencer.GClef.width;
+        const gClefHeight = marioSequencer.GClef.height;
+        marioSequencer.L2C.drawImage(
+            marioSequencer.GClef,
             0,
             0,
             gClefWidth,
             gClefHeight,
-            (9 - scroll) * window.MAGNIFY,
-            48 * window.MAGNIFY,
-            gClefWidth * window.MAGNIFY,
-            gClefHeight * window.MAGNIFY
+            (9 - scroll) * marioSequencer.MAGNIFY,
+            48 * marioSequencer.MAGNIFY,
+            gClefWidth * marioSequencer.MAGNIFY,
+            gClefHeight * marioSequencer.MAGNIFY
         );
 
         // Draw repeat mark if looping is enabled
-        if (window.curScore.loop) {
+        if (marioSequencer.curScore.loop) {
             drawRepeatHead(41 - scroll);
         }
-    } else if (position === 1 && window.curScore.loop) {
+    } else if (position === 1 && marioSequencer.curScore.loop) {
         drawRepeatHead(9 - scroll);
     }
 
     // Calculate which beats should be highlighted orange
-    const beats = window.curScore.beats;
+    const beats = marioSequencer.curScore.beats;
     // For 4 beats: orange = 2,1,0,3,2,1,0,3,...
     // For 3 beats: orange = 2,1,0,2,1,0,2,1,...
     const orangeBeat = beats === 4 ? 3 - ((position + 1) % 4) : 2 - ((position + 3) % 3);
@@ -106,30 +120,30 @@ const drawScore = (position, notes, scroll) => {
     // Draw each bar in the visible area
     for (; barIndex < 9; barIndex++) {
         const originalX = 16 + 32 * barIndex - scroll;
-        const x = originalX * window.MAGNIFY;
+        const x = originalX * marioSequencer.MAGNIFY;
         const barNumber = position + barIndex - 2;
 
         // Draw end mark if this is the last bar
-        if (barNumber === window.curScore.end) {
-            const endMarkImage = window.curScore.loop ? window.repeatMark[1] : window.endMark;
-            window.L2C.drawImage(endMarkImage, x - 7 * window.MAGNIFY, 56 * window.MAGNIFY);
+        if (barNumber === marioSequencer.curScore.end) {
+            const endMarkImage = marioSequencer.curScore.loop ? marioSequencer.repeatMark[1] : marioSequencer.endMark;
+            marioSequencer.L2C.drawImage(endMarkImage, x - 7 * marioSequencer.MAGNIFY, 56 * marioSequencer.MAGNIFY);
         }
 
         // Draw vertical bar line
-        window.L2C.beginPath();
-        window.L2C.setLineDash([window.MAGNIFY, window.MAGNIFY]);
-        window.L2C.lineWidth = window.MAGNIFY;
+        marioSequencer.L2C.beginPath();
+        marioSequencer.L2C.setLineDash([marioSequencer.MAGNIFY, marioSequencer.MAGNIFY]);
+        marioSequencer.L2C.lineWidth = marioSequencer.MAGNIFY;
 
         // Highlight first beat of each measure in orange
         if (barIndex % beats === orangeBeat) {
-            if (window.gameStatus === 0) drawBarNumber(barIndex, barNumber / beats + 1);
-            window.L2C.strokeStyle = "#F89000"; // Orange
+            if (marioSequencer.gameStatus === 0) drawBarNumber(barIndex, barNumber / beats + 1);
+            marioSequencer.L2C.strokeStyle = "#F89000"; // Orange
         } else {
-            window.L2C.strokeStyle = "#A0C0B0"; // Light green
+            marioSequencer.L2C.strokeStyle = "#A0C0B0"; // Light green
         }
-        window.L2C.moveTo(x, 41 * window.MAGNIFY);
-        window.L2C.lineTo(x, 148 * window.MAGNIFY);
-        window.L2C.stroke();
+        marioSequencer.L2C.moveTo(x, 41 * marioSequencer.MAGNIFY);
+        marioSequencer.L2C.lineTo(x, 148 * marioSequencer.MAGNIFY);
+        marioSequencer.L2C.stroke();
 
         // Skip if no notes in this bar
         const barNotes = notes[barNumber];
@@ -137,14 +151,16 @@ const drawScore = (position, notes, scroll) => {
 
         // Calculate vertical offset for jumping animation
         let noteDelta = 0;
-        if (window.gameStatus === 2 && window.mario.marioPosition - 2 === barNumber) {
+        if (marioSequencer.gameStatus === 2 && marioSequencer.mario.marioPosition - 2 === barNumber) {
             // Calculate jump height based on Mario's position
             let noteIndex;
-            if (window.mario.marioX === 120) {
+            if (marioSequencer.mario.marioX === 120) {
                 noteIndex =
-                    window.mario.marioScroll >= 16 ? window.mario.marioScroll - 16 : window.mario.marioScroll + 16;
+                    marioSequencer.mario.marioScroll >= 16
+                        ? marioSequencer.mario.marioScroll - 16
+                        : marioSequencer.mario.marioScroll + 16;
             } else {
-                noteIndex = window.mario.marioX + 8 - originalX;
+                noteIndex = marioSequencer.mario.marioX + 8 - originalX;
             }
             // Jump height table for animation
             const jumpTable = [
@@ -164,11 +180,11 @@ const drawScore = (position, notes, scroll) => {
 
             // Skip drawing note if eraser is hovering over it (blinking effect)
             if (
-                window.curChar === 16 &&
+                marioSequencer.curChar === 16 &&
                 gridPosition !== false &&
                 barIndex === gridX &&
                 noteScale === gridY &&
-                window.eraserTimer.currentFrame === 1
+                marioSequencer.eraserTimer.currentFrame === 1
             ) {
                 continue;
             }
@@ -180,36 +196,41 @@ const drawScore = (position, notes, scroll) => {
             }
 
             // Draw the note
-            window.L2C.drawImage(
-                window.SOUNDS[soundNumber].image,
-                x - window.HALFCHARSIZE,
-                (40 + noteScale * 8 + noteDelta) * window.MAGNIFY
+            marioSequencer.L2C.drawImage(
+                marioSequencer.SOUNDS[soundNumber].image,
+                x - marioSequencer.HALFCHARSIZE,
+                (40 + noteScale * 8 + noteDelta) * marioSequencer.MAGNIFY
             );
 
             // Draw accidentals (sharps/flats)
-            const x2 = x - 13 * window.MAGNIFY;
-            const y = (44 + noteScale * 8 + noteDelta) * window.MAGNIFY;
+            const x2 = x - 13 * marioSequencer.MAGNIFY;
+            const y = (44 + noteScale * 8 + noteDelta) * marioSequencer.MAGNIFY;
             if ((barNotes[noteIndex] & 0x80) !== 0) {
-                window.L2C.drawImage(window.Semitones[0], x2, y); // Sharp
+                marioSequencer.L2C.drawImage(marioSequencer.Semitones[0], x2, y); // Sharp
             } else if ((barNotes[noteIndex] & 0x40) !== 0) {
-                window.L2C.drawImage(window.Semitones[1], x2, y); // Flat
+                marioSequencer.L2C.drawImage(marioSequencer.Semitones[1], x2, y); // Flat
             }
         }
     }
 
     // Draw cursor rectangle in edit mode
-    if (window.gameStatus === 0 && gridPosition !== false) {
-        window.L2C.beginPath();
-        window.L2C.setLineDash([7 * window.MAGNIFY, 2 * window.MAGNIFY, 7 * window.MAGNIFY, 0]);
-        window.L2C.lineWidth = window.MAGNIFY;
-        window.L2C.strokeStyle = "#F00";
-        const x = (16 + 32 * gridX - 8) * window.MAGNIFY;
-        const y = (40 + gridY * 8) * window.MAGNIFY;
-        window.L2C.rect(x, y, window.CHARSIZE, window.CHARSIZE);
-        window.L2C.stroke();
+    if (marioSequencer.gameStatus === 0 && gridPosition !== false) {
+        marioSequencer.L2C.beginPath();
+        marioSequencer.L2C.setLineDash([
+            7 * marioSequencer.MAGNIFY,
+            2 * marioSequencer.MAGNIFY,
+            7 * marioSequencer.MAGNIFY,
+            0,
+        ]);
+        marioSequencer.L2C.lineWidth = marioSequencer.MAGNIFY;
+        marioSequencer.L2C.strokeStyle = "#F00";
+        const x = (16 + 32 * gridX - 8) * marioSequencer.MAGNIFY;
+        const y = (40 + gridY * 8) * marioSequencer.MAGNIFY;
+        marioSequencer.L2C.rect(x, y, marioSequencer.CHARSIZE, marioSequencer.CHARSIZE);
+        marioSequencer.L2C.stroke();
     }
 
-    window.L2C.restore();
+    marioSequencer.L2C.restore();
 };
 
 /**
@@ -217,7 +238,11 @@ const drawScore = (position, notes, scroll) => {
  * @param {number} xPosition - X position to draw at
  */
 const drawRepeatHead = (xPosition) => {
-    window.L2C.drawImage(window.repeatMark[0], xPosition * window.MAGNIFY, 56 * window.MAGNIFY);
+    marioSequencer.L2C.drawImage(
+        marioSequencer.repeatMark[0],
+        xPosition * marioSequencer.MAGNIFY,
+        56 * marioSequencer.MAGNIFY
+    );
 };
 
 /**
@@ -225,7 +250,7 @@ const drawRepeatHead = (xPosition) => {
  * @param {number} soundNumber - Index of the sound to use
  */
 const changeCursor = (soundNumber) => {
-    window.SCREEN.style.cursor = `url(${window.SOUNDS[soundNumber].image.src})${window.HALFCHARSIZE} ${window.HALFCHARSIZE}, auto`;
+    marioSequencer.SCREEN.style.cursor = `url(${marioSequencer.SOUNDS[soundNumber].image.src})${marioSequencer.HALFCHARSIZE} ${marioSequencer.HALFCHARSIZE}, auto`;
 };
 
 /**
@@ -233,14 +258,19 @@ const changeCursor = (soundNumber) => {
  * @param {HTMLImageElement} image - Image to draw
  */
 const drawCurChar = (image) => {
-    const x = 4 * window.MAGNIFY;
-    const y = 7 * window.MAGNIFY;
-    window.L1C.beginPath();
-    window.L1C.imageSmoothingEnabled = false;
-    window.L1C.clearRect(x, y, window.CHARSIZE, window.CHARSIZE);
-    window.L1C.drawImage(image, x, y);
-    window.L1C.fillRect(x, y, window.CHARSIZE, window.MAGNIFY);
-    window.L1C.fillRect(x, y + window.CHARSIZE - window.MAGNIFY, window.CHARSIZE, window.MAGNIFY);
+    const x = 4 * marioSequencer.MAGNIFY;
+    const y = 7 * marioSequencer.MAGNIFY;
+    marioSequencer.L1C.beginPath();
+    marioSequencer.L1C.imageSmoothingEnabled = false;
+    marioSequencer.L1C.clearRect(x, y, marioSequencer.CHARSIZE, marioSequencer.CHARSIZE);
+    marioSequencer.L1C.drawImage(image, x, y);
+    marioSequencer.L1C.fillRect(x, y, marioSequencer.CHARSIZE, marioSequencer.MAGNIFY);
+    marioSequencer.L1C.fillRect(
+        x,
+        y + marioSequencer.CHARSIZE - marioSequencer.MAGNIFY,
+        marioSequencer.CHARSIZE,
+        marioSequencer.MAGNIFY
+    );
 };
 
 /**
@@ -248,15 +278,25 @@ const drawCurChar = (image) => {
  * @param {HTMLImageElement} image - Image to draw
  */
 const drawEndMarkIcon = (image) => {
-    window.L1C.clearRect(4 * window.MAGNIFY, 8 * window.MAGNIFY, 16 * window.MAGNIFY, 14 * window.MAGNIFY);
-    window.L1C.drawImage(image, 5 * window.MAGNIFY, 8 * window.MAGNIFY);
+    marioSequencer.L1C.clearRect(
+        4 * marioSequencer.MAGNIFY,
+        8 * marioSequencer.MAGNIFY,
+        16 * marioSequencer.MAGNIFY,
+        14 * marioSequencer.MAGNIFY
+    );
+    marioSequencer.L1C.drawImage(image, 5 * marioSequencer.MAGNIFY, 8 * marioSequencer.MAGNIFY);
 };
 
 /**
  * Clear the eraser icon area
  */
 const drawEraserIcon = () => {
-    window.L1C.clearRect(4 * window.MAGNIFY, 8 * window.MAGNIFY, 16 * window.MAGNIFY, 14 * window.MAGNIFY);
+    marioSequencer.L1C.clearRect(
+        4 * marioSequencer.MAGNIFY,
+        8 * marioSequencer.MAGNIFY,
+        16 * marioSequencer.MAGNIFY,
+        14 * marioSequencer.MAGNIFY
+    );
 };
 
 /**
@@ -264,13 +304,15 @@ const drawEraserIcon = () => {
  * @param {Object} mySelf - Timer object
  */
 const drawBomb = (mySelf) => {
-    const bombX = 9 * window.MAGNIFY;
-    const bombY = 202 * window.MAGNIFY;
-    window.L1C.drawImage(window.BOMBS[mySelf.currentFrame], bombX, bombY);
+    const bombX = 9 * marioSequencer.MAGNIFY;
+    const bombY = 202 * marioSequencer.MAGNIFY;
+    marioSequencer.L1C.drawImage(marioSequencer.BOMBS[mySelf.currentFrame], bombX, bombY);
     mySelf.currentFrame = mySelf.currentFrame === 0 ? 1 : 0;
 
-    if (window.curSong !== undefined && window.gameStatus === 2) {
-        window.curSong.style.backgroundImage = `url(${window.curSong.images[mySelf.currentFrame + 1].src})`;
+    if (marioSequencer.curSong !== undefined && marioSequencer.gameStatus === 2) {
+        marioSequencer.curSong.style.backgroundImage = `url(${
+            marioSequencer.curSong.images[mySelf.currentFrame + 1].src
+        })`;
     }
 };
 
@@ -281,21 +323,21 @@ const drawBomb = (mySelf) => {
  * @returns {Array|boolean} Grid coordinates [x, y] or false if outside grid
  */
 const toGrid = (mouseRealX, mouseRealY) => {
-    const gridLeft = (8 + 0) * window.MAGNIFY;
-    const gridTop = 41 * window.MAGNIFY;
-    const gridRight = (247 - 4) * window.MAGNIFY;
-    const gridBottom = (148 - 4) * window.MAGNIFY;
+    const gridLeft = (8 + 0) * marioSequencer.MAGNIFY;
+    const gridTop = 41 * marioSequencer.MAGNIFY;
+    const gridRight = (247 - 4) * marioSequencer.MAGNIFY;
+    const gridBottom = (148 - 4) * marioSequencer.MAGNIFY;
 
     if (mouseRealX < gridLeft || mouseRealX > gridRight || mouseRealY < gridTop || mouseRealY > gridBottom)
         return false;
 
-    let gridX = Math.floor((mouseRealX - gridLeft) / window.CHARSIZE);
+    let gridX = Math.floor((mouseRealX - gridLeft) / marioSequencer.CHARSIZE);
     if (gridX % 2 !== 0) return false; // Not near the bar
     gridX /= 2;
-    const gridY = Math.floor((mouseRealY - gridTop) / window.HALFCHARSIZE);
+    const gridY = Math.floor((mouseRealY - gridTop) / marioSequencer.HALFCHARSIZE);
 
     // Consider G-Clef and repeat head area
-    if ((window.curPos === 0 && gridX < 2) || (window.curPos === 1 && gridX === 0)) return false;
+    if ((marioSequencer.curPos === 0 && gridX < 2) || (marioSequencer.curPos === 1 && gridX === 0)) return false;
     else return [gridX, gridY];
 };
 
@@ -336,101 +378,111 @@ const resizeScreen = () => {
 
 // Update core dimensions based on magnification
 const updateCoreDimensions = () => {
-    window.CHARSIZE = 16 * window.MAGNIFY;
-    window.HALFCHARSIZE = Math.floor(window.CHARSIZE / 2);
+    marioSequencer.CHARSIZE = 16 * marioSequencer.MAGNIFY;
+    marioSequencer.HALFCHARSIZE = Math.floor(marioSequencer.CHARSIZE / 2);
 
     // Update console dimensions
-    window.CONSOLE.style.width = `${window.ORGWIDTH * window.MAGNIFY}px`;
-    window.CONSOLE.style.height = `${window.ORGHEIGHT * window.MAGNIFY}px`;
+    marioSequencer.CONSOLE.style.width = `${marioSequencer.ORGWIDTH * marioSequencer.MAGNIFY}px`;
+    marioSequencer.CONSOLE.style.height = `${marioSequencer.ORGHEIGHT * marioSequencer.MAGNIFY}px`;
 
     // Update offsets for cursor positioning
-    window.offsetLeft = window.CONSOLE.offsetLeft;
-    window.offsetTop = window.CONSOLE.offsetTop;
+    marioSequencer.offsetLeft = marioSequencer.CONSOLE.offsetLeft;
+    marioSequencer.offsetTop = marioSequencer.CONSOLE.offsetTop;
 
     // Update global image resources
-    window.BOMBS = sliceImage(window.bombImg, 14, 18);
-    window.mario.images = sliceImage(window.marioImg, 16, 22);
-    window.Semitones = sliceImage(window.semitoneImg, 5, 12);
-    window.NUMBERS = sliceImage(window.numImg, 5, 7);
+    marioSequencer.BOMBS = sliceImage(marioSequencer.bombImg, 14, 18);
+    marioSequencer.mario.images = sliceImage(marioSequencer.marioImg, 16, 22);
+    marioSequencer.Semitones = sliceImage(marioSequencer.semitoneImg, 5, 12);
+    marioSequencer.NUMBERS = sliceImage(marioSequencer.numImg, 5, 7);
 
     // Prepare Repeat marks
-    window.repeatMark = sliceImage(window.repeatImg, 13, 62);
-    window.endMark = window.repeatMark[2];
+    marioSequencer.repeatMark = sliceImage(marioSequencer.repeatImg, 13, 62);
+    marioSequencer.endMark = marioSequencer.repeatMark[2];
 };
 
 // Resize canvas elements
 const resizeCanvasElements = () => {
     // Resize and redraw the main canvas
-    window.MAT.width = window.ORGWIDTH * window.MAGNIFY;
-    window.MAT.height = window.ORGHEIGHT * window.MAGNIFY;
-    window.L1C.drawImage(
-        window.matImage,
+    marioSequencer.MAT.width = marioSequencer.ORGWIDTH * marioSequencer.MAGNIFY;
+    marioSequencer.MAT.height = marioSequencer.ORGHEIGHT * marioSequencer.MAGNIFY;
+    marioSequencer.L1C.drawImage(
+        marioSequencer.matImage,
         0,
         0,
-        window.matImage.width * window.MAGNIFY,
-        window.matImage.height * window.MAGNIFY
+        marioSequencer.matImage.width * marioSequencer.MAGNIFY,
+        marioSequencer.matImage.height * marioSequencer.MAGNIFY
     );
 
     // Resize the screen canvas
-    window.SCREEN.width = window.ORGWIDTH * window.MAGNIFY;
-    window.SCREEN.height = window.SCRHEIGHT * window.MAGNIFY;
+    marioSequencer.SCREEN.width = marioSequencer.ORGWIDTH * marioSequencer.MAGNIFY;
+    marioSequencer.SCREEN.height = marioSequencer.SCRHEIGHT * marioSequencer.MAGNIFY;
 };
 
 // Resize note buttons and end mark button
 const resizeNoteButtons = () => {
-    const characterImages = sliceImage(window.charSheet, 16, 16);
+    const characterImages = sliceImage(marioSequencer.charSheet, 16, 16);
 
     // Resize all buttons
-    window.BUTTONS.forEach((button, index) => {
+    marioSequencer.BUTTONS.forEach((button, index) => {
         button.redraw();
         if (index < 15) button.se.image = characterImages[index];
     });
 
     // Update end mark button
-    window.BUTTONS[15].images = sliceImage(window.endImg, 14, 13);
-    window.endMarkTimer.images = window.BUTTONS[15].images;
+    marioSequencer.BUTTONS[15].images = sliceImage(marioSequencer.endImg, 14, 13);
+    marioSequencer.endMarkTimer.images = marioSequencer.BUTTONS[15].images;
 
     // Update cursor and character display
-    if (window.curChar < 15) {
-        changeCursor(window.curChar);
+    if (marioSequencer.curChar < 15) {
+        changeCursor(marioSequencer.curChar);
     }
 
-    if (window.curChar === 15) drawEndMarkIcon(window.BUTTONS[15].images[0]);
-    else if (window.curChar === 16) drawEraserIcon();
-    else drawCurChar(window.SOUNDS[window.curChar].image);
+    if (marioSequencer.curChar === 15) drawEndMarkIcon(marioSequencer.BUTTONS[15].images[0]);
+    else if (marioSequencer.curChar === 16) drawEraserIcon();
+    else drawCurChar(marioSequencer.SOUNDS[marioSequencer.curChar].image);
 };
 
 // Resize control buttons (play, stop, loop)
 const resizeControlButtons = () => {
     // Resize play button
-    window.DOM.playButton.redraw();
-    window.DOM.playButton.images = sliceImage(window.playBtnImg, 12, 15);
-    const playButtonState = window.DOM.playButton.disabled ? 1 : 0;
-    window.DOM.playButton.style.backgroundImage = `url(${window.DOM.playButton.images[playButtonState].src})`;
+    marioSequencer.DOM.playButton.redraw();
+    marioSequencer.DOM.playButton.images = sliceImage(marioSequencer.playBtnImg, 12, 15);
+    const playButtonState = marioSequencer.DOM.playButton.disabled ? 1 : 0;
+    marioSequencer.DOM.playButton.style.backgroundImage = `url(${marioSequencer.DOM.playButton.images[playButtonState].src})`;
 
     // Resize stop button
-    window.DOM.stopButton.redraw();
-    const stopButtonImages = sliceImage(window.stopBtnImg, 16, 15);
-    window.DOM.stopButton.images = [stopButtonImages[0], stopButtonImages[1]];
-    window.DOM.stopButton.style.backgroundImage = `url(${window.DOM.stopButton.images[1 - playButtonState].src})`;
+    marioSequencer.DOM.stopButton.redraw();
+    const stopButtonImages = sliceImage(marioSequencer.stopBtnImg, 16, 15);
+    marioSequencer.DOM.stopButton.images = [stopButtonImages[0], stopButtonImages[1]];
+    marioSequencer.DOM.stopButton.style.backgroundImage = `url(${
+        marioSequencer.DOM.stopButton.images[1 - playButtonState].src
+    })`;
 
     // Resize loop button
-    window.DOM.loopButton.redraw();
-    window.DOM.loopButton.images = [stopButtonImages[2], stopButtonImages[3]]; // reuse images from stop button
-    const loopButtonState = window.curScore.loop ? 1 : 0;
-    window.DOM.loopButton.style.backgroundImage = `url(${window.DOM.loopButton.images[loopButtonState].src})`;
+    marioSequencer.DOM.loopButton.redraw();
+    marioSequencer.DOM.loopButton.images = [stopButtonImages[2], stopButtonImages[3]]; // reuse images from stop button
+    const loopButtonState = marioSequencer.curScore.loop ? 1 : 0;
+    marioSequencer.DOM.loopButton.style.backgroundImage = `url(${marioSequencer.DOM.loopButton.images[loopButtonState].src})`;
 
     // Resize clear button
-    window.DOM.clearButton.redraw();
-    window.DOM.clearButton.images = sliceImage(window.clearImg, 34, 16);
-    window.DOM.clearButton.style.backgroundImage = `url(${window.DOM.clearButton.images[0].src})`;
+    marioSequencer.DOM.clearButton.redraw();
+    marioSequencer.DOM.clearButton.images = sliceImage(marioSequencer.clearImg, 34, 16);
+    marioSequencer.DOM.clearButton.style.backgroundImage = `url(${marioSequencer.DOM.clearButton.images[0].src})`;
 };
 
 // Resize slider elements (scroll bar, tempo)
 const resizeSliderElements = () => {
     // Resize scroll bar
-    moveDOM(window.DOM.scrollBar, window.DOM.scrollBar.originalX, window.DOM.scrollBar.originalY);
-    resizeDOM(window.DOM.scrollBar, window.DOM.scrollBar.originalW, window.DOM.scrollBar.originalH);
+    moveDOM(
+        marioSequencer.DOM.scrollBar,
+        marioSequencer.DOM.scrollBar.originalX,
+        marioSequencer.DOM.scrollBar.originalY
+    );
+    resizeDOM(
+        marioSequencer.DOM.scrollBar,
+        marioSequencer.DOM.scrollBar.originalW,
+        marioSequencer.DOM.scrollBar.originalH
+    );
 
     // Update scroll bar thumb style
     updateSliderThumbStyle("#scroll::-webkit-slider-thumb", {
@@ -441,17 +493,17 @@ const resizeSliderElements = () => {
             "box-shadow": "inset 0 0 0px",
             border: "0px",
         },
-        width: 5 * window.MAGNIFY,
-        height: 7 * window.MAGNIFY,
+        width: 5 * marioSequencer.MAGNIFY,
+        height: 7 * marioSequencer.MAGNIFY,
     });
 
     // Resize tempo slider
-    moveDOM(window.DOM.tempo, window.DOM.tempo.originalX, window.DOM.tempo.originalY);
-    resizeDOM(window.DOM.tempo, window.DOM.tempo.originalW, window.DOM.tempo.originalH);
+    moveDOM(marioSequencer.DOM.tempo, marioSequencer.DOM.tempo.originalX, marioSequencer.DOM.tempo.originalY);
+    resizeDOM(marioSequencer.DOM.tempo, marioSequencer.DOM.tempo.originalW, marioSequencer.DOM.tempo.originalH);
 
     // Get thumb image for tempo slider
-    const thumbImage = sliceImage(window.thumbImg, 5, 8)[0];
-    window.DOM.tempo.image = thumbImage;
+    const thumbImage = sliceImage(marioSequencer.thumbImg, 5, 8)[0];
+    marioSequencer.DOM.tempo.image = thumbImage;
 
     // Update tempo slider thumb style
     updateSliderThumbStyle("#tempo::-webkit-slider-thumb", {
@@ -462,76 +514,80 @@ const resizeSliderElements = () => {
             "background-size": "100% 100%",
             border: "0px",
         },
-        width: 5 * window.MAGNIFY,
-        height: 8 * window.MAGNIFY,
+        width: 5 * marioSequencer.MAGNIFY,
+        height: 8 * marioSequencer.MAGNIFY,
     });
 };
 
 // Resize navigation buttons
 const resizeNavigationButtons = () => {
     // Resize left and right navigation buttons
-    window.DOM.leftButton.redraw();
-    window.DOM.rightButton.redraw();
+    marioSequencer.DOM.leftButton.redraw();
+    marioSequencer.DOM.rightButton.redraw();
 };
 
 // Resize beat buttons
 const resizeBeatButtons = () => {
     // Resize beat buttons
-    window.DOM.beats3Button.redraw();
-    window.DOM.beats4Button.redraw();
+    marioSequencer.DOM.beats3Button.redraw();
+    marioSequencer.DOM.beats4Button.redraw();
 
-    const beatImages = sliceImage(window.beatImg, 14, 15);
+    const beatImages = sliceImage(marioSequencer.beatImg, 14, 15);
 
     // Set images for both buttons
-    window.DOM.beats3Button.images = [beatImages[0], beatImages[1]];
-    window.DOM.beats4Button.images = [beatImages[2], beatImages[3]];
+    marioSequencer.DOM.beats3Button.images = [beatImages[0], beatImages[1]];
+    marioSequencer.DOM.beats4Button.images = [beatImages[2], beatImages[3]];
 
     // Determine state and apply to both buttons
-    const is3Beats = window.curScore.beats === 3;
-    window.DOM.beats3Button.style.backgroundImage = `url(${window.DOM.beats3Button.images[is3Beats ? 1 : 0].src})`;
-    window.DOM.beats4Button.style.backgroundImage = `url(${window.DOM.beats4Button.images[is3Beats ? 0 : 1].src})`;
+    const is3Beats = marioSequencer.curScore.beats === 3;
+    marioSequencer.DOM.beats3Button.style.backgroundImage = `url(${
+        marioSequencer.DOM.beats3Button.images[is3Beats ? 1 : 0].src
+    })`;
+    marioSequencer.DOM.beats4Button.style.backgroundImage = `url(${
+        marioSequencer.DOM.beats4Button.images[is3Beats ? 0 : 1].src
+    })`;
 };
 
 // Resize song buttons
 const resizeSongButtons = () => {
-    const songImages = sliceImage(window.songImg, 15, 17);
+    const songImages = sliceImage(marioSequencer.songImg, 15, 17);
 
     // Configure all song buttons
     const songButtonsConfig = [
-        { button: window.DOM.songButtons.frog, imageIndices: [0, 1, 2] },
-        { button: window.DOM.songButtons.beak, imageIndices: [3, 4, 5] },
-        { button: window.DOM.songButtons["1up"], imageIndices: [6, 7, 8] },
+        { button: marioSequencer.DOM.songButtons.frog, imageIndices: [0, 1, 2] },
+        { button: marioSequencer.DOM.songButtons.beak, imageIndices: [3, 4, 5] },
+        { button: marioSequencer.DOM.songButtons["1up"], imageIndices: [6, 7, 8] },
     ];
 
     songButtonsConfig.forEach((config) => {
         const button = config.button;
         button.redraw();
         button.images = config.imageIndices.map((i) => songImages[i]);
-        const buttonState = window.curSong === button ? 1 : 0;
+        const buttonState = marioSequencer.curSong === button ? 1 : 0;
         button.style.backgroundImage = `url(${button.images[buttonState].src})`;
     });
 };
 
 // Resize eraser button
 const resizeEraserButton = () => {
-    const songImages = sliceImage(window.songImg, 15, 17);
+    const songImages = sliceImage(marioSequencer.songImg, 15, 17);
 
-    window.DOM.eraserButton.redraw();
-    window.DOM.eraserButton.images = [songImages[9], songImages[10], songImages[11]];
-    const eraserButtonState = window.curChar === 16 ? 1 : 0;
+    marioSequencer.DOM.eraserButton.redraw();
+    marioSequencer.DOM.eraserButton.images = [songImages[9], songImages[10], songImages[11]];
+    const eraserButtonState = marioSequencer.curChar === 16 ? 1 : 0;
 
-    if (window.curChar === 16) {
-        window.SCREEN.style.cursor = `url(${window.DOM.eraserButton.images[2].src}) 0 0, auto`;
+    if (marioSequencer.curChar === 16) {
+        marioSequencer.SCREEN.style.cursor = `url(${marioSequencer.DOM.eraserButton.images[2].src}) 0 0, auto`;
     }
 
-    window.DOM.eraserButton.style.backgroundImage = `url(${window.DOM.eraserButton.images[eraserButtonState].src})`;
+    marioSequencer.DOM.eraserButton.style.backgroundImage = `url(${marioSequencer.DOM.eraserButton.images[eraserButtonState].src})`;
 };
 
 // Resize undo dog button
 const resizeUndoDogButton = () => {
-    window.DOM.undoButton.redraw();
-    window.DOM.undoButton.images = sliceImage(window.undoDogImg, 14, 15);
-    window.DOM.undoButton.style.backgroundImage = `url(${window.DOM.undoButton.images[0].src})`;
+    marioSequencer.DOM.undoButton.redraw();
+    marioSequencer.DOM.undoButton.images = sliceImage(marioSequencer.undoDogImg, 14, 15);
+    marioSequencer.DOM.undoButton.style.backgroundImage = `url(${marioSequencer.DOM.undoButton.images[0].src})`;
 };
 
 export {

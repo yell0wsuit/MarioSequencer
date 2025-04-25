@@ -1,6 +1,9 @@
 /**
  * Module for handling user interactions and events
  */
+
+import marioSequencer from "../appState.js";
+
 import { toGrid } from "./UIManager.js";
 import { readFileAsync } from "./Utils.js";
 
@@ -9,11 +12,11 @@ import { readFileAsync } from "./Utils.js";
  * @param {MouseEvent} event - The mouse event
  */
 function mouseClickListener(event) {
-    if (window.gameStatus !== 0) return;
+    if (marioSequencer.gameStatus !== 0) return;
     event.preventDefault();
 
-    const mouseRealX = event.clientX - window.offsetLeft;
-    const mouseRealY = event.clientY - window.offsetTop;
+    const mouseRealX = event.clientX - marioSequencer.offsetLeft;
+    const mouseRealY = event.clientY - marioSequencer.offsetTop;
 
     const gridPosition = toGrid(mouseRealX, mouseRealY);
     if (gridPosition === false) return;
@@ -21,38 +24,38 @@ function mouseClickListener(event) {
     let gridY = gridPosition[1];
 
     // Map logical x to real bar number
-    const barNumber = window.curPos + gridX - 2;
+    const barNumber = marioSequencer.curPos + gridX - 2;
 
     // process End Mark
-    if (window.curChar === 15) {
+    if (marioSequencer.curChar === 15) {
         // Store the old end mark position before changing it
-        window.undoHistory.push({
+        marioSequencer.undoHistory.push({
             type: "endmark",
-            oldEnd: window.curScore.end,
+            oldEnd: marioSequencer.curScore.end,
             newEnd: barNumber,
         });
-        window.curScore.end = barNumber;
+        marioSequencer.curScore.end = barNumber;
         updateUndoButtonState();
         return;
     }
 
-    if (barNumber >= window.curScore.end) return;
+    if (barNumber >= marioSequencer.curScore.end) return;
 
-    const barNotes = window.curScore["notes"][barNumber];
+    const barNotes = marioSequencer.curScore["notes"][barNumber];
     // Delete
-    if (window.curChar === 16 || event.button === 2) {
+    if (marioSequencer.curChar === 16 || event.button === 2) {
         // Delete Top of the stack
         for (let i = barNotes.length - 1; i >= 0; i--) {
             if ((barNotes[i] & 0x3f) === gridY) {
                 // Store in undo history before deleting
-                window.undoHistory.push({
+                marioSequencer.undoHistory.push({
                     type: "delete",
                     barNumber: barNumber,
                     note: barNotes[i],
                 });
                 barNotes.splice(i, 1);
-                window.curScore.notes[barNumber] = barNotes;
-                window.SOUNDS[17].play(8);
+                marioSequencer.curScore.notes[barNumber] = barNotes;
+                marioSequencer.SOUNDS[17].play(8);
                 updateUndoButtonState();
                 break;
             }
@@ -60,22 +63,22 @@ function mouseClickListener(event) {
         return;
     }
 
-    let note = (window.curChar << 8) | gridY;
+    let note = (marioSequencer.curChar << 8) | gridY;
     if (barNotes.indexOf(note) !== -1) return;
     //
     // Handle semitone
     if (event.shiftKey) gridY |= 0x80;
     if (event.ctrlKey) gridY |= 0x40;
-    window.SOUNDS[window.curChar].play(gridY);
-    note = (window.curChar << 8) | gridY;
+    marioSequencer.SOUNDS[marioSequencer.curChar].play(gridY);
+    note = (marioSequencer.curChar << 8) | gridY;
     // Store in undo history before adding
-    window.undoHistory.push({
+    marioSequencer.undoHistory.push({
         type: "add",
         barNumber: barNumber,
         note: note,
     });
     barNotes.push(note);
-    window.curScore["notes"][barNumber] = barNotes;
+    marioSequencer.curScore["notes"][barNumber] = barNotes;
     updateUndoButtonState();
 }
 
@@ -125,8 +128,8 @@ async function handleFileDrop(e) {
  * Update undo button state based on history length
  */
 function updateUndoButtonState() {
-    window.DOM.undoButton.disabled = window.undoHistory.length === 0;
-    window.DOM.undoButton.style.cursor = window.DOM.undoButton.disabled ? "not-allowed" : "pointer";
+    marioSequencer.DOM.undoButton.disabled = marioSequencer.undoHistory.length === 0;
+    marioSequencer.DOM.undoButton.style.cursor = marioSequencer.DOM.undoButton.disabled ? "not-allowed" : "pointer";
 }
 
 /**
@@ -148,10 +151,10 @@ function addMSQ(text) {
         this[k] = v;
     }, values);
 
-    const oldEnd = window.curScore.end;
+    const oldEnd = marioSequencer.curScore.end;
     const s = values.SCORE;
     let i = 0,
-        count = window.curScore.end;
+        count = marioSequencer.curScore.end;
     // MSQ format is variable length string.
     out: while (i < s.length) {
         const bar = [];
@@ -165,17 +168,17 @@ function addMSQ(text) {
                 bar.push(note);
             }
         }
-        window.curScore.notes[count++] = bar;
+        marioSequencer.curScore.notes[count++] = bar;
     }
 
-    window.curScore.end += parseInt(values.END) - 1;
-    if (window.curScore.tempo !== values.TEMPO) window.curScore.notes[oldEnd].splice(0, 0, "TEMPO=" + values.TEMPO);
-    window.curScore.tempo = values.TEMPO;
+    marioSequencer.curScore.end += parseInt(values.END) - 1;
+    if (marioSequencer.curScore.tempo !== values.TEMPO) marioSequencer.curScore.notes[oldEnd].splice(0, 0, "TEMPO=" + values.TEMPO);
+    marioSequencer.curScore.tempo = values.TEMPO;
     const beats = values.TIME44 === "TRUE" ? 4 : 3;
-    window.curScore.beats = beats;
+    marioSequencer.curScore.beats = beats;
 
     // Set loop button state
-    values.LOOP === "TRUE" ? window.DOM.loopButton.set() : window.DOM.loopButton.reset();
+    values.LOOP === "TRUE" ? marioSequencer.DOM.loopButton.set() : marioSequencer.DOM.loopButton.reset();
 }
 
 /**
@@ -184,25 +187,25 @@ function addMSQ(text) {
  */
 function addJSON(text) {
     const json = JSON.parse(text);
-    for (let i = 0; i < json.end; i++) window.curScore.notes.push(json.notes[i]);
+    for (let i = 0; i < json.end; i++) marioSequencer.curScore.notes.push(json.notes[i]);
 
-    const notes = window.curScore.notes[window.curScore.end];
-    if (window.curScore.tempo !== json.tempo && notes.length !== 0) {
+    const notes = marioSequencer.curScore.notes[marioSequencer.curScore.end];
+    if (marioSequencer.curScore.tempo !== json.tempo && notes.length !== 0) {
         const tempostr = notes[0];
         if (typeof tempostr !== "string") {
             notes.splice(0, 0, "TEMPO=" + json.tempo);
         }
     }
-    window.curScore.tempo = json.tempo;
+    marioSequencer.curScore.tempo = json.tempo;
 
-    window.curScore.end += json.end;
+    marioSequencer.curScore.end += json.end;
 
     // Update curScore.loop with json.loop value
-    window.curScore.loop = json.loop;
+    marioSequencer.curScore.loop = json.loop;
 
     // Use json.loop instead of curScore.loop to determine button state
-    if (json.loop) window.DOM.loopButton.set();
-    else window.DOM.loopButton.reset();
+    if (json.loop) marioSequencer.DOM.loopButton.set();
+    else marioSequencer.DOM.loopButton.reset();
 }
 
 /**
@@ -210,21 +213,21 @@ function addJSON(text) {
  */
 function closing() {
     // Finally, after reducing, set parameters to Score
-    const beatButton = window.DOM[window.curScore.beats === 3 ? "beats3Button" : "beats4Button"];
+    const beatButton = marioSequencer.DOM[marioSequencer.curScore.beats === 3 ? "beats3Button" : "beats4Button"];
     const e = new Event("click");
     e.soundOff = true;
     beatButton.dispatchEvent(e);
 
-    window.curMaxBars = window.curScore.end + 1;
-    window.DOM.scrollBar.max = window.curMaxBars - 6;
-    window.DOM.scrollBar.value = 0;
-    window.curPos = 0;
+    marioSequencer.curMaxBars = marioSequencer.curScore.end + 1;
+    marioSequencer.DOM.scrollBar.max = marioSequencer.curMaxBars - 6;
+    marioSequencer.DOM.scrollBar.value = 0;
+    marioSequencer.curPos = 0;
 
-    const tempo = window.curScore.notes[0][0];
+    const tempo = marioSequencer.curScore.notes[0][0];
     if (typeof tempo === "string" && tempo.slice(0, 5) === "TEMPO") {
         const tempoValue = tempo.split("=")[1];
-        window.curScore.tempo = tempoValue;
-        window.DOM.tempo.value = tempoValue;
+        marioSequencer.curScore.tempo = tempoValue;
+        marioSequencer.DOM.tempo.value = tempoValue;
     }
 }
 
@@ -235,35 +238,35 @@ function setupKeyboardControls() {
     document.addEventListener("keydown", function (event) {
         switch (event.code) {
             case "Space": // space -> play/stop or restart with shift
-                if (window.DOM.playButton.disabled === false || event.shiftKey) {
-                    playListener.call(window.DOM.playButton, event);
+                if (marioSequencer.DOM.playButton.disabled === false || event.shiftKey) {
+                    playListener.call(marioSequencer.DOM.playButton, event);
                 } else {
-                    stopListener.call(window.DOM.stopButton, event);
+                    stopListener.call(marioSequencer.DOM.stopButton, event);
                 }
                 event.preventDefault();
                 break;
 
             case "ArrowLeft": // left -> scroll left
-                if (window.gameStatus === 0) {
+                if (marioSequencer.gameStatus === 0) {
                     // Only allow scrolling in edit mode
-                    if (window.DOM.scrollBar.value > 0) window.curPos = --window.DOM.scrollBar.value;
+                    if (marioSequencer.DOM.scrollBar.value > 0) marioSequencer.curPos = --marioSequencer.DOM.scrollBar.value;
                     event.preventDefault();
                 }
                 break;
 
             case "ArrowRight": // right -> scroll right
-                if (window.gameStatus === 0) {
+                if (marioSequencer.gameStatus === 0) {
                     // Only allow scrolling in edit mode
-                    if (window.DOM.scrollBar.value < window.curMaxBars - 6)
-                        window.curPos = ++window.DOM.scrollBar.value;
+                    if (marioSequencer.DOM.scrollBar.value < marioSequencer.curMaxBars - 6)
+                        marioSequencer.curPos = ++marioSequencer.DOM.scrollBar.value;
                     event.preventDefault();
                 }
                 break;
 
             case "KeyZ": // Ctrl+Z or Command+Z for undo
-                if ((event.ctrlKey || event.metaKey) && !event.shiftKey && window.gameStatus === 0) {
-                    if (!window.DOM.undoButton.disabled) {
-                        window.DOM.undoButton.click();
+                if ((event.ctrlKey || event.metaKey) && !event.shiftKey && marioSequencer.gameStatus === 0) {
+                    if (!marioSequencer.DOM.undoButton.disabled) {
+                        marioSequencer.DOM.undoButton.click();
                         event.preventDefault();
                     }
                 }
@@ -277,37 +280,38 @@ function setupKeyboardControls() {
  */
 function clearSongButtons() {
     // Reset all song button states
-    window.DOM.songButtons.frog.disabled = false;
-    window.DOM.songButtons.frog.style.backgroundImage = "url(" + window.DOM.songButtons.frog.images[0].src + ")";
+    marioSequencer.DOM.songButtons.frog.disabled = false;
+    marioSequencer.DOM.songButtons.frog.style.backgroundImage = "url(" + marioSequencer.DOM.songButtons.frog.images[0].src + ")";
 
-    window.DOM.songButtons.beak.disabled = false;
-    window.DOM.songButtons.beak.style.backgroundImage = "url(" + window.DOM.songButtons.beak.images[0].src + ")";
+    marioSequencer.DOM.songButtons.beak.disabled = false;
+    marioSequencer.DOM.songButtons.beak.style.backgroundImage = "url(" + marioSequencer.DOM.songButtons.beak.images[0].src + ")";
 
-    window.DOM.songButtons["1up"].disabled = false;
-    window.DOM.songButtons["1up"].style.backgroundImage = "url(" + window.DOM.songButtons["1up"].images[0].src + ")";
+    marioSequencer.DOM.songButtons["1up"].disabled = false;
+    marioSequencer.DOM.songButtons["1up"].style.backgroundImage =
+        "url(" + marioSequencer.DOM.songButtons["1up"].images[0].src + ")";
 
-    window.curSong = undefined;
+    marioSequencer.curSong = undefined;
 }
 
 /**
  * Clear eraser button selection
  */
 function clearEraserButton() {
-    window.DOM.eraserButton.style.backgroundImage = "url(" + window.DOM.eraserButton.images[0].src + ")";
-    window.eraserTimer.switch = false;
+    marioSequencer.DOM.eraserButton.style.backgroundImage = "url(" + marioSequencer.DOM.eraserButton.images[0].src + ")";
+    marioSequencer.eraserTimer.switch = false;
 }
 
 /**
  * Full initialize score for file loading
  */
 function fullInitScore() {
-    window.curScore.notes = [];
-    window.curMaxBars = 0;
-    window.curScore.beats = 4;
+    marioSequencer.curScore.notes = [];
+    marioSequencer.curMaxBars = 0;
+    marioSequencer.curScore.beats = 4;
     // Loop button itself has a state, so keep current value;
     // curScore.loop = false;
-    window.curScore.end = 0;
-    window.curScore.tempo = 0;
+    marioSequencer.curScore.end = 0;
+    marioSequencer.curScore.tempo = 0;
 }
 
 /**
@@ -315,20 +319,20 @@ function fullInitScore() {
  */
 function initScore() {
     const emptyBars = [];
-    for (let barIndex = 0; barIndex < window.DEFAULT_MAX_BARS; barIndex++) emptyBars[barIndex] = [];
-    window.curScore.notes = emptyBars;
-    window.curMaxBars = window.DEFAULT_MAX_BARS;
-    window.DOM.scrollBar.max = window.DEFAULT_MAX_BARS - 6;
-    window.DOM.scrollBar.value = 0;
-    window.curScore.loop = false;
-    window.DOM.loopButton.reset();
-    window.curScore.end = window.DEFAULT_MAX_BARS - 1;
-    window.curScore.tempo = window.DEFAULT_TEMPO;
-    window.DOM.tempo.value = window.DEFAULT_TEMPO;
-    window.curScore.beats = 4;
+    for (let barIndex = 0; barIndex < marioSequencer.DEFAULT_MAX_BARS; barIndex++) emptyBars[barIndex] = [];
+    marioSequencer.curScore.notes = emptyBars;
+    marioSequencer.curMaxBars = marioSequencer.DEFAULT_MAX_BARS;
+    marioSequencer.DOM.scrollBar.max = marioSequencer.DEFAULT_MAX_BARS - 6;
+    marioSequencer.DOM.scrollBar.value = 0;
+    marioSequencer.curScore.loop = false;
+    marioSequencer.DOM.loopButton.reset();
+    marioSequencer.curScore.end = marioSequencer.DEFAULT_MAX_BARS - 1;
+    marioSequencer.curScore.tempo = marioSequencer.DEFAULT_TEMPO;
+    marioSequencer.DOM.tempo.value = marioSequencer.DEFAULT_TEMPO;
+    marioSequencer.curScore.beats = 4;
     const clickEvent = new Event("click");
     clickEvent.soundOff = true;
-    window.DOM.beats4Button.dispatchEvent(clickEvent);
+    marioSequencer.DOM.beats4Button.dispatchEvent(clickEvent);
 }
 
 /**
@@ -336,27 +340,27 @@ function initScore() {
  */
 function playListener() {
     this.style.backgroundImage = "url(" + this.images[1].src + ")";
-    window.SOUNDS[17].play(8);
-    window.DOM.stopButton.style.backgroundImage = "url(" + window.DOM.stopButton.images[0].src + ")";
-    window.DOM.stopButton.disabled = false;
+    marioSequencer.SOUNDS[17].play(8);
+    marioSequencer.DOM.stopButton.style.backgroundImage = "url(" + marioSequencer.DOM.stopButton.images[0].src + ")";
+    marioSequencer.DOM.stopButton.disabled = false;
     this.disabled = true; // Would be unlocked by stop button
 
     // Disable UI controls during playback
-    window.DOM.leftButton.disabled = true;
-    window.DOM.rightButton.disabled = true;
-    window.DOM.scrollBar.disabled = true;
-    window.DOM.clearButton.disabled = true;
-    window.DOM.songButtons.frog.disabled = true;
-    window.DOM.songButtons.beak.disabled = true;
-    window.DOM.songButtons["1up"].disabled = true;
+    marioSequencer.DOM.leftButton.disabled = true;
+    marioSequencer.DOM.rightButton.disabled = true;
+    marioSequencer.DOM.scrollBar.disabled = true;
+    marioSequencer.DOM.clearButton.disabled = true;
+    marioSequencer.DOM.songButtons.frog.disabled = true;
+    marioSequencer.DOM.songButtons.beak.disabled = true;
+    marioSequencer.DOM.songButtons["1up"].disabled = true;
 
     // Reset scroll position to beginning
-    window.DOM.scrollBar.value = 0;
-    window.curPos = 0;
+    marioSequencer.DOM.scrollBar.value = 0;
+    marioSequencer.curPos = 0;
 
-    window.gameStatus = 1; // Mario Entering the stage
-    window.mario.init();
-    window.requestAnimFrame(doMarioEnter);
+    marioSequencer.gameStatus = 1; // Mario Entering the stage
+    marioSequencer.mario.init();
+    requestAnimationFrame(doMarioEnter);
 }
 
 /**
@@ -365,15 +369,15 @@ function playListener() {
 function stopListener(event) {
     this.style.backgroundImage = "url(" + this.images[1].src + ")";
     // Sound ON: click, OFF: called by doMarioPlay
-    if (event !== undefined) window.SOUNDS[17].play(8);
-    window.DOM.playButton.style.backgroundImage = "url(" + window.DOM.playButton.images[0].src + ")";
+    if (event !== undefined) marioSequencer.SOUNDS[17].play(8);
+    marioSequencer.DOM.playButton.style.backgroundImage = "url(" + marioSequencer.DOM.playButton.images[0].src + ")";
     //DOM.playButton.disabled = false; // Do after Mario left the stage
     this.disabled = true; // Would be unlocked by play button
 
-    window.gameStatus = 3; // Mario leaves from the stage
-    window.mario.init4leaving();
-    if (window.animationFrameId !== 0) window.cancelAnimationFrame(window.animationFrameId);
-    window.requestAnimFrame(doMarioLeave);
+    marioSequencer.gameStatus = 3; // Mario leaves from the stage
+    marioSequencer.mario.init4leaving();
+    if (marioSequencer.animationFrameId !== 0) cancelAnimationFrame(marioSequencer.animationFrameId);
+    requestAnimationFrame(doMarioLeave);
 }
 
 /**
@@ -381,7 +385,7 @@ function stopListener(event) {
  */
 function clearListener() {
     this.style.backgroundImage = "url(" + this.images[1].src + ")";
-    window.SOUNDS[19].play(8);
+    marioSequencer.SOUNDS[19].play(8);
     const self = this;
     function makePromise(num) {
         return new Promise(function (resolve) {
@@ -401,8 +405,8 @@ function clearListener() {
         })
         .then(function () {
             initScore();
-            window.curPos = 0;
-            window.undoHistory = []; // Clear undo history
+            marioSequencer.curPos = 0;
+            marioSequencer.undoHistory = []; // Clear undo history
             updateUndoButtonState(); // Update undo button state
         });
 
@@ -413,16 +417,16 @@ function clearListener() {
  * Let Mario run on the stage
  */
 function doMarioEnter(timeStamp) {
-    window.bombTimer.checkAndFire(timeStamp);
-    window.drawScore(0, window.curScore.notes, 0);
-    window.mario.enter(timeStamp);
+    marioSequencer.bombTimer.checkAndFire(timeStamp);
+    marioSequencer.drawScore(0, marioSequencer.curScore.notes, 0);
+    marioSequencer.mario.enter(timeStamp);
 
-    if (window.mario.marioX < 40) {
-        window.animationFrameId = window.requestAnimFrame(doMarioEnter);
+    if (marioSequencer.mario.marioX < 40) {
+        marioSequencer.animationFrameId = requestAnimationFrame(doMarioEnter);
     } else {
-        window.mario.init4playing(timeStamp);
-        window.gameStatus = 2;
-        window.animationFrameId = window.requestAnimFrame(doMarioPlay);
+        marioSequencer.mario.init4playing(timeStamp);
+        marioSequencer.gameStatus = 2;
+        marioSequencer.animationFrameId = requestAnimationFrame(doMarioPlay);
     }
 }
 
@@ -430,20 +434,20 @@ function doMarioEnter(timeStamp) {
  * Let Mario play the music
  */
 function doMarioPlay(timeStamp) {
-    window.bombTimer.checkAndFire(timeStamp);
-    window.mario.play(timeStamp);
-    if (window.gameStatus === 2) {
-        if (window.mario.marioPosition - 2 !== window.curScore.end - 1) {
-            window.animationFrameId = window.requestAnimFrame(doMarioPlay);
-        } else if (window.curScore.loop) {
-            window.curPos = 0;
-            window.mario.marioPosition = 1;
-            window.mario.marioX = 40;
-            window.mario.init4playing(timeStamp);
-            window.animationFrameId = window.requestAnimFrame(doMarioPlay);
+    marioSequencer.bombTimer.checkAndFire(timeStamp);
+    marioSequencer.mario.play(timeStamp);
+    if (marioSequencer.gameStatus === 2) {
+        if (marioSequencer.mario.marioPosition - 2 !== marioSequencer.curScore.end - 1) {
+            marioSequencer.animationFrameId = requestAnimationFrame(doMarioPlay);
+        } else if (marioSequencer.curScore.loop) {
+            marioSequencer.curPos = 0;
+            marioSequencer.mario.marioPosition = 1;
+            marioSequencer.mario.marioX = 40;
+            marioSequencer.mario.init4playing(timeStamp);
+            marioSequencer.animationFrameId = requestAnimationFrame(doMarioPlay);
         } else {
             // Calls stopListener without a event arg
-            stopListener.call(window.DOM.stopButton);
+            stopListener.call(marioSequencer.DOM.stopButton);
         }
     }
 }
@@ -452,26 +456,26 @@ function doMarioPlay(timeStamp) {
  * Let Mario leave the stage
  */
 function doMarioLeave(timeStamp) {
-    window.bombTimer.checkAndFire(timeStamp);
-    window.drawScore(window.curPos, window.curScore.notes, window.mario.marioScroll);
-    window.mario.leave(timeStamp);
+    marioSequencer.bombTimer.checkAndFire(timeStamp);
+    marioSequencer.drawScore(marioSequencer.curPos, marioSequencer.curScore.notes, marioSequencer.mario.marioScroll);
+    marioSequencer.mario.leave(timeStamp);
 
-    if (window.mario.marioX < 247) {
-        window.requestAnimFrame(doMarioLeave);
+    if (marioSequencer.mario.marioX < 247) {
+        requestAnimationFrame(doMarioLeave);
     } else {
-        window.gameStatus = 0;
+        marioSequencer.gameStatus = 0;
 
         // Re-enable all controls
-        window.DOM.leftButton.disabled = false;
-        window.DOM.rightButton.disabled = false;
-        window.DOM.scrollBar.disabled = false;
-        window.DOM.playButton.disabled = false;
-        window.DOM.clearButton.disabled = false;
-        window.DOM.songButtons.frog.disabled = false;
-        window.DOM.songButtons.beak.disabled = false;
-        window.DOM.songButtons["1up"].disabled = false;
+        marioSequencer.DOM.leftButton.disabled = false;
+        marioSequencer.DOM.rightButton.disabled = false;
+        marioSequencer.DOM.scrollBar.disabled = false;
+        marioSequencer.DOM.playButton.disabled = false;
+        marioSequencer.DOM.clearButton.disabled = false;
+        marioSequencer.DOM.songButtons.frog.disabled = false;
+        marioSequencer.DOM.songButtons.beak.disabled = false;
+        marioSequencer.DOM.songButtons["1up"].disabled = false;
 
-        window.requestAnimFrame(doAnimation);
+        requestAnimationFrame(doAnimation);
     }
 }
 
@@ -480,32 +484,44 @@ function doMarioLeave(timeStamp) {
  */
 function doAnimation(time) {
     // Bomb
-    window.bombTimer.checkAndFire(time);
-    window.eraserTimer.checkAndFire(time);
-    window.endMarkTimer.checkAndFire(time);
+    marioSequencer.bombTimer.checkAndFire(time);
+    marioSequencer.eraserTimer.checkAndFire(time);
+    marioSequencer.endMarkTimer.checkAndFire(time);
 
-    window.drawScore(window.curPos, window.curScore["notes"], 0);
+    marioSequencer.drawScore(marioSequencer.curPos, marioSequencer.curScore["notes"], 0);
 
-    if (window.gameStatus !== 0) return;
+    if (marioSequencer.gameStatus !== 0) return;
 
-    window.requestAnimFrame(doAnimation);
+    requestAnimationFrame(doAnimation);
 }
 
 /**
  * Process URL parameters if provided
  */
+// Checking the parameters
+const OPTS = Object.fromEntries(
+    window.location.search
+        .slice(1)
+        .split("&")
+        .filter((param) => param)
+        .map((param) => {
+            const [key, value] = param.split("=");
+            return [key, value];
+        })
+);
+
 function processUrlParameters() {
     // Exit early if no options are provided
-    if (Object.keys(window.OPTS).length === 0) return;
+    if (Object.keys(OPTS).length === 0) return;
 
     // Initialize score before loading external data
-    if (window.OPTS.url || window.OPTS.S || window.OPTS.SCORE) {
+    if (OPTS.url || OPTS.S || OPTS.SCORE) {
         fullInitScore();
     }
 
     // Handle URL-based score loading
-    if (window.OPTS.url) {
-        return fetch(window.OPTS.url)
+    if (OPTS.url) {
+        return fetch(OPTS.url)
             .then((response) => {
                 if (!response.ok) {
                     throw new Error(`HTTP error ${response.status}`);
@@ -514,21 +530,21 @@ function processUrlParameters() {
             })
             .then((data) => {
                 // Determine file type by extension and process accordingly
-                window.OPTS.url.endsWith(".msq") ? addMSQ(data) : addJSON(data);
+                OPTS.url.endsWith(".msq") ? addMSQ(data) : addJSON(data);
                 closing();
             })
             .catch((error) => {
-                console.error(`Downloading File: ${window.OPTS.url} failed:`, error);
-                alert(`Downloading File: ${window.OPTS.url} failed: ${error.message}`);
+                console.error(`Downloading File: ${OPTS.url} failed:`, error);
+                alert(`Downloading File: ${OPTS.url} failed: ${error.message}`);
             });
     }
     // Handle parameter-based score loading
-    else if (window.OPTS.S || window.OPTS.SCORE) {
-        const score = window.OPTS.SCORE || window.OPTS.S;
-        const tempo = window.OPTS.TEMPO || window.OPTS.T;
-        const loop = window.OPTS.LOOP || window.OPTS.L;
-        const end = window.OPTS.END || window.OPTS.E;
-        const beats = window.OPTS.TIME44 || window.OPTS.B;
+    else if (OPTS.S || OPTS.SCORE) {
+        const score = OPTS.SCORE || OPTS.S;
+        const tempo = OPTS.TEMPO || OPTS.T;
+        const loop = OPTS.LOOP || OPTS.L;
+        const end = OPTS.END || OPTS.E;
+        const beats = OPTS.TIME44 || OPTS.B;
 
         if (!tempo || !loop || !end || !beats) {
             throw new Error("Not enough parameters");
