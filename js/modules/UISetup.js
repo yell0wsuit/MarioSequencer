@@ -389,7 +389,7 @@ const setupBeatButtons = () => {
     beats3Button.id = "3beats";
     beats3Button.beats = 3;
     beats3Button.images = [beatImages[0], beatImages[1]];
-    beats3Button.style.backgroundImage = "url(" + beats3Button.images[0].src + ")";
+    beats3Button.style.backgroundImage = `url(${beats3Button.images[0].src})`;
     beats3Button.disabled = false;
     marioSequencer.CONSOLE.appendChild(beats3Button);
 
@@ -398,7 +398,7 @@ const setupBeatButtons = () => {
     beats4Button.id = "4beats";
     beats4Button.beats = 4;
     beats4Button.images = [beatImages[2], beatImages[3]];
-    beats4Button.style.backgroundImage = "url(" + beats4Button.images[1].src + ")";
+    beats4Button.style.backgroundImage = `url(${beats4Button.images[1].src})`;
     beats4Button.disabled = true;
     marioSequencer.CONSOLE.appendChild(beats4Button);
 
@@ -426,7 +426,7 @@ const setupSongButtons = () => {
         button.id = id;
         button.num = index;
         button.images = songImages.slice(index * 3, index * 3 + 3);
-        button.style.backgroundImage = "url(" + button.images[0].src + ")";
+        button.style.backgroundImage = `url(${button.images[0].src})`;
         button.disabled = false;
         marioSequencer.CONSOLE.appendChild(button);
         return button;

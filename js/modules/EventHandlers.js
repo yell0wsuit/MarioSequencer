@@ -283,16 +283,15 @@ const setupKeyboardControls = () => {
 const clearSongButtons = () => {
     // Reset all song button states
     marioSequencer.DOM.songButtons.frog.disabled = false;
-    marioSequencer.DOM.songButtons.frog.style.backgroundImage =
-        "url(" + marioSequencer.DOM.songButtons.frog.images[0].src + ")";
+    marioSequencer.DOM.songButtons.frog.style.backgroundImage = `url(${marioSequencer.DOM.songButtons.frog.images[0].src})`;
 
     marioSequencer.DOM.songButtons.beak.disabled = false;
-    marioSequencer.DOM.songButtons.beak.style.backgroundImage =
-        "url(" + marioSequencer.DOM.songButtons.beak.images[0].src + ")";
+    marioSequencer.DOM.songButtons.beak.style.backgroundImage = `url(${marioSequencer.DOM.songButtons.beak.images[0].src})`;
 
     marioSequencer.DOM.songButtons["1up"].disabled = false;
-    marioSequencer.DOM.songButtons["1up"].style.backgroundImage =
-        "url(" + marioSequencer.DOM.songButtons["1up"].images[0].src + ")";
+    marioSequencer.DOM.songButtons[
+        "1up"
+    ].style.backgroundImage = `url(${marioSequencer.DOM.songButtons["1up"].images[0].src})`;
 
     marioSequencer.curSong = undefined;
 };
@@ -301,8 +300,7 @@ const clearSongButtons = () => {
  * Clear eraser button selection
  */
 const clearEraserButton = () => {
-    marioSequencer.DOM.eraserButton.style.backgroundImage =
-        "url(" + marioSequencer.DOM.eraserButton.images[0].src + ")";
+    marioSequencer.DOM.eraserButton.style.backgroundImage = `url(${marioSequencer.DOM.eraserButton.images[0].src})`;
     marioSequencer.eraserTimer.switch = false;
 };
 
@@ -344,9 +342,9 @@ const initScore = () => {
  * Play button event handler
  */
 function playListener() {
-    this.style.backgroundImage = "url(" + this.images[1].src + ")";
+    this.style.backgroundImage = `url(${this.images[1].src})`;
     marioSequencer.SOUNDS[17].play(8);
-    marioSequencer.DOM.stopButton.style.backgroundImage = "url(" + marioSequencer.DOM.stopButton.images[0].src + ")";
+    marioSequencer.DOM.stopButton.style.backgroundImage = `url(${marioSequencer.DOM.stopButton.images[0].src})`;
     marioSequencer.DOM.stopButton.disabled = false;
     this.disabled = true; // Would be unlocked by stop button
 
@@ -366,16 +364,16 @@ function playListener() {
     marioSequencer.gameStatus = 1; // Mario Entering the stage
     marioSequencer.mario.init();
     requestAnimationFrame(doMarioEnter);
-}
+};
 
 /**
  * Stop button event handler
  */
 function stopListener(event) {
-    this.style.backgroundImage = "url(" + this.images[1].src + ")";
+    this.style.backgroundImage = `url(${this.images[1].src})`;
     // Sound ON: click, OFF: called by doMarioPlay
     if (event !== undefined) marioSequencer.SOUNDS[17].play(8);
-    marioSequencer.DOM.playButton.style.backgroundImage = "url(" + marioSequencer.DOM.playButton.images[0].src + ")";
+    marioSequencer.DOM.playButton.style.backgroundImage = `url(${marioSequencer.DOM.playButton.images[0].src})`;
     //DOM.playButton.disabled = false; // Do after Mario left the stage
     this.disabled = true; // Would be unlocked by play button
 
@@ -389,31 +387,27 @@ function stopListener(event) {
  * Clear button event handler
  */
 function clearListener() {
-    this.style.backgroundImage = "url(" + this.images[1].src + ")";
+    this.style.backgroundImage = `url(${this.images[1].src})`;
     marioSequencer.SOUNDS[19].play(8);
     const self = this;
-    function makePromise(num) {
-        return new Promise(function (resolve) {
-            setTimeout(function () {
-                self.style.backgroundImage = "url(" + self.images[num].src + ")";
+    const makePromise = (num) => {
+        return new Promise((resolve) => {
+            setTimeout(() => {
+                self.style.backgroundImage = `url(${self.images[num].src})`;
                 resolve();
             }, 150);
         });
-    }
+    };
 
-    makePromise(2)
-        .then(function () {
-            return makePromise(1);
-        })
-        .then(function () {
-            return makePromise(0);
-        })
-        .then(function () {
-            initScore();
-            marioSequencer.curPos = 0;
-            marioSequencer.undoHistory = []; // Clear undo history
-            updateUndoButtonState(); // Update undo button state
-        });
+    (async () => {
+        await makePromise(2);
+        await makePromise(1);
+        await makePromise(0);
+        initScore();
+        marioSequencer.curPos = 0;
+        marioSequencer.undoHistory = []; // Clear undo history
+        updateUndoButtonState(); // Update undo button state
+    })();
 
     clearSongButtons();
 }
