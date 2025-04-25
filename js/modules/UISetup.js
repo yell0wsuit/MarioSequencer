@@ -41,12 +41,12 @@ const setupNoteButtons = () => {
         button.num = i;
         button.se = marioSequencer.SOUNDS[i];
         button.se.image = buttonImages[i];
-        button.addEventListener("click", function () {
-            this.se.play(8); // Note F
-            marioSequencer.curChar = this.num;
+        button.addEventListener("click", () => {
+            button.se.play(8); // Note F
+            marioSequencer.curChar = button.num;
             clearEraserButton();
-            changeCursor(this.num);
-            drawCurChar(this.se.image);
+            changeCursor(button.num);
+            drawCurChar(button.se.image);
         });
         marioSequencer.CONSOLE.appendChild(button);
         return button;
@@ -76,12 +76,12 @@ const setupNoteButtons = () => {
     marioSequencer.endMarkTimer.currentFrame = 0;
 
     // Add click handler
-    endMarkButton.addEventListener("click", function () {
+    endMarkButton.addEventListener("click", () => {
         marioSequencer.endMarkTimer.switch = true;
         marioSequencer.curChar = 15;
         marioSequencer.SOUNDS[15].play(8);
         clearEraserButton();
-        drawEndMarkIcon(this.images[0]);
+        drawEndMarkIcon(endMarkButton.images[0]);
     });
 
     marioSequencer.CONSOLE.appendChild(endMarkButton);
@@ -109,14 +109,14 @@ const setupEraserButton = () => {
         self.currentFrame = self.currentFrame === 0 ? 1 : 0;
     });
     marioSequencer.eraserTimer.currentFrame = 0;
-    eraserButton.addEventListener("click", function () {
+    eraserButton.addEventListener("click", () => {
         marioSequencer.eraserTimer.switch = true;
         marioSequencer.curChar = 16;
         marioSequencer.SOUNDS[17].play(8);
         drawEraserIcon();
         clearSongButtons();
-        this.style.backgroundImage = `url(${this.images[1].src})`;
-        marioSequencer.SCREEN.style.cursor = `url(${this.images[2].src}) 0 0, auto`;
+        eraserButton.style.backgroundImage = `url(${eraserButton.images[1].src})`;
+        marioSequencer.SCREEN.style.cursor = `url(${eraserButton.images[2].src}) 0 0, auto`;
     });
     marioSequencer.CONSOLE.appendChild(eraserButton);
 };
@@ -156,7 +156,7 @@ const setupControlButtons = () => {
     undoButton.id = "undo";
     undoButton.images = sliceImage(marioSequencer.undoDogImg, 14, 15);
     undoButton.style.backgroundImage = `url(${undoButton.images[0].src})`;
-    undoButton.addEventListener("click", function () {
+    undoButton.addEventListener("click", () => {
         if (marioSequencer.undoHistory.length === 0) return;
 
         const lastAction = marioSequencer.undoHistory.pop();
@@ -180,9 +180,9 @@ const setupControlButtons = () => {
         updateUndoButtonState();
 
         // Add hover effect
-        this.style.backgroundImage = `url(${this.images[1].src})`;
+        undoButton.style.backgroundImage = `url(${undoButton.images[1].src})`;
         setTimeout(() => {
-            this.style.backgroundImage = `url(${this.images[0].src})`;
+            undoButton.style.backgroundImage = `url(${undoButton.images[0].src})`;
         }, 150);
     });
     marioSequencer.CONSOLE.appendChild(undoButton);
@@ -198,19 +198,19 @@ const setupControlButtons = () => {
     loopButton.images = [stopButtonImages[2], stopButtonImages[3]]; // made in Stop button (above)
     loopButton.style.backgroundImage = `url(${loopButton.images[0].src})`;
     marioSequencer.curScore.loop = false;
-    loopButton.addEventListener("click", function () {
+    loopButton.addEventListener("click", () => {
         marioSequencer.curScore.loop = !marioSequencer.curScore.loop;
         const buttonState = marioSequencer.curScore.loop ? 1 : 0;
-        this.style.backgroundImage = `url(${this.images[buttonState].src})`;
+        loopButton.style.backgroundImage = `url(${loopButton.images[buttonState].src})`;
         marioSequencer.SOUNDS[17].play(8);
     });
-    loopButton.reset = function () {
+    loopButton.reset = () => {
         marioSequencer.curScore.loop = false;
-        this.style.backgroundImage = `url(${this.images[0].src})`;
+        loopButton.style.backgroundImage = `url(${loopButton.images[0].src})`;
     };
-    loopButton.set = function () {
+    loopButton.set = () => {
         marioSequencer.curScore.loop = true;
-        this.style.backgroundImage = `url(${this.images[1].src})`;
+        loopButton.style.backgroundImage = `url(${loopButton.images[1].src})`;
     };
     marioSequencer.pseudoSheet.insertRule("#loop:focus {outline: none !important;}", 0);
     marioSequencer.CONSOLE.appendChild(loopButton);
@@ -297,7 +297,7 @@ const setupUIControls = () => {
     // Prepare range's side buttons for inc/decrements
     const leftButton = makeButton(184, 158, 7, 9, "button", "Scroll left");
     leftButton.id = "toLeft";
-    leftButton.addEventListener("click", function () {
+    leftButton.addEventListener("click", () => {
         if (marioSequencer.DOM.scrollBar.value > 0) {
             marioSequencer.curPos = --marioSequencer.DOM.scrollBar.value;
         }
@@ -306,7 +306,7 @@ const setupUIControls = () => {
 
     const rightButton = makeButton(241, 158, 7, 9, "button", "Scroll right");
     rightButton.id = "toRight";
-    rightButton.addEventListener("click", function () {
+    rightButton.addEventListener("click", () => {
         if (marioSequencer.DOM.scrollBar.value < marioSequencer.curMaxBars - 6) {
             marioSequencer.curPos = ++marioSequencer.DOM.scrollBar.value;
         }
@@ -348,8 +348,8 @@ const setupUIControls = () => {
     resizeDOM(tempoSlider, tempoSlider.originalW, tempoSlider.originalH);
 
     // Add event listener
-    tempoSlider.addEventListener("input", function () {
-        marioSequencer.curScore.tempo = parseInt(this.value);
+    tempoSlider.addEventListener("input", () => {
+        marioSequencer.curScore.tempo = parseInt(tempoSlider.value);
     });
 
     marioSequencer.CONSOLE.appendChild(tempoSlider);
@@ -421,7 +421,7 @@ const setupBeatButtons = () => {
  */
 const setupSongButtons = () => {
     const songImages = sliceImage(marioSequencer.songImg, 15, 17);
-    const songButtons = ["frog", "beak", "1up"].map(function (id, index) {
+    const songButtons = ["frog", "beak", "1up"].map((id, index) => {
         const button = makeButton(136 + 24 * index, 202, 15, 17, "button", `Load ${id} song`);
         button.id = id;
         button.num = index;
