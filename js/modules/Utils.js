@@ -205,6 +205,11 @@ const readFileAsync = (file) => {
     });
 };
 
+const isChrome =
+    (!!window.chrome && (!!window.chrome.webstore || !!window.chrome.runtime)) ||
+    (!!window.navigator.userAgent.match(/WebKit/i) && !window.navigator.userAgent.match(/Edge|Edg|OPR|Opera/i));
+const isFirefox = typeof InstallTrigger !== "undefined";
+
 export {
     download,
     makeButton,
@@ -214,4 +219,6 @@ export {
     resizeDOM,
     sliceImage,
     updateSliderThumbStyle,
+    isChrome,
+    isFirefox,
 };

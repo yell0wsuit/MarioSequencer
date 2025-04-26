@@ -6,7 +6,7 @@ import marioSequencer from "../appState.js";
 import { EasyTimer } from "./EasyTimer.js";
 import { clearEraserButton, clearListener, playListener, stopListener } from "./EventHandlers.js";
 import { changeCursor, drawCurChar, drawEndMarkIcon, drawEraserIcon } from "./UIManager.js";
-import { makeButton, moveDOM, resizeDOM, sliceImage } from "./Utils.js";
+import { makeButton, moveDOM, resizeDOM, sliceImage, isChrome, isFirefox } from "./Utils.js";
 
 /**
  * Initialize DOM references when document is ready
@@ -254,7 +254,7 @@ const setupUIControls = () => {
     // Set all styles in a single object
     Object.assign(scrollBar.style, {
         cursor: "pointer",
-        "-webkit-appearance": "none",
+        appearance: "none",
         "border-radius": "0px",
         "background-color": "#F8F8F8",
         "box-shadow": "inset 0 0 0 #000",
@@ -277,21 +277,35 @@ const setupUIControls = () => {
     marioSequencer.CONSOLE.appendChild(scrollBar);
 
     // Set up scroll bar thumb styling
-    marioSequencer.pseudoSheet.insertRule(
-        "#scroll::-webkit-slider-thumb {" +
-            "-webkit-appearance: none !important;" +
-            "border-radius: 0px;" +
-            "background-color: #A870D0;" +
-            "box-shadow:inset 0 0 0px;" +
-            "border: 0px;" +
-            "width: " +
-            5 * marioSequencer.MAGNIFY +
-            "px;" +
-            "height:" +
-            7 * marioSequencer.MAGNIFY +
-            "px;}",
-        0
-    );
+    if (isChrome) {
+        marioSequencer.pseudoSheet.insertRule(
+            `#scroll::-webkit-slider-thumb {
+            appearance: none !important;
+            border-radius: 0px;
+            background-color: #A870D0;
+            box-shadow: inset 0 0 0px;
+            border: 0px;
+            width: ${5 * marioSequencer.MAGNIFY}px;
+            height: ${7 * marioSequencer.MAGNIFY}px;
+        }`,
+            0
+        );
+    }
+
+    if (isFirefox) {
+        marioSequencer.pseudoSheet.insertRule(
+            `#scroll::-moz-range-thumb {
+            appearance: none !important;
+            border-radius: 0px;
+            background-color: #A870D0;
+            box-shadow: inset 0 0 0px;
+            border: 0px;
+            width: ${5 * marioSequencer.MAGNIFY}px;
+            height: ${7 * marioSequencer.MAGNIFY}px;
+        }`,
+            0
+        );
+    }
     marioSequencer.pseudoSheet.insertRule("#scroll:focus {outline: none !important;}", 0);
 
     // Prepare range's side buttons for inc/decrements
@@ -334,7 +348,7 @@ const setupUIControls = () => {
     // Set all styles in a single object
     Object.assign(tempoSlider.style, {
         cursor: "pointer",
-        "-webkit-appearance": "none",
+        appearance: "none",
         "border-radius": "0px",
         "background-color": "rgba(0, 0, 0, 0.0)",
         "box-shadow": "inset 0 0 0 #000",
@@ -358,23 +372,36 @@ const setupUIControls = () => {
     tempoSlider.image = thumbImage;
 
     // Setup tempo slider thumb styling
-    marioSequencer.pseudoSheet.insertRule(
-        "#tempo::-webkit-slider-thumb {" +
-            "-webkit-appearance: none !important;" +
-            "background-image: url('" +
-            thumbImage.src +
-            "');" +
-            "background-repeat: no-repeat;" +
-            "background-size: 100% 100%;" +
-            "border: 0px;" +
-            "width: " +
-            5 * marioSequencer.MAGNIFY +
-            "px;" +
-            "height:" +
-            8 * marioSequencer.MAGNIFY +
-            "px;}",
-        0
-    );
+    if (isChrome) {
+        marioSequencer.pseudoSheet.insertRule(
+            `#tempo::-webkit-slider-thumb {
+            appearance: none !important;
+            background-image: url('${thumbImage.src}');
+            background-repeat: no-repeat;
+            background-size: 100% 100%;
+            border: 0px;
+            width: ${5 * marioSequencer.MAGNIFY}px;
+            height: ${8 * marioSequencer.MAGNIFY}px;
+        }`,
+            0
+        );
+    }
+
+    if (isFirefox) {
+        marioSequencer.pseudoSheet.insertRule(
+            `#tempo::-moz-range-thumb {
+            appearance: none !important;
+            background-image: url('${thumbImage.src}');
+            background-repeat: no-repeat;
+            background-size: 100% 100%;
+            border: 0px;
+            width: ${5 * marioSequencer.MAGNIFY}px;
+            height: ${8 * marioSequencer.MAGNIFY}px;
+        }`,
+            0
+        );
+    }
+
     marioSequencer.pseudoSheet.insertRule("#tempo:focus {outline: none !important;}", 0);
 };
 
