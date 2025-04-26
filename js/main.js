@@ -197,7 +197,7 @@ document.getElementById("downloadBtn").addEventListener("click", download);
 
 // Add help button listener
 document.getElementById("helpBtn").addEventListener("click", () => {
-    window.open("https://github.com/yell0wsuit/MarioSequencer/tree/main?tab=readme-ov-file#how-to-use", "_blank");
+    window.open("https://github.com/yell0wsuit/MarioSequencer/tree/main#how-to-use", "_blank");
 });
 
 // Add window resize handler
