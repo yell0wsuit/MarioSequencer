@@ -12,21 +12,29 @@ import { isFirefox, makeButton, moveDOM, resizeDOM, sliceImage } from "./Utils.j
  * Initialize DOM references when document is ready
  */
 const initDOM = () => {
-    marioSequencer.DOM.scrollBar = document.getElementById("scroll");
-    marioSequencer.DOM.tempo = document.getElementById("tempo");
-    marioSequencer.DOM.playButton = document.getElementById("play");
-    marioSequencer.DOM.stopButton = document.getElementById("stop");
-    marioSequencer.DOM.loopButton = document.getElementById("loop");
-    marioSequencer.DOM.beats3Button = document.getElementById("3beats");
-    marioSequencer.DOM.beats4Button = document.getElementById("4beats");
-    marioSequencer.DOM.eraserButton = document.getElementById("eraser");
-    marioSequencer.DOM.undoButton = document.getElementById("undo");
-    marioSequencer.DOM.leftButton = document.getElementById("toLeft");
-    marioSequencer.DOM.rightButton = document.getElementById("toRight");
-    marioSequencer.DOM.clearButton = document.getElementById("clear");
-    marioSequencer.DOM.songButtons.frog = document.getElementById("frog");
-    marioSequencer.DOM.songButtons.beak = document.getElementById("beak");
-    marioSequencer.DOM.songButtons["1up"] = document.getElementById("1up");
+    const elements = [
+        { key: "scrollBar", id: "scroll" },
+        { key: "tempo", id: "tempo" },
+        { key: "playButton", id: "play" },
+        { key: "stopButton", id: "stop" },
+        { key: "loopButton", id: "loop" },
+        { key: "beats3Button", id: "3beats" },
+        { key: "beats4Button", id: "4beats" },
+        { key: "eraserButton", id: "eraser" },
+        { key: "undoButton", id: "undo" },
+        { key: "leftButton", id: "toLeft" },
+        { key: "rightButton", id: "toRight" },
+        { key: "clearButton", id: "clear" },
+    ];
+
+    elements.forEach(({ key, id }) => {
+        marioSequencer.DOM[key] = document.getElementById(id);
+    });
+
+    const songButtons = ["frog", "beak", "1up"];
+    songButtons.forEach((button) => {
+        marioSequencer.DOM.songButtons[button] = document.getElementById(button);
+    });
 };
 
 /**
