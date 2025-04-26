@@ -569,6 +569,31 @@ const processUrlParameters = () => {
     }
 };
 
+/**
+ * Setup mouse wheel event for scrolling left/right in the score area
+ */
+const setupMouseWheelScroll = () => {
+    if (!marioSequencer.SCREEN) return;
+    marioSequencer.SCREEN.addEventListener(
+        "wheel",
+        (event) => {
+            if (marioSequencer.gameStatus !== 0) return;
+            event.preventDefault();
+            // event.deltaY > 0: scroll right, event.deltaY < 0: scroll left
+            if (event.deltaY > 0) {
+                if (marioSequencer.DOM.scrollBar.value < marioSequencer.curMaxBars - 6) {
+                    marioSequencer.curPos = ++marioSequencer.DOM.scrollBar.value;
+                }
+            } else if (event.deltaY < 0) {
+                if (marioSequencer.DOM.scrollBar.value > 0) {
+                    marioSequencer.curPos = --marioSequencer.DOM.scrollBar.value;
+                }
+            }
+        },
+        { passive: false }
+    );
+};
+
 export {
     addJSON,
     addMSQ,
@@ -589,4 +614,5 @@ export {
     setupKeyboardControls,
     stopListener,
     updateUndoButtonState,
+    setupMouseWheelScroll,
 };

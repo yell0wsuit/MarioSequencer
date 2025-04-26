@@ -17,6 +17,7 @@ import {
     mouseClickListener,
     processUrlParameters,
     setupKeyboardControls,
+    setupMouseWheelScroll,
 } from "./modules/EventHandlers.js";
 import MarioClass from "./modules/MarioClass.js";
 import SoundEntity from "./modules/SoundEntity.js";
@@ -215,6 +216,7 @@ const onload = async () => {
     setupNoteButtons();
     setupControlButtons();
     setupUIControls();
+    setupMouseWheelScroll();
     setupBeatButtons();
     setupSongButtons();
     setupKeyboardControls();
