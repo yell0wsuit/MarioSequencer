@@ -5,6 +5,32 @@ html {
     font-size: 16px;
 }
 
+html, body {
+    background: #fff;
+}
+
+@media (prefers-color-scheme: dark) {
+    html, body {
+        background: #181a1b;
+        color: #e8e6e3;
+    }
+    #btncontrols button {
+        color: #fff;
+        background-color: oklch(35% 0.15 86.047);
+        border: 1px solid oklch(35% 0.15 86.047);
+    }
+    #btncontrols button:hover,
+    #btncontrols button:active,
+    #btncontrols button:focus {
+        background-color: burlywood;
+        border: 1px solid burlywood;
+    }
+    #btncontrols button:disabled {
+        background-color: #222;
+        border: 1px solid #222;
+    }
+}
+
 .game {
     margin: 0;
     padding: 0;
