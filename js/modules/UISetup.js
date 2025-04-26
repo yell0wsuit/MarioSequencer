@@ -79,7 +79,8 @@ const setupNoteButtons = () => {
     endMarkButton.addEventListener("click", () => {
         marioSequencer.endMarkTimer.switch = true;
         marioSequencer.curChar = 15;
-        marioSequencer.SOUNDS[15].play(8);
+        // Play musicloopplacer.wav when end mark button is clicked
+        marioSequencer.SOUNDS[marioSequencer.SOUND_INDEX.END_MARK_PLACER].play(8);
         clearEraserButton();
         drawEndMarkIcon(endMarkButton.images[0]);
     });

@@ -36,6 +36,8 @@ const mouseClickListener = (event) => {
         });
         marioSequencer.curScore.end = barNumber;
         updateUndoButtonState();
+        // Play sound16.wav when placing the end mark on the bar
+        marioSequencer.SOUNDS[marioSequencer.SOUND_INDEX.END_MARK_ON_BAR].play(8);
         return;
     }
 

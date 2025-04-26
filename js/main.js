@@ -111,6 +111,14 @@ marioSequencer.SOUNDS = Array.from({ length: 20 }, (_, i) => {
 
 // Add undo dog sound
 marioSequencer.SOUNDS[20] = new SoundEntity("wav/dogundo.wav");
+// Add musicloopplacer sound
+marioSequencer.SOUNDS[21] = new SoundEntity("wav/musicloopplacer.wav");
+
+// Export sound indices for special sounds
+marioSequencer.SOUND_INDEX = {
+    END_MARK_PLACER: 21, // musicloopplacer.wav
+    END_MARK_ON_BAR: 15, // sound16.wav
+};
 
 // Prepare Mat
 marioSequencer.MAT = document.getElementById("layer1");
