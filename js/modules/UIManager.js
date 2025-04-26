@@ -231,6 +231,7 @@ const drawScore = (position, notes, scroll) => {
     }
 
     marioSequencer.L2C.restore();
+    updateDownloadButtonState();
 };
 
 /**
@@ -590,6 +591,27 @@ const resizeUndoDogButton = () => {
     marioSequencer.DOM.undoButton.style.backgroundImage = `url(${marioSequencer.DOM.undoButton.images[0].src})`;
 };
 
+// Utility to check if there are any notes (excluding tempo strings)
+const hasAnyNotes = () => {
+    if (!marioSequencer.curScore.notes || !Array.isArray(marioSequencer.curScore.notes)) return false;
+    for (const bar of marioSequencer.curScore.notes) {
+        if (Array.isArray(bar)) {
+            for (const note of bar) {
+                if (typeof note !== "string") {
+                    return true;
+                }
+            }
+        }
+    }
+    return false;
+};
+
+const updateDownloadButtonState = () => {
+    const btn = document.getElementById("downloadBtn");
+    if (!btn) return;
+    btn.disabled = !hasAnyNotes();
+};
+
 export {
     changeCursor,
     drawBomb,
@@ -600,4 +622,5 @@ export {
     drawScore,
     resizeScreen,
     toGrid,
+    updateDownloadButtonState,
 };

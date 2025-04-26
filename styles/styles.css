@@ -1,3 +1,10 @@
+*,
+html {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell,
+        "Open Sans", "Helvetica Neue", sans-serif;
+    font-size: 16px;
+}
+
 .game {
     margin: 0;
     padding: 0;
@@ -44,29 +51,26 @@
 
 #btncontrols button {
     color: black;
-    background-color: burlywood;
-    border: 1px solid burlywood;
+    background-color: oklch(79.5% 0.184 86.047);
+    border: 1px solid oklch(79.5% 0.184 86.047);
     border-radius: 5px;
     padding: 5px 10px;
     cursor: pointer;
-    font-size: 16px;
     font-weight: bold;
     text-transform: uppercase;
     letter-spacing: 1px;
     transition: all 0.3s ease;
 }
 
-#btncontrols button:hover {
-    background-color: #d3d3d3;
-    border: 1px solid #d3d3d3;
-}
-
-#btncontrols button:active {
-    background-color: #d3d3d3;
-    border: 1px solid #d3d3d3;
-}
-
+#btncontrols button:hover,
+#btncontrols button:active,
 #btncontrols button:focus {
-    background-color: #d3d3d3;
-    border: 1px solid #d3d3d3;
+    background-color: burlywood;
+    border: 1px solid burlywood;
+}
+
+#btncontrols button:disabled {
+    background-color: oklch(70.8% 0 0);
+    border: 1px solid oklch(70.8% 0 0);
+    cursor: not-allowed;
 }
