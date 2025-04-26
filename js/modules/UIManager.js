@@ -4,7 +4,7 @@
 
 import marioSequencer from "../appState.js";
 
-import { isChrome, isFirefox, moveDOM, resizeDOM, sliceImage, updateSliderThumbStyle } from "./Utils.js";
+import { isFirefox, moveDOM, resizeDOM, sliceImage, updateSliderThumbStyle } from "./Utils.js";
 
 /**
  * Draw the horizontal bar for high notes
@@ -486,19 +486,18 @@ const resizeSliderElements = () => {
     );
 
     // Update scroll bar thumb style
-    if (isChrome) {
-        updateSliderThumbStyle("#scroll::-webkit-slider-thumb", {
-            properties: {
-                appearance: "none !important",
-                "border-radius": "0px",
-                "background-color": "#A870D0",
-                "box-shadow": "inset 0 0 0px",
-                border: "0px",
-            },
-            width: 5 * marioSequencer.MAGNIFY,
-            height: 7 * marioSequencer.MAGNIFY,
-        });
-    }
+
+    updateSliderThumbStyle("#scroll::-webkit-slider-thumb", {
+        properties: {
+            appearance: "none !important",
+            "border-radius": "0px",
+            "background-color": "#A870D0",
+            "box-shadow": "inset 0 0 0px",
+            border: "0px",
+        },
+        width: 5 * marioSequencer.MAGNIFY,
+        height: 7 * marioSequencer.MAGNIFY,
+    });
 
     if (isFirefox) {
         updateSliderThumbStyle("#scroll::-moz-range-thumb", {
@@ -523,19 +522,18 @@ const resizeSliderElements = () => {
     marioSequencer.DOM.tempo.image = thumbImage;
 
     // Update tempo slider thumb style
-    if (isChrome) {
-        updateSliderThumbStyle("#tempo::-webkit-slider-thumb", {
-            properties: {
-                appearance: "none !important",
-                "background-image": `url('${thumbImage.src}')`,
-                "background-repeat": "no-repeat",
-                "background-size": "100% 100%",
-                border: "0px",
-            },
-            width: 5 * marioSequencer.MAGNIFY,
-            height: 8 * marioSequencer.MAGNIFY,
-        });
-    }
+
+    updateSliderThumbStyle("#tempo::-webkit-slider-thumb", {
+        properties: {
+            appearance: "none !important",
+            "background-image": `url('${thumbImage.src}')`,
+            "background-repeat": "no-repeat",
+            "background-size": "100% 100%",
+            border: "0px",
+        },
+        width: 5 * marioSequencer.MAGNIFY,
+        height: 8 * marioSequencer.MAGNIFY,
+    });
 
     if (isFirefox) {
         updateSliderThumbStyle("#tempo::-moz-range-thumb", {

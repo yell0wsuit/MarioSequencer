@@ -6,7 +6,7 @@ import marioSequencer from "../appState.js";
 import { EasyTimer } from "./EasyTimer.js";
 import { clearEraserButton, clearListener, playListener, stopListener } from "./EventHandlers.js";
 import { changeCursor, drawCurChar, drawEndMarkIcon, drawEraserIcon } from "./UIManager.js";
-import { makeButton, moveDOM, resizeDOM, sliceImage, isChrome, isFirefox } from "./Utils.js";
+import { isFirefox, makeButton, moveDOM, resizeDOM, sliceImage } from "./Utils.js";
 
 /**
  * Initialize DOM references when document is ready
@@ -277,9 +277,9 @@ const setupUIControls = () => {
     marioSequencer.CONSOLE.appendChild(scrollBar);
 
     // Set up scroll bar thumb styling
-    if (isChrome) {
-        marioSequencer.pseudoSheet.insertRule(
-            `#scroll::-webkit-slider-thumb {
+
+    marioSequencer.pseudoSheet.insertRule(
+        `#scroll::-webkit-slider-thumb {
             appearance: none !important;
             border-radius: 0px;
             background-color: #A870D0;
@@ -288,9 +288,8 @@ const setupUIControls = () => {
             width: ${5 * marioSequencer.MAGNIFY}px;
             height: ${7 * marioSequencer.MAGNIFY}px;
         }`,
-            0
-        );
-    }
+        0
+    );
 
     if (isFirefox) {
         marioSequencer.pseudoSheet.insertRule(
@@ -372,9 +371,9 @@ const setupUIControls = () => {
     tempoSlider.image = thumbImage;
 
     // Setup tempo slider thumb styling
-    if (isChrome) {
-        marioSequencer.pseudoSheet.insertRule(
-            `#tempo::-webkit-slider-thumb {
+
+    marioSequencer.pseudoSheet.insertRule(
+        `#tempo::-webkit-slider-thumb {
             appearance: none !important;
             background-image: url('${thumbImage.src}');
             background-repeat: no-repeat;
@@ -383,9 +382,8 @@ const setupUIControls = () => {
             width: ${5 * marioSequencer.MAGNIFY}px;
             height: ${8 * marioSequencer.MAGNIFY}px;
         }`,
-            0
-        );
-    }
+        0
+    );
 
     if (isFirefox) {
         marioSequencer.pseudoSheet.insertRule(
