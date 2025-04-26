@@ -160,16 +160,19 @@ const setupControlButtons = () => {
         if (marioSequencer.undoHistory.length === 0) return;
 
         const lastAction = marioSequencer.undoHistory.pop();
-        const barNotes = lastAction.type !== "endmark" ? marioSequencer.curScore.notes[lastAction.barNumber] : null;
-        const index = barNotes.indexOf(lastAction.note);
 
         switch (lastAction.type) {
-            case "add":
+            case "add": {
+                const barNotes = marioSequencer.curScore.notes[lastAction.barNumber];
+                const index = barNotes.indexOf(lastAction.note);
                 if (index !== -1) barNotes.splice(index, 1);
                 break;
-            case "delete":
+            }
+            case "delete": {
+                const barNotes = marioSequencer.curScore.notes[lastAction.barNumber];
                 barNotes.push(lastAction.note);
                 break;
+            }
             case "endmark":
                 marioSequencer.curScore.end = lastAction.oldEnd;
                 break;
